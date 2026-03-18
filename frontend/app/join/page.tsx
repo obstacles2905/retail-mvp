@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createApiClient } from '@/lib/api-client';
 import { setAuth } from '@/lib/auth';
@@ -11,8 +11,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
 
 export default function JoinByInvitePage(): JSX.Element {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+  const [token, setToken] = useState<string | null>(null);
 
   const [status, setStatus] = useState<'loading' | 'valid' | 'invalid'>('loading');
   const [buyerCompanyName, setBuyerCompanyName] = useState<string>('');
@@ -23,6 +22,11 @@ export default function JoinByInvitePage(): JSX.Element {
   const [companyName, setCompanyName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    setToken(url.searchParams.get('token'));
+  }, []);
 
   useEffect(() => {
     if (!token) {

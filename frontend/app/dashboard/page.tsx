@@ -1,9 +1,17 @@
 'use client';
 
+import {
+  useEffect,
+  useState,
+} from 'react';
+
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { getStoredUser, clearAuth } from '@/lib/auth';
+
+import {
+  clearAuth,
+  getStoredUser,
+} from '@/lib/auth';
 
 export default function DashboardPage(): JSX.Element {
   const router = useRouter();
@@ -69,6 +77,12 @@ export default function DashboardPage(): JSX.Element {
         </p>
 
         <div className="mt-8 flex flex-col gap-4">
+          <Link
+            href="/profile"
+            className="rounded-lg border border-gray-200 bg-white p-4 font-medium text-gray-900 shadow-sm hover:border-gray-300 hover:bg-gray-50"
+          >
+            Профіль — особисті дані та аватар
+          </Link>
           {user.role === 'BUYER' ? (
             <Link
               href="/buyer"

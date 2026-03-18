@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 
 export interface UserSafe {
   id: string;
   email: string;
   name: string;
   companyName: string;
+  phone: string | null;
+  avatarPath: string | null;
   role: string;
   createdAt: Date;
   updatedAt: Date;
@@ -51,11 +54,56 @@ export class UsersService {
     };
   }
 
+  async findSafeById(userId: string): Promise<UserSafe | null> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return null;
+    return this.toUserSafe(user);
+  }
+
+  async updateMe(
+    userId: string,
+    dto: { name?: string; companyName?: string; phone?: string | null },
+  ): Promise<UserSafe> {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: dto.name ?? undefined,
+        companyName: dto.companyName ?? undefined,
+        phone: dto.phone ?? undefined,
+      },
+    });
+    return this.toUserSafe(user);
+  }
+
+  async setAvatarPath(userId: string, avatarPath: string): Promise<UserSafe> {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarPath },
+    });
+    return this.toUserSafe(user);
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new BadRequestException('User not found');
+
+    const ok = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!ok) throw new UnauthorizedException('Invalid current password');
+
+    const passwordHash = await bcrypt.hash(newPassword, UsersService.SALT_ROUNDS);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+  }
+
   private toUserSafe(user: {
     id: string;
     email: string;
     name: string;
     companyName: string;
+    phone?: string | null;
+    avatarPath?: string | null;
     role: string;
     createdAt: Date;
     updatedAt: Date;
@@ -65,6 +113,8 @@ export class UsersService {
       email: user.email,
       name: user.name,
       companyName: user.companyName,
+      phone: user.phone ?? null,
+      avatarPath: user.avatarPath ?? null,
       role: user.role,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

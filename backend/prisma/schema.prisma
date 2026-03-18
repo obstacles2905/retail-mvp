@@ -37,6 +37,8 @@ model User {
   passwordHash String
   name         String
   companyName  String
+  phone        String?
+  avatarPath   String?
   role         UserRole
 
   createdSkus  Sku[]          @relation("BuyerSkus")
