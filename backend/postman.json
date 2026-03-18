@@ -263,7 +263,7 @@
               },
               "body": {
                 "mode": "raw",
-                "raw": "{\n  \"skuId\": \"{{skuId}}\",\n  \"currentPrice\": \"115.00\",\n  \"volume\": \"100\"\n}"
+                "raw": "{\n  \"skuId\": \"{{skuId}}\",\n  \"currentPrice\": \"115.00\",\n  \"volume\": \"100\",\n  \"unit\": \"item\"\n}"
               }
             },
             "response": []

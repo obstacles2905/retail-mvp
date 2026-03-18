@@ -45,6 +45,7 @@ export default function VendorDashboardPage(): JSX.Element {
   const [createProductName, setCreateProductName] = useState('');
   const [createPrice, setCreatePrice] = useState('');
   const [createVolume, setCreateVolume] = useState('');
+  const [createUnit, setCreateUnit] = useState('item');
   const [createDeliveryTerms, setCreateDeliveryTerms] = useState('');
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -97,6 +98,7 @@ export default function VendorDashboardPage(): JSX.Element {
     const body: Record<string, unknown> = {
       currentPrice: createPrice.trim(),
       volume: createVolume.trim(),
+      unit: createUnit,
       deliveryTerms: createDeliveryTerms.trim() || undefined,
     };
     if (offerType === 'catalog') body.skuId = createSkuId;
@@ -112,6 +114,7 @@ export default function VendorDashboardPage(): JSX.Element {
         setCreateProductName('');
         setCreatePrice('');
         setCreateVolume('');
+        setCreateUnit('item');
         setCreateDeliveryTerms('');
         loadData();
       })
@@ -303,7 +306,7 @@ export default function VendorDashboardPage(): JSX.Element {
                     </div>
                     <div className="w-24">
                       <label htmlFor="vendor-volume" className="block text-xs font-medium text-gray-700">
-                        Об'єм, шт.
+                        Об'єм
                       </label>
                       <input
                         id="vendor-volume"
@@ -315,6 +318,40 @@ export default function VendorDashboardPage(): JSX.Element {
                         required
                         className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       />
+                    </div>
+                    <div className="w-36">
+                      <label htmlFor="vendor-unit" className="block text-xs font-medium text-gray-700">
+                        Од. виміру
+                      </label>
+                      <select
+                        id="vendor-unit"
+                        value={createUnit}
+                        onChange={(e) => setCreateUnit(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      >
+                        <optgroup label="Штучний">
+                          <option value="item">Штука (item)</option>
+                        </optgroup>
+                        <optgroup label="Вага">
+                          <option value="mg">Міліграм (mg)</option>
+                          <option value="g">Грам (g)</option>
+                          <option value="kg">Кілограм (kg)</option>
+                        </optgroup>
+                        <optgroup label="Об'єм">
+                          <option value="ml">Мілілітр (ml)</option>
+                          <option value="cl">Сантилітр (cl)</option>
+                          <option value="L">Літр (L)</option>
+                          <option value="m³">Куб. метр (m³)</option>
+                        </optgroup>
+                        <optgroup label="Розмір">
+                          <option value="mm">Міліметр (mm)</option>
+                          <option value="cm">Сантиметр (cm)</option>
+                          <option value="m">Метр (m)</option>
+                        </optgroup>
+                        <optgroup label="Площа">
+                          <option value="m²">Кв. метр (m²)</option>
+                        </optgroup>
+                      </select>
                     </div>
                   </div>
                   <div>
@@ -400,7 +437,7 @@ export default function VendorDashboardPage(): JSX.Element {
                           {offer.currentPrice} грн
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-600">
-                          {offer.volume}
+                          {offer.volume} {offer.unit}
                         </td>
                         <td className="max-w-[180px] truncate px-4 py-3 text-sm text-gray-600" title={offer.deliveryTerms ?? undefined}>
                           {offer.deliveryTerms || '—'}

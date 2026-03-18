@@ -92,6 +92,7 @@ model Offer {
   initiatorRole UserRole
   currentPrice  Decimal
   volume        Int
+  unit          String          @default("item")
   deliveryTerms String?
   status        OfferStatus     @default(NEW)
   currentTurn   OfferTurn

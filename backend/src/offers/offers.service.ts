@@ -31,6 +31,7 @@ export interface OfferDto {
   initiatorRole: 'BUYER' | 'VENDOR';
   currentPrice: string;
   volume: number;
+  unit: string;
   deliveryTerms: string | null;
   status: OfferStatus;
   currentTurn: OfferTurn;
@@ -75,6 +76,7 @@ export class OffersService {
           initiatorRole: 'VENDOR',
           currentPrice: dto.currentPrice,
           volume: volumeInt,
+          unit: dto.unit ?? 'item',
           deliveryTerms: dto.deliveryTerms ?? null,
           status: OfferStatus.NEW,
           currentTurn: OfferTurn.BUYER,
@@ -95,6 +97,7 @@ export class OffersService {
           initiatorRole: 'VENDOR',
           currentPrice: dto.currentPrice,
           volume: volumeInt,
+          unit: dto.unit ?? 'item',
           deliveryTerms: dto.deliveryTerms ?? null,
           status: OfferStatus.NEW,
           currentTurn: OfferTurn.BUYER,
@@ -142,6 +145,7 @@ export class OffersService {
       initiatorRole: 'BUYER' | 'VENDOR';
       currentPrice: unknown;
       volume: number;
+      unit: string;
       deliveryTerms: string | null;
       status: OfferStatus;
       currentTurn: OfferTurn;
@@ -198,7 +202,7 @@ export class OffersService {
     offerId: string,
     userId: string,
     role: 'BUYER' | 'VENDOR',
-  ): Promise<{ id: string; skuId: string | null; buyerId: string | null; vendorId: string; currentPrice: unknown; volume: number; status: OfferStatus; currentTurn: OfferTurn; sku: { createdById: string } | null }> {
+  ): Promise<{ id: string; skuId: string | null; buyerId: string | null; vendorId: string; currentPrice: unknown; volume: number; unit: string; status: OfferStatus; currentTurn: OfferTurn; sku: { createdById: string } | null }> {
     const offer = await this.prisma.offer.findUnique({
       where: { id: offerId },
       include: { sku: true },
@@ -219,6 +223,7 @@ export class OffersService {
       vendorId: string;
       currentPrice: unknown;
       volume: number;
+      unit: string;
       status: OfferStatus;
       currentTurn: OfferTurn;
       sku: { createdById: string } | null;
@@ -604,6 +609,7 @@ export class OffersService {
     initiatorRole: 'BUYER' | 'VENDOR';
     currentPrice: unknown;
     volume: number;
+    unit: string;
     deliveryTerms: string | null;
     status: OfferStatus;
     currentTurn: OfferTurn;
@@ -619,6 +625,7 @@ export class OffersService {
       initiatorRole: offer.initiatorRole,
       currentPrice: String(offer.currentPrice),
       volume: offer.volume,
+      unit: offer.unit,
       deliveryTerms: offer.deliveryTerms,
       status: offer.status,
       currentTurn: offer.currentTurn,

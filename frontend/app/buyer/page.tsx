@@ -56,6 +56,7 @@ export default function BuyerDashboardPage(): JSX.Element {
   const [orderProductName, setOrderProductName] = useState('');
   const [orderTargetPrice, setOrderTargetPrice] = useState('');
   const [orderVolume, setOrderVolume] = useState('');
+  const [orderUnit, setOrderUnit] = useState('item');
   const [orderDeliveryTerms, setOrderDeliveryTerms] = useState('');
   const [orderVendorIds, setOrderVendorIds] = useState<string[]>([]);
   const [orderLoading, setOrderLoading] = useState(false);
@@ -106,6 +107,7 @@ export default function BuyerDashboardPage(): JSX.Element {
     const body: Record<string, unknown> = {
       targetPrice: orderTargetPrice.trim(),
       volume: orderVolume.trim(),
+      unit: orderUnit,
       deliveryTerms: orderDeliveryTerms.trim() || undefined,
       vendorIds: orderVendorIds,
     };
@@ -120,6 +122,7 @@ export default function BuyerDashboardPage(): JSX.Element {
         setOrderProductName('');
         setOrderTargetPrice('');
         setOrderVolume('');
+        setOrderUnit('item');
         setOrderDeliveryTerms('');
         setOrderVendorIds([]);
         return api.get<OfferListItem[]>('/buyer/orders').then((r) => setMyOrders(r.data));
@@ -281,7 +284,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                 </div>
                 <div className="w-24">
                   <label htmlFor="order-volume" className="block text-xs font-medium text-gray-700">
-                    Об'єм, шт.
+                    Об'єм
                   </label>
                   <input
                     id="order-volume"
@@ -293,6 +296,40 @@ export default function BuyerDashboardPage(): JSX.Element {
                     required
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
+                </div>
+                <div className="w-36">
+                  <label htmlFor="order-unit" className="block text-xs font-medium text-gray-700">
+                    Од. виміру
+                  </label>
+                  <select
+                    id="order-unit"
+                    value={orderUnit}
+                    onChange={(e) => setOrderUnit(e.target.value)}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  >
+                    <optgroup label="Штучний">
+                      <option value="item">Штука (item)</option>
+                    </optgroup>
+                    <optgroup label="Вага">
+                      <option value="mg">Міліграм (mg)</option>
+                      <option value="g">Грам (g)</option>
+                      <option value="kg">Кілограм (kg)</option>
+                    </optgroup>
+                    <optgroup label="Об'єм">
+                      <option value="ml">Мілілітр (ml)</option>
+                      <option value="cl">Сантилітр (cl)</option>
+                      <option value="L">Літр (L)</option>
+                      <option value="m³">Куб. метр (m³)</option>
+                    </optgroup>
+                    <optgroup label="Розмір">
+                      <option value="mm">Міліметр (mm)</option>
+                      <option value="cm">Сантиметр (cm)</option>
+                      <option value="m">Метр (m)</option>
+                    </optgroup>
+                    <optgroup label="Площа">
+                      <option value="m²">Кв. метр (m²)</option>
+                    </optgroup>
+                  </select>
                 </div>
               </div>
 
@@ -446,7 +483,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                       {offer.currentPrice} грн
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-600">
-                      {offer.volume}
+                      {offer.volume} {offer.unit}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
@@ -514,7 +551,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                       {offer.currentPrice} грн
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-600">
-                      {offer.volume}
+                      {offer.volume} {offer.unit}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
