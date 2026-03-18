@@ -13,6 +13,7 @@ describe('OffersGateway', () => {
 
     const offersService = {
       getOne: jest.fn().mockResolvedValue({}),
+      markRead: jest.fn().mockResolvedValue(undefined),
     } as unknown as OffersService;
 
     const realtime = { setServer: jest.fn(), emitNewMessage: jest.fn() } as unknown as OffersRealtimeService;
