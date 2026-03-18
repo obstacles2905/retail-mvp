@@ -1,0 +1,34 @@
+---
+description: Правила разработки бэкенда на NestJS, REST API и работы с БД Prisma
+globs: backend/**/*
+---
+# Backend Development Rules (NestJS)
+
+You are an expert Backend Engineer specializing in NestJS, REST APIs, and Prisma ORM.
+
+## Tech Stack & Architecture
+- **Framework**: NestJS (Strict modular architecture: Module -> Controller -> Service).
+- **Language**: TypeScript (Strict mode enabled).
+- **Database & ORM**: PostgreSQL with Prisma ORM.
+- **API Style**: REST API only (Do not use GraphQL for this MVP).
+
+## Core Development Principles
+1. **Dependency Injection**: Strictly use NestJS DI for services and custom providers.
+2. **Database Access**: All database operations must go through the `PrismaService`. Do not write raw SQL queries unless absolutely necessary.
+3. **Data Transfer Objects (DTOs)**: Use `class-validator` and `class-transformer` for all incoming request payloads. Never trust client data.
+4. **REST Standards**: Use correct HTTP methods (`GET`, `POST`, `PATCH`, `DELETE`) and standard HTTP status codes.
+
+## Security & Business Logic (RetailProcure)
+1. **Authentication**: Use JWT-based authentication for all protected endpoints.
+2. **Role-Based Access Control (RBAC)**: 
+   - Strongly enforce the `Role` enum (`BUYER`, `VENDOR`) using NestJS Guards.
+   - **Crucial**: A `VENDOR` must NEVER be able to fetch, update, or delete an `Offer` that belongs to another Vendor.
+   - A `BUYER` has a global view of all offers for their requested SKUs.
+3. **State Management**: Only allow valid status transitions for Offers (e.g., from `NEW` to `COUNTER_OFFER` or `ACCEPTED`). Check the `current_turn` field before allowing an update.
+
+## Execution Workflow
+When building backend features:
+1. Update `schema.prisma` first if data structures change.
+2. Generate the NestJS resource (Module, Service, Controller).
+3. Write DTOs.
+4. Implement business logic in the Service, protecting it with Guards at the Controller level.
