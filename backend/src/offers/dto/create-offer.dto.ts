@@ -28,6 +28,12 @@ export class CreateOfferDto {
 
   @IsOptional()
   @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  unit?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(2000)
   deliveryTerms?: string;
 }

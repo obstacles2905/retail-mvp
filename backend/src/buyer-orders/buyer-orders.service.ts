@@ -51,6 +51,7 @@ export class BuyerOrdersService {
               initiatorRole: 'BUYER',
               currentPrice: dto.targetPrice,
               volume: volumeInt,
+              unit: dto.unit ?? 'item',
               deliveryTerms: dto.deliveryTerms ?? null,
               status: OfferStatus.NEW,
               currentTurn: OfferTurn.VENDOR,
@@ -107,6 +108,7 @@ export class BuyerOrdersService {
     initiatorRole: 'BUYER' | 'VENDOR';
     currentPrice: unknown;
     volume: number;
+    unit: string;
     deliveryTerms: string | null;
     status: OfferStatus;
     currentTurn: OfferTurn;
@@ -122,6 +124,7 @@ export class BuyerOrdersService {
       initiatorRole: o.initiatorRole,
       currentPrice: String(o.currentPrice),
       volume: o.volume,
+      unit: o.unit,
       deliveryTerms: o.deliveryTerms,
       status: o.status,
       currentTurn: o.currentTurn,

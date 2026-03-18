@@ -177,14 +177,14 @@ export function DealSidebar({
         <div className="mt-3 flex items-baseline justify-between gap-4">
           <div>
             <p className="text-xs text-gray-500">Поточна пропозиція</p>
-            <p className="mt-0.5 text-2xl font-bold text-gray-900">{offer.currentPrice} грн/шт</p>
+            <p className="mt-0.5 text-2xl font-bold text-gray-900">{offer.currentPrice} грн/{offer.unit}</p>
           </div>
         </div>
 
         <dl className="mt-4 grid gap-2 border-t border-gray-100 pt-3">
           <div className="flex justify-between text-sm">
             <dt className="text-gray-500">Обʼєм (на місяць)</dt>
-            <dd className="font-medium text-gray-900">{offer.volume.toLocaleString('uk-UA')} шт</dd>
+            <dd className="font-medium text-gray-900">{offer.volume.toLocaleString('uk-UA')} {offer.unit}</dd>
           </div>
           <div className="flex justify-between text-sm">
             <dt className="text-gray-500">Відстрочка платежу</dt>

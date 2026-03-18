@@ -17,6 +17,7 @@ export interface OfferListItem {
   initiatorRole: InitiatorRole;
   currentPrice: string;
   volume: number;
+  unit: string;
   deliveryTerms: string | null;
   status: OfferStatus;
   currentTurn: OfferTurn;
@@ -36,6 +37,7 @@ export interface OfferDetail {
   initiatorRole: InitiatorRole;
   currentPrice: string;
   volume: number;
+  unit: string;
   deliveryTerms: string | null;
   status: OfferStatus;
   currentTurn: OfferTurn;
