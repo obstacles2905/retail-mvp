@@ -55,6 +55,9 @@ export function DealSidebar({
     if (initialOffer == null && offerId) fetchOffer();
   }, [offerId]);
 
+  const isMyTurn =
+    !!offer && (currentUser.role === 'BUYER' ? offer.currentTurn === 'BUYER' : offer.currentTurn === 'VENDOR');
+
   const isClosed = offer && (offer.status === 'ACCEPTED' || offer.status === 'REJECTED');
 
   const mergeOfferUpdate = (updated: Partial<OfferDetail>): void => {
