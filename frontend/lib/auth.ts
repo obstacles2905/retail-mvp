@@ -6,6 +6,7 @@ export interface AuthUser {
   email: string;
   name: string;
   companyName: string;
+  avatarPath?: string | null;
   role: 'BUYER' | 'VENDOR';
   createdAt: string;
   updatedAt: string;

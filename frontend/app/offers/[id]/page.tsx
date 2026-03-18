@@ -21,6 +21,13 @@ function getShortDealId(offerId: string): string {
   return `#OFF-${offerId.slice(-6).toUpperCase()}`;
 }
 
+function getAvatarUrl(avatarPath: string | null | undefined): string | null {
+  if (!avatarPath) return null;
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
+  const baseUrl = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase;
+  return `${baseUrl}${avatarPath}`;
+}
+
 export default function OfferNegotiationPage(): JSX.Element {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -139,12 +146,22 @@ export default function OfferNegotiationPage(): JSX.Element {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
             </button>
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-800"
-              title={user.companyName}
-            >
-              {getInitials(user.companyName)}
-            </div>
+            {getAvatarUrl(user.avatarPath) ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={getAvatarUrl(user.avatarPath)!}
+                alt="Avatar"
+                className="h-8 w-8 rounded-full object-cover border border-gray-200"
+                title={user.companyName}
+              />
+            ) : (
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-800"
+                title={user.companyName}
+              >
+                {getInitials(user.companyName)}
+              </div>
+            )}
           </div>
         </div>
       </header>

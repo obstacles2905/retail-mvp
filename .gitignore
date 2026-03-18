@@ -43,3 +43,8 @@ node_modules/.cache/
 ### Misc
 .eslintcache
 *.tsbuildinfo
+
+### Uploads (store locally, don't commit files)
+backend/uploads/**
+!backend/uploads/avatars/
+!backend/uploads/avatars/.gitkeep
