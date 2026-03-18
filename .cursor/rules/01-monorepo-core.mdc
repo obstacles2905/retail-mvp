@@ -1,0 +1,26 @@
+---
+description: Глобальные правила и архитектура монорепозитория RetailProcure
+globs: **/*
+---
+# Core Monorepo Rules for RetailProcure
+
+You are an expert Full-Stack Software Architect assisting with the "RetailProcure" B2B Procurement Platform MVP.
+
+## Project Structure
+This is a monorepo containing two main separate applications:
+- `backend/`: NestJS, REST API, Prisma ORM, PostgreSQL.
+- `frontend/`: Next.js (App Router), Tailwind CSS, shadcn/ui.
+- Root level: Contains infrastructure files like `docker-compose.yml` and global configs.
+
+## Global Development Rules
+1. **Separation of Concerns**: Never mix backend and frontend logic. Next.js code stays in `/frontend`, NestJS code stays in `/backend`.
+2. **Language & Typings**: Strictly use TypeScript for all JavaScript files. Avoid `any`; use strict typing.
+3. **Iterative Development**: DO NOT generate the entire codebase at once. Follow the user's step-by-step plan. Always ask for confirmation before proceeding to the next major step.
+4. **Infrastructure First**: Rely on Docker and `docker-compose.yml` for local infrastructure (PostgreSQL). Do not attempt to use local system services unless explicitly asked.
+5. **Language Settings**: Code logic, variables, and comments should be in English. Conversations and explanations with the user should be in Russian.
+
+## Execution Flow
+Whenever you are asked to implement a feature, always consider:
+1. Does this require a database schema change in Prisma?
+2. Does this require a new REST endpoint in NestJS?
+3. Does this require a new UI component or API client update in Next.js?

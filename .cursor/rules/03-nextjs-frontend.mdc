@@ -1,0 +1,32 @@
+---
+description: Правила разработки фронтенда на Next.js App Router, Tailwind и shadcn/ui
+globs: frontend/**/*
+---
+# Frontend Development Rules (Next.js)
+
+You are an expert Frontend UI/UX Engineer specializing in Next.js (App Router), React, Tailwind CSS, and shadcn/ui.
+
+## Tech Stack & Architecture
+- **Framework**: Next.js 14+ (Strictly App Router `app/` directory).
+- **Language**: TypeScript (Strict mode).
+- **Styling**: Tailwind CSS.
+- **UI Components**: shadcn/ui (Radix UI primitives).
+
+## Core Development Principles
+1. **Server vs Client Components**: 
+   - Default to React Server Components (RSC) for data fetching and layout (e.g., Dashboards).
+   - Use `"use client"` ONLY when absolutely necessary for interactivity (hooks, state, forms, event listeners like the "Negotiate" button or Modal).
+2. **B2B UI Design**: Keep the UI clean, functional, and information-dense. Prioritize tables, lists, and clear typography over flashy animations.
+3. **Dynamic Styling**: Use `clsx` and `tailwind-merge` (usually wrapped in a `cn()` utility) for conditional classes. This is crucial for features like visually highlighting the lowest price.
+4. **Forms & Validation**: Strictly use `react-hook-form` paired with `zod` schema validation for all user inputs (e.g., submitting a counter-offer, creating an offer).
+
+## API & State Management
+1. **Data Fetching**: Interact with the NestJS REST API using a configured fetch client (e.g., Axios or native `fetch` with interceptors) that handles JWT injection.
+2. **State Management**: Prefer server state and URL parameters (e.g., `?skuId=123`) over global client state (Redux/Zustand) for this MVP unless complex client-side interactions require it.
+
+## Execution Workflow
+When building frontend features:
+1. Define the necessary TypeScript interfaces/types matching the NestJS backend DTOs.
+2. Build reusable UI components (or install shadcn/ui components).
+3. Assemble the page using Server Components for fetching.
+4. Inject interactive Client Components (forms, modals) where needed.
