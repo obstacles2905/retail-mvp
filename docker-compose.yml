@@ -1,0 +1,17 @@
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: retailprocure-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: retailprocure
+      POSTGRES_PASSWORD: retailprocure_password
+      POSTGRES_DB: retailprocure
+    ports:
+      - "5433:5432"
+    volumes:
+      - retailprocure_pg_data:/var/lib/postgresql/data
+
+volumes:
+  retailprocure_pg_data:

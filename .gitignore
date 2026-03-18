@@ -1,0 +1,45 @@
+### OS / Editor
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*.tmp
+
+.vscode/
+.idea/
+
+### Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+### Env / Secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+
+### Node
+node_modules/
+
+### Build outputs
+dist/
+coverage/
+.turbo/
+.next/
+out/
+
+### Prisma
+**/node_modules/.prisma/
+
+### Cache
+.cache/
+node_modules/.cache/
+
+### Misc
+.eslintcache
+*.tsbuildinfo

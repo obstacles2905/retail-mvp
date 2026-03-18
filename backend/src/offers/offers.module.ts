@@ -1,0 +1,17 @@
+import { Module } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { InvitesModule } from '../invites/invites.module';
+import { AuthModule } from '../auth/auth.module';
+import { OffersService } from './offers.service';
+import { OffersController } from './offers.controller';
+import { OffersGateway } from '../realtime/offers.gateway';
+import { WsJwtGuard } from '../realtime/ws-jwt.guard';
+import { OffersRealtimeService } from '../realtime/offers-realtime.service';
+
+@Module({
+  imports: [InvitesModule, AuthModule],
+  controllers: [OffersController],
+  providers: [OffersService, PrismaService, OffersRealtimeService, OffersGateway, WsJwtGuard],
+})
+export class OffersModule {}
+

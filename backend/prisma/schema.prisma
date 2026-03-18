@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  BUYER
+  VENDOR
+}
+
+enum OfferStatus {
+  NEW
+  IN_REVIEW
+  COUNTER_OFFER
+  ACCEPTED
+  REJECTED
+}
+
+enum OfferTurn {
+  BUYER
+  VENDOR
+}
+
+enum SystemEventType {
+  PRICE_CHANGED
+  DEAL_ACCEPTED
+  TERMS_UPDATED
+}
+
+model User {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  passwordHash String
+  name         String
+  companyName  String
+  role         UserRole
+
+  createdSkus  Sku[]          @relation("BuyerSkus")
+  offers       Offer[]        @relation("VendorOffers")
+  offersReceived Offer[]      @relation("OfferBuyer")
+  histories    OfferHistory[]
+  messages     OfferMessage[]
+  readStates   OfferReadState[]
+
+  invitesSent    Invite[]     @relation("InviteBuyer")
+  invitesUsedAsVendor Invite[] @relation("InviteUsedByVendor")
+
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+/// Приглашение поставщика закупщиком. По ссылке с token поставщик регистрируется и получает доступ к SKU этого закупщика.
+model Invite {
+  id              String    @id @default(uuid())
+  token           String    @unique
+  buyerId         String
+  buyer           User      @relation("InviteBuyer", fields: [buyerId], references: [id])
+  usedByVendorId  String?
+  usedByVendor    User?     @relation("InviteUsedByVendor", fields: [usedByVendorId], references: [id])
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+}
+
+model Sku {
+  id          String   @id @default(uuid())
+  name        String
+  category    String
+  targetPrice Decimal?
+
+  createdById String
+  createdBy   User     @relation("BuyerSkus", fields: [createdById], references: [id])
+
+  offers      Offer[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// Оффер: либо по существующему SKU закупщика (skuId), либо «свой товар» поставщика (buyerId + productName).
+model Offer {
+  id            String          @id @default(uuid())
+  skuId         String?
+  buyerId       String?
+  productName   String?
+  vendorId      String
+  initiatorRole UserRole
+  currentPrice  Decimal
+  volume        Int
+  deliveryTerms String?
+  status        OfferStatus     @default(NEW)
+  currentTurn   OfferTurn
+
+  sku          Sku?            @relation(fields: [skuId], references: [id])
+  buyer        User?           @relation("OfferBuyer", fields: [buyerId], references: [id])
+  vendor       User            @relation("VendorOffers", fields: [vendorId], references: [id])
+  histories    OfferHistory[]
+  messages     OfferMessage[]
+  readStates   OfferReadState[]
+
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model OfferHistory {
+  id           String   @id @default(uuid())
+
+  offerId      String
+  offer        Offer    @relation(fields: [offerId], references: [id])
+
+  previousPrice Decimal?
+  newPrice      Decimal
+  comment       String?
+
+  createdById  String
+  createdBy    User     @relation(fields: [createdById], references: [id])
+
+  createdAt    DateTime @default(now())
+}
+
+model OfferMessage {
+  id           String           @id @default(uuid())
+
+  offerId      String
+  offer        Offer            @relation(fields: [offerId], references: [id])
+
+  senderId     String
+  sender       User             @relation(fields: [senderId], references: [id])
+
+  content      String?
+  isSystemEvent Boolean         @default(false)
+  eventType    SystemEventType?
+  metaData     Json?
+
+  createdAt    DateTime         @default(now())
+}
+
+model OfferReadState {
+  id         String   @id @default(uuid())
+  offerId    String
+  userId     String
+  lastReadAt DateTime @default(now())
+
+  offer      Offer    @relation(fields: [offerId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@unique([offerId, userId])
+  @@index([userId])
+  @@index([offerId])
+}
+
+

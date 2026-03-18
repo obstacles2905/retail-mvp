@@ -1,0 +1,474 @@
+{
+    "info": {
+      "name": "RetailProcure API",
+      "_postman_id": "a7e9c1b4-0000-4000-9000-retailprocure",
+      "description": "Коллекция для тестирования RetailProcure backend (NestJS + Prisma)",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Auth",
+        "item": [
+          {
+            "name": "Register BUYER",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/auth/register",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "auth",
+                  "register"
+                ]
+              },
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"email\": \"buyer1@example.com\",\n  \"password\": \"StrongPass123\",\n  \"name\": \"Buyer One\",\n  \"companyName\": \"BuyerCo\",\n  \"role\": \"BUYER\"\n}"
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Register VENDOR",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/auth/register",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "auth",
+                  "register"
+                ]
+              },
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"email\": \"vendor1@example.com\",\n  \"password\": \"StrongPass123\",\n  \"name\": \"Vendor One\",\n  \"companyName\": \"VendorCo\",\n  \"role\": \"VENDOR\"\n}"
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Login BUYER",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "const json = pm.response.json();",
+                    "if (json && json.accessToken) {",
+                    "  pm.collectionVariables.set('buyerToken', json.accessToken);",
+                    "}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/auth/login",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "auth",
+                  "login"
+                ]
+              },
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"email\": \"buyer1@example.com\",\n  \"password\": \"StrongPass123\"\n}"
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Login VENDOR",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "const json = pm.response.json();",
+                    "if (json && json.accessToken) {",
+                    "  pm.collectionVariables.set('vendorToken', json.accessToken);",
+                    "}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/auth/login",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "auth",
+                  "login"
+                ]
+              },
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"email\": \"vendor1@example.com\",\n  \"password\": \"StrongPass123\"\n}"
+              }
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "SKUs",
+        "item": [
+          {
+            "name": "Get all SKUs",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{buyerToken}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/skus",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "skus"
+                ]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Create SKU (BUYER)",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "const json = pm.response.json();",
+                    "if (json && json.id) {",
+                    "  pm.collectionVariables.set('skuId', json.id);",
+                    "}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{buyerToken}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/skus",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "skus"
+                ]
+              },
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"name\": \"Black Tea Lipton 100g\",\n  \"category\": \"Tea\",\n  \"targetPrice\": \"120.50\"\n}"
+              }
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "Offers",
+        "item": [
+          {
+            "name": "Create Offer (VENDOR)",
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "exec": [
+                    "const json = pm.response.json();",
+                    "if (json && json.id) {",
+                    "  pm.collectionVariables.set('offerId', json.id);",
+                    "}"
+                  ],
+                  "type": "text/javascript"
+                }
+              }
+            ],
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{vendorToken}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/offers",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "offers"
+                ]
+              },
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"skuId\": \"{{skuId}}\",\n  \"currentPrice\": \"115.00\",\n  \"volume\": \"100\"\n}"
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Get Offers (BUYER)",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{buyerToken}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/offers",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "offers"
+                ]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Get Offers (VENDOR)",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{vendorToken}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/offers",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "offers"
+                ]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Counter Offer (BUYER)",
+            "request": {
+              "method": "PATCH",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{buyerToken}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/offers/{{offerId}}/counter",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "offers",
+                  "{{offerId}}",
+                  "counter"
+                ]
+              },
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"newPrice\": \"110.00\",\n  \"comment\": \"Готов купить по 110 за этот объём\"\n}"
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Counter Offer (VENDOR)",
+            "request": {
+              "method": "PATCH",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{vendorToken}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/offers/{{offerId}}/counter",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "offers",
+                  "{{offerId}}",
+                  "counter"
+                ]
+              },
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"newPrice\": \"112.00\",\n  \"comment\": \"Могу предложить 112 при этом объёме\"\n}"
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Update Offer Status (ACCEPTED, BUYER)",
+            "request": {
+              "method": "PATCH",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{buyerToken}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/offers/{{offerId}}/status",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "offers",
+                  "{{offerId}}",
+                  "status"
+                ]
+              },
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"status\": \"ACCEPTED\"\n}"
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Update Offer Status (REJECTED, VENDOR)",
+            "request": {
+              "method": "PATCH",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{vendorToken}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/offers/{{offerId}}/status",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "offers",
+                  "{{offerId}}",
+                  "status"
+                ]
+              },
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"status\": \"REJECTED\"\n}"
+              }
+            },
+            "response": []
+          }
+        ]
+      }
+    ],
+    "variable": [
+      {
+        "key": "baseUrl",
+        "value": "http://localhost:3001/api"
+      },
+      {
+        "key": "buyerToken",
+        "value": ""
+      },
+      {
+        "key": "vendorToken",
+        "value": ""
+      },
+      {
+        "key": "skuId",
+        "value": ""
+      },
+      {
+        "key": "offerId",
+        "value": ""
+      }
+    ]
+  }
