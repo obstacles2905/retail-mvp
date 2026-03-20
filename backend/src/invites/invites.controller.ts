@@ -11,6 +11,12 @@ import { AcceptInviteDto } from './dto/accept-invite.dto';
 export class InvitesController {
   constructor(private readonly invitesService: InvitesService) {}
 
+  @Get('mine')
+  @Roles('BUYER')
+  async getMyInvite(@CurrentUser() user: { sub: string }) {
+    return this.invitesService.getMyInviteLink(user.sub);
+  }
+
   @Post()
   @Roles('BUYER')
   create(@CurrentUser() user: { sub: string }): Promise<InviteDto> {

@@ -42,7 +42,7 @@ export default function BuyerDashboardPage(): JSX.Element {
   const [incomingOffers, setIncomingOffers] = useState<OfferListItem[]>([]);
   const [myOrders, setMyOrders] = useState<OfferListItem[]>([]);
   const [unread, setUnread] = useState<Record<string, number>>({});
-  const [invites, setInvites] = useState<InviteDto[]>([]);
+  const [myInvite, setMyInvite] = useState<{ token: string; inviteUrl: string } | null>(null);
   const [vendorConnections, setVendorConnections] = useState<VendorConnectionDto[]>([]);
   const [skus, setSkus] = useState<SkuOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +72,7 @@ export default function BuyerDashboardPage(): JSX.Element {
     Promise.all([
       api.get<OfferListItem[]>('/offers').then((r) => setIncomingOffers(r.data.filter((o) => o.initiatorRole !== 'BUYER'))),
       api.get<OfferListItem[]>('/buyer/orders').then((r) => setMyOrders(r.data)),
-      api.get<InviteDto[]>('/invites').then((r) => setInvites(r.data)),
+      api.get<{ token: string; inviteUrl: string }>('/invites/mine').then((r) => setMyInvite(r.data)),
       api.get<VendorConnectionDto[]>('/invites/vendor-connections').then((r) => setVendorConnections(r.data)),
       api.get<SkuOption[]>('/skus').then((r) => setSkus(r.data)),
     ]).catch(() => setError('Не вдалося завантажити дані'))
@@ -143,9 +143,9 @@ export default function BuyerDashboardPage(): JSX.Element {
     const api = getAuthApiClient();
     setCreatingInvite(true);
     api
-      .post<InviteDto>('/invites')
-      .then((res) => setInvites((prev) => [res.data, ...prev]))
-      .catch(() => setError('Не вдалося створити запрошення'))
+      .get<{ token: string; inviteUrl: string }>('/invites/mine')
+      .then((res) => setMyInvite(res.data))
+      .catch(() => setError('Не вдалося отримати запрошення'))
       .finally(() => setCreatingInvite(false));
   };
 
@@ -388,36 +388,31 @@ export default function BuyerDashboardPage(): JSX.Element {
         <div className="mt-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           <h2 className="text-sm font-semibold text-gray-900">Запросити постачальника</h2>
           <p className="mt-1 text-xs text-gray-600">
-            Створіть посилання та надішліть його постачальнику (наприклад, по пошті або в месенджері). За посиланням він зареєструється та отримає доступ до ваших SKU для створення пропозицій.
+            Надішліть це посилання постачальнику (наприклад, по пошті або в месенджері). За посиланням він зареєструється та отримає доступ до ваших SKU для створення пропозицій.
           </p>
-          <button
-            type="button"
-            onClick={createInvite}
-            disabled={creatingInvite}
-            className="mt-3 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {creatingInvite ? 'Створення…' : 'Створити посилання-запрошення'}
-          </button>
-          {invites.length > 0 && (
-            <ul className="mt-4 space-y-2">
-              {invites.map((inv) => (
-                <li key={inv.id} className="flex items-center justify-between gap-2 rounded border border-gray-100 bg-gray-50 px-3 py-2 text-sm">
-                  <code className="truncate flex-1 text-gray-700" title={inv.inviteUrl}>
-                    {inv.inviteUrl}
-                  </code>
-                  <span className="shrink-0 text-xs text-gray-500">
-                    {inv.usedByVendorId ? 'Використано' : 'Активно'}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => copyLink(inv.inviteUrl, inv.id)}
-                    className="shrink-0 rounded px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50"
-                  >
-                    {copiedId === inv.id ? 'Скопійовано' : 'Копіювати'}
-                  </button>
-                </li>
-              ))}
-            </ul>
+          
+          {myInvite ? (
+            <div className="mt-4 flex items-center justify-between gap-2 rounded border border-gray-100 bg-gray-50 px-3 py-2 text-sm">
+              <code className="truncate flex-1 text-gray-700" title={myInvite.inviteUrl}>
+                {myInvite.inviteUrl}
+              </code>
+              <button
+                type="button"
+                onClick={() => copyLink(myInvite.inviteUrl, myInvite.token)}
+                className="shrink-0 rounded px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50"
+              >
+                {copiedId === myInvite.token ? 'Скопійовано' : 'Копіювати'}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={createInvite}
+              disabled={creatingInvite}
+              className="mt-3 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {creatingInvite ? 'Отримання…' : 'Отримати посилання-запрошення'}
+            </button>
           )}
         </div>
 

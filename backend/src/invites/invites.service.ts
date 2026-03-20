@@ -49,7 +49,38 @@ export class InvitesService {
   }
 
   /** Проверяет токен: инвайт существует, не использован, не истёк. Возвращает invite или null. */
+  async getMyInviteLink(buyerId: string): Promise<{ token: string; inviteUrl: string }> {
+    let user = await this.prisma.user.findUnique({ where: { id: buyerId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (!user.inviteToken) {
+      const token = randomUUID();
+      user = await this.prisma.user.update({
+        where: { id: buyerId },
+        data: { inviteToken: token },
+      });
+    }
+
+    return {
+      token: user.inviteToken!,
+      inviteUrl: `${FRONTEND_URL}/join?token=${user.inviteToken}`,
+    };
+  }
+
   async validateToken(token: string): Promise<{ buyerId: string; buyerCompanyName: string } | null> {
+    // 1. Check if token belongs to a User (reusable link)
+    const buyer = await this.prisma.user.findUnique({
+      where: { inviteToken: token },
+      select: { id: true, companyName: true },
+    });
+
+    if (buyer) {
+      return { buyerId: buyer.id, buyerCompanyName: buyer.companyName };
+    }
+
+    // 2. Fallback to old Invite model for backward compatibility
     const invite = await this.prisma.invite.findUnique({
       where: { token },
       include: { buyer: { select: { id: true, companyName: true } } },
@@ -65,6 +96,29 @@ export class InvitesService {
 
   /** Отмечает инвайт как использованный поставщиком. Вызывается после регистрации. */
   async markAsUsed(token: string, vendorId: string): Promise<void> {
+    // 1. Check if token is a reusable user token
+    const buyer = await this.prisma.user.findUnique({
+      where: { inviteToken: token },
+    });
+
+    if (buyer) {
+      // Check if connection already exists
+      const existing = await this.prisma.invite.findFirst({
+        where: { buyerId: buyer.id, usedByVendorId: vendorId },
+      });
+      if (!existing) {
+        await this.prisma.invite.create({
+          data: {
+            token: randomUUID(), // dummy unique token for DB constraint
+            buyerId: buyer.id,
+            usedByVendorId: vendorId,
+          },
+        });
+      }
+      return;
+    }
+
+    // 2. Fallback to old logic
     const invite = await this.prisma.invite.findUnique({
       where: { token },
     });
@@ -72,6 +126,7 @@ export class InvitesService {
       throw new NotFoundException('Invite not found');
     }
     if (invite.usedByVendorId != null) {
+      if (invite.usedByVendorId === vendorId) return; // already connected
       throw new ForbiddenException('Invite already used');
     }
     if (invite.expiresAt != null && invite.expiresAt < new Date()) {
