@@ -36,6 +36,7 @@ model User {
   email        String         @unique
   passwordHash String?
   googleId     String?        @unique
+  inviteToken  String?        @unique
   name         String
   companyName  String
   phone        String?
