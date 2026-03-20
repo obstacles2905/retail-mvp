@@ -1,9 +1,10 @@
-import { Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { InvitesService, InviteDto, LinkedBuyerDto, LinkedVendorDto } from './invites.service';
+import { AcceptInviteDto } from './dto/accept-invite.dto';
 
 @Controller('invites')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -14,6 +15,13 @@ export class InvitesController {
   @Roles('BUYER')
   create(@CurrentUser() user: { sub: string }): Promise<InviteDto> {
     return this.invitesService.create(user.sub);
+  }
+
+  @Post('accept')
+  @Roles('VENDOR')
+  async accept(@CurrentUser() user: { sub: string }, @Body() dto: AcceptInviteDto): Promise<{ ok: boolean }> {
+    await this.invitesService.markAsUsed(dto.token, user.sub);
+    return { ok: true };
   }
 
   @Get()

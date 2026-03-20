@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createApiClient } from '@/lib/api-client';
-import { setAuth } from '@/lib/auth';
+import { setAuth, getStoredUser, getStoredToken } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
@@ -14,6 +14,7 @@ export default function JoinByInvitePage(): JSX.Element {
   const [token, setToken] = useState<string | null>(null);
 
   const [status, setStatus] = useState<'loading' | 'valid' | 'invalid'>('loading');
+  const [mode, setMode] = useState<'register' | 'login'>('register');
   const [buyerCompanyName, setBuyerCompanyName] = useState<string>('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,6 +23,11 @@ export default function JoinByInvitePage(): JSX.Element {
   const [companyName, setCompanyName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    setCurrentUser(getStoredUser());
+  }, []);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -30,7 +36,7 @@ export default function JoinByInvitePage(): JSX.Element {
 
   useEffect(() => {
     if (!token) {
-      setStatus('invalid');
+      if (status !== 'loading') setStatus('invalid');
       return;
     }
     fetch(`${API_URL}/invites/validate/${encodeURIComponent(token)}`)
@@ -44,11 +50,11 @@ export default function JoinByInvitePage(): JSX.Element {
         }
       })
       .catch(() => setStatus('invalid'));
-  }, [token]);
+  }, [token, status]);
 
   const api = createApiClient();
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+  const handleRegister = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     if (password !== confirmPassword) {
       setError('Пароль та підтвердження пароля не збігаються.');
@@ -74,16 +80,59 @@ export default function JoinByInvitePage(): JSX.Element {
       const ax = err && typeof err === 'object' && 'response' in err
         ? (err as { response?: { data?: { message?: string | string[] }; status?: number } })
         : undefined;
-      const msg = ax?.response?.data?.message;
+      const data = ax?.response?.data;
+      const msg = data?.message;
       const message =
         typeof msg === 'string'
           ? msg
           : Array.isArray(msg)
             ? msg.join(', ')
-            : ax?.response?.status === 403
-              ? 'Посилання вже використане або минуло.'
-              : 'Помилка реєстрації. Перевірте дані.';
+            : ax?.response?.status === 409
+              ? 'Користувач з таким email вже зареєстрований.'
+              : ax?.response?.status === 403
+                ? 'Посилання вже використане або минуло.'
+                : 'Помилка реєстрації. Перевірте дані.';
       setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
+    if (!token) return;
+    setError(null);
+    setLoading(true);
+    try {
+      const { data } = await api.post<{ accessToken: string; user: AuthUser }>('/auth/login', {
+        email,
+        password,
+      });
+      setAuth({ accessToken: data.accessToken, user: data.user });
+      
+      const authApi = createApiClient({ getToken: () => data.accessToken });
+      await authApi.post('/invites/accept', { token });
+      
+      router.push('/dashboard');
+      router.refresh();
+    } catch (err: unknown) {
+      setError('Невірний email або пароль, або помилка прийняття запрошення.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAcceptExisting = async (): Promise<void> => {
+    if (!token || !currentUser) return;
+    setError(null);
+    setLoading(true);
+    try {
+      const authApi = createApiClient({ getToken: getStoredToken });
+      await authApi.post('/invites/accept', { token });
+      router.push('/dashboard');
+      router.refresh();
+    } catch (err: unknown) {
+      setError('Не вдалося прийняти запрошення. Можливо, воно вже використане.');
     } finally {
       setLoading(false);
     }
@@ -126,100 +175,163 @@ export default function JoinByInvitePage(): JSX.Element {
 
       <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 px-4 py-12">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Реєстрація постачальника</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Запрошення від закупника</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Вас запросив закупник <strong>{buyerCompanyName || 'компанія'}</strong>. Заповніть дані — після реєстрації ви зможете пропонувати угоди за їхніми товарами.
+            Вас запросив закупник <strong>{buyerCompanyName || 'компанія'}</strong>.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-800" role="alert">
-              {error}
+        {currentUser ? (
+          <div className="flex flex-col gap-4">
+            <div className="rounded-lg border border-gray-200 bg-white p-4">
+              <p className="text-sm text-gray-700">Ви вже увійшли як <strong>{currentUser.name}</strong> ({currentUser.companyName}).</p>
+              <p className="mt-2 text-sm text-gray-600">Бажаєте прийняти запрошення для цього акаунту?</p>
             </div>
-          )}
+            {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</div>}
+            <button
+              onClick={handleAcceptExisting}
+              disabled={loading}
+              className="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {loading ? 'Обробка…' : 'Прийняти запрошення'}
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="flex rounded-md bg-gray-100 p-1">
+              <button
+                type="button"
+                onClick={() => { setMode('register'); setError(null); }}
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${mode === 'register' ? 'bg-white text-gray-900 shadow' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Новий акаунт
+              </button>
+              <button
+                type="button"
+                onClick={() => { setMode('login'); setError(null); }}
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${mode === 'login' ? 'bg-white text-gray-900 shadow' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Вже є акаунт
+              </button>
+            </div>
 
-          <div>
-            <label htmlFor="join-email" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              id="join-email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-          </div>
-          <div>
-            <label htmlFor="join-password" className="block text-sm font-medium text-gray-700">
-              Пароль (не менше 8 символів)
-            </label>
-            <input
-              id="join-password"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-          </div>
-          <div>
-            <label htmlFor="join-confirm" className="block text-sm font-medium text-gray-700">
-              Підтвердження пароля
-            </label>
-            <input
-              id="join-confirm"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={8}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-          </div>
-          <div>
-            <label htmlFor="join-name" className="block text-sm font-medium text-gray-700">
-              Ім'я
-            </label>
-            <input
-              id="join-name"
-              type="text"
-              autoComplete="name"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-          </div>
-          <div>
-            <label htmlFor="join-company" className="block text-sm font-medium text-gray-700">
-              Назва компанії
-            </label>
-            <input
-              id="join-company"
-              type="text"
-              autoComplete="organization"
-              required
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-          </div>
+            <form onSubmit={mode === 'register' ? handleRegister : handleLogin} className="flex flex-col gap-4">
+              {error && (
+                <div className="rounded-md bg-red-50 p-3 text-sm text-red-800" role="alert">
+                  {error}
+                </div>
+              )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {loading ? 'Реєстрація…' : 'Зареєструватися'}
-          </button>
-        </form>
+              <div>
+                <label htmlFor="join-email" className="block text-sm font-medium text-gray-700">
+                  Email
+                </label>
+                <input
+                  id="join-email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="join-password" className="block text-sm font-medium text-gray-700">
+                  Пароль {mode === 'register' && '(не менше 8 символів)'}
+                </label>
+                <input
+                  id="join-password"
+                  type="password"
+                  autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                  required
+                  minLength={mode === 'register' ? 8 : 1}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+
+              {mode === 'register' && (
+                <>
+                  <div>
+                    <label htmlFor="join-confirm" className="block text-sm font-medium text-gray-700">
+                      Підтвердження пароля
+                    </label>
+                    <input
+                      id="join-confirm"
+                      type="password"
+                      autoComplete="new-password"
+                      required
+                      minLength={8}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="join-name" className="block text-sm font-medium text-gray-700">
+                      Ім'я
+                    </label>
+                    <input
+                      id="join-name"
+                      type="text"
+                      autoComplete="name"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="join-company" className="block text-sm font-medium text-gray-700">
+                      Назва компанії
+                    </label>
+                    <input
+                      id="join-company"
+                      type="text"
+                      autoComplete="organization"
+                      required
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+                </>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {loading ? 'Обробка…' : mode === 'register' ? 'Зареєструватися' : 'Увійти та прийняти'}
+              </button>
+            </form>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-2 text-gray-500">Або</span>
+              </div>
+            </div>
+
+            <a
+              href={`${API_URL}/auth/google?state=${typeof window !== 'undefined' ? btoa(JSON.stringify({ inviteToken: token, role: 'VENDOR' })) : ''}`}
+              className="flex w-full items-center justify-center gap-3 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+              </svg>
+              Продовжити через Google
+            </a>
+          </>
+        )}
 
         <p className="text-center text-sm text-gray-500">
           <Link href="/" className="text-indigo-600 hover:text-indigo-500">

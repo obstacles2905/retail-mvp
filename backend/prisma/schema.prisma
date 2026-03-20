@@ -34,7 +34,8 @@ enum SystemEventType {
 model User {
   id           String         @id @default(uuid())
   email        String         @unique
-  passwordHash String
+  passwordHash String?
+  googleId     String?        @unique
   name         String
   companyName  String
   phone        String?
@@ -47,6 +48,10 @@ model User {
   histories    OfferHistory[]
   messages     OfferMessage[]
   readStates   OfferReadState[]
+  
+  chatsAsParticipant1 Chat[] @relation("ChatParticipant1")
+  chatsAsParticipant2 Chat[] @relation("ChatParticipant2")
+  chatMessages        ChatMessage[]
 
   invitesSent    Invite[]     @relation("InviteBuyer")
   invitesUsedAsVendor Invite[] @relation("InviteUsedByVendor")
@@ -153,6 +158,32 @@ model OfferReadState {
   @@unique([offerId, userId])
   @@index([userId])
   @@index([offerId])
+}
+
+model Chat {
+  id             String        @id @default(uuid())
+  participant1Id String
+  participant2Id String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  participant1   User          @relation("ChatParticipant1", fields: [participant1Id], references: [id])
+  participant2   User          @relation("ChatParticipant2", fields: [participant2Id], references: [id])
+  messages       ChatMessage[]
+
+  @@unique([participant1Id, participant2Id])
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  chatId    String
+  senderId  String
+  content   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
 }
 
 
