@@ -4,9 +4,10 @@ import { InvitesModule } from './invites/invites.module';
 import { SkuModule } from './sku/sku.module';
 import { OffersModule } from './offers/offers.module';
 import { BuyerOrdersModule } from './buyer-orders/buyer-orders.module';
+import { ChatsModule } from './chats/chats.module';
 
 @Module({
-  imports: [AuthModule, InvitesModule, SkuModule, OffersModule, BuyerOrdersModule],
+  imports: [AuthModule, InvitesModule, SkuModule, OffersModule, BuyerOrdersModule, ChatsModule],
 })
 export class AppModule {}
 

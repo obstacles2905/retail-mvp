@@ -78,6 +78,12 @@ export default function DashboardPage(): JSX.Element {
 
         <div className="mt-8 flex flex-col gap-4">
           <Link
+            href="/chats"
+            className="rounded-lg border border-gray-200 bg-white p-4 font-medium text-gray-900 shadow-sm hover:border-gray-300 hover:bg-gray-50"
+          >
+            Повідомлення — прямі чати
+          </Link>
+          <Link
             href="/profile"
             className="rounded-lg border border-gray-200 bg-white p-4 font-medium text-gray-900 shadow-sm hover:border-gray-300 hover:bg-gray-50"
           >
