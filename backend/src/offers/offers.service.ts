@@ -27,6 +27,8 @@ export interface OfferDto {
   skuId: string | null;
   buyerId: string | null;
   productName: string | null;
+  category: string | null;
+  isNovelty: boolean;
   vendorId: string;
   initiatorRole: 'BUYER' | 'VENDOR';
   currentPrice: string;
@@ -93,6 +95,8 @@ export class OffersService {
         data: {
           buyerId: dto.buyerId,
           productName: dto.productName.trim(),
+          category: dto.category?.trim() ?? null,
+          isNovelty: true,
           vendorId,
           initiatorRole: 'VENDOR',
           currentPrice: dto.currentPrice,
@@ -141,6 +145,8 @@ export class OffersService {
       skuId: string | null;
       buyerId: string | null;
       productName: string | null;
+      category: string | null;
+      isNovelty: boolean;
       vendorId: string;
       initiatorRole: 'BUYER' | 'VENDOR';
       currentPrice: unknown;
@@ -605,6 +611,8 @@ export class OffersService {
     skuId: string | null;
     buyerId: string | null;
     productName: string | null;
+    category: string | null;
+    isNovelty: boolean;
     vendorId: string;
     initiatorRole: 'BUYER' | 'VENDOR';
     currentPrice: unknown;
@@ -621,6 +629,8 @@ export class OffersService {
       skuId: offer.skuId,
       buyerId: offer.buyerId,
       productName: offer.productName,
+      category: offer.category,
+      isNovelty: offer.isNovelty,
       vendorId: offer.vendorId,
       initiatorRole: offer.initiatorRole,
       currentPrice: String(offer.currentPrice),

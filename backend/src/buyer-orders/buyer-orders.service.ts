@@ -27,6 +27,8 @@ export class BuyerOrdersService {
 
     let skuId: string | null = null;
     let productName: string | null = null;
+    let category: string | null = null;
+    let isNovelty = false;
 
     if (dto.skuId) {
       const sku = await this.prisma.sku.findUnique({ where: { id: dto.skuId } });
@@ -37,6 +39,8 @@ export class BuyerOrdersService {
       skuId = sku.id;
     } else {
       productName = dto.productName!.trim();
+      category = dto.category?.trim() ?? null;
+      isNovelty = true;
     }
 
     const created = await this.prisma.$transaction(async (tx) => {
@@ -47,6 +51,8 @@ export class BuyerOrdersService {
               skuId,
               buyerId,
               productName,
+              category,
+              isNovelty,
               vendorId,
               initiatorRole: 'BUYER',
               currentPrice: dto.targetPrice,
@@ -104,6 +110,8 @@ export class BuyerOrdersService {
     skuId: string | null;
     buyerId: string | null;
     productName: string | null;
+    category: string | null;
+    isNovelty: boolean;
     vendorId: string;
     initiatorRole: 'BUYER' | 'VENDOR';
     currentPrice: unknown;
@@ -120,6 +128,8 @@ export class BuyerOrdersService {
       skuId: o.skuId,
       buyerId: o.buyerId,
       productName: o.productName,
+      category: o.category,
+      isNovelty: o.isNovelty,
       vendorId: o.vendorId,
       initiatorRole: o.initiatorRole,
       currentPrice: String(o.currentPrice),

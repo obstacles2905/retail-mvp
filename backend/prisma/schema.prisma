@@ -77,7 +77,11 @@ model Sku {
   id          String   @id @default(uuid())
   name        String
   category    String
+  uom         String   @default("item")
+  articleCode String?
+  barcode     String?
   targetPrice Decimal?
+  isArchived  Boolean  @default(false)
 
   createdById String
   createdBy   User     @relation("BuyerSkus", fields: [createdById], references: [id])
@@ -94,6 +98,8 @@ model Offer {
   skuId         String?
   buyerId       String?
   productName   String?
+  category      String?
+  isNovelty     Boolean         @default(false)
   vendorId      String
   initiatorRole UserRole
   currentPrice  Decimal

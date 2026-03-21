@@ -7,6 +7,8 @@ import { getStoredUser } from '@/lib/auth';
 import { getAuthApiClient } from '@/lib/api-client';
 import type { OfferListItem } from '@/lib/types/offer';
 
+import { ProductSelect } from '@/components/ProductSelect';
+
 const STATUS_LABELS: Record<string, string> = {
   NEW: 'Нова',
   IN_REVIEW: 'На розгляді',
@@ -40,12 +42,9 @@ export default function VendorDashboardPage(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
 
   const [selectedBuyerId, setSelectedBuyerId] = useState('');
-  const [offerType, setOfferType] = useState<'catalog' | 'own'>('own');
-  const [createSkuId, setCreateSkuId] = useState('');
-  const [createProductName, setCreateProductName] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<{ skuId?: string; productName?: string; category?: string; uom?: string } | null>(null);
   const [createPrice, setCreatePrice] = useState('');
   const [createVolume, setCreateVolume] = useState('');
-  const [createUnit, setCreateUnit] = useState('item');
   const [createDeliveryTerms, setCreateDeliveryTerms] = useState('');
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -89,32 +88,31 @@ export default function VendorDashboardPage(): JSX.Element {
   const handleCreateOffer = (e: React.FormEvent): void => {
     e.preventDefault();
     const hasPrice = !!createPrice.trim() && !!createVolume.trim();
-    const catalogOk = offerType === 'catalog' && createSkuId.trim();
-    const ownOk = offerType === 'own' && selectedBuyerId && createProductName.trim();
-    if (!hasPrice || (!catalogOk && !ownOk)) return;
+    if (!hasPrice || !selectedBuyerId || !selectedProduct) return;
     setCreateError(null);
     setCreateLoading(true);
     const api = getAuthApiClient();
     const body: Record<string, unknown> = {
       currentPrice: createPrice.trim(),
       volume: createVolume.trim(),
-      unit: createUnit,
+      unit: selectedProduct.uom || 'item',
       deliveryTerms: createDeliveryTerms.trim() || undefined,
     };
-    if (offerType === 'catalog') body.skuId = createSkuId;
-    else body.buyerId = selectedBuyerId;
-    if (offerType === 'own') body.productName = createProductName.trim();
+    if (selectedProduct.skuId) {
+      body.skuId = selectedProduct.skuId;
+    } else {
+      body.buyerId = selectedBuyerId;
+      body.productName = selectedProduct.productName;
+      body.category = selectedProduct.category;
+    }
 
     api
       .post<OfferListItem>('/offers', body)
       .then(() => {
         setSelectedBuyerId('');
-        setOfferType('own');
-        setCreateSkuId('');
-        setCreateProductName('');
+        setSelectedProduct(null);
         setCreatePrice('');
         setCreateVolume('');
-        setCreateUnit('item');
         setCreateDeliveryTerms('');
         loadData();
       })
@@ -134,7 +132,7 @@ export default function VendorDashboardPage(): JSX.Element {
     <main className="flex min-h-screen flex-col">
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
-          <Link href="/dashboard" className="text-xl font-semibold tracking-tight text-gray-900">
+          <Link href="/" className="text-xl font-semibold tracking-tight text-gray-900">
             RetailProcure
           </Link>
           <Link
@@ -207,7 +205,7 @@ export default function VendorDashboardPage(): JSX.Element {
                       value={selectedBuyerId}
                       onChange={(e) => {
                         setSelectedBuyerId(e.target.value);
-                        setCreateSkuId('');
+                        setSelectedProduct(null);
                       }}
                       required
                       className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
@@ -220,74 +218,25 @@ export default function VendorDashboardPage(): JSX.Element {
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <span className="block text-xs font-medium text-gray-700">Тип пропозиції</span>
-                    <div className="mt-1 flex gap-4">
-                      <label className="inline-flex items-center gap-1.5 text-sm">
-                        <input
-                          type="radio"
-                          name="offerType"
-                          checked={offerType === 'own'}
-                          onChange={() => { setOfferType('own'); setCreateSkuId(''); }}
-                        />
-                        Свій товар (назву вводите ви)
-                      </label>
-                      <label className="inline-flex items-center gap-1.5 text-sm">
-                        <input
-                          type="radio"
-                          name="offerType"
-                          checked={offerType === 'catalog'}
-                          onChange={() => { setOfferType('catalog'); setCreateProductName(''); }}
-                        />
-                        Товар з каталогу закупника
-                      </label>
-                    </div>
-                  </div>
-                  {offerType === 'own' ? (
+
+                  {selectedBuyerId && (
                     <div>
-                      <label htmlFor="vendor-product-name" className="block text-xs font-medium text-gray-700">
-                        Назва товару
-                      </label>
-                      <input
-                        id="vendor-product-name"
-                        type="text"
-                        value={createProductName}
-                        onChange={(e) => setCreateProductName(e.target.value)}
-                        placeholder="Наприклад: Молоко 2,5% 1 л"
-                        required={offerType === 'own'}
-                        maxLength={500}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Товар</label>
+                      <ProductSelect
+                        buyerId={selectedBuyerId}
+                        role="VENDOR"
+                        value={selectedProduct}
+                        onChange={setSelectedProduct}
                       />
-                    </div>
-                  ) : (
-                    <div>
-                      <label htmlFor="vendor-sku" className="block text-xs font-medium text-gray-700">
-                        Товар (SKU) закупника
-                      </label>
-                      <select
-                        id="vendor-sku"
-                        value={createSkuId}
-                        onChange={(e) => setCreateSkuId(e.target.value)}
-                        required={offerType === 'catalog'}
-                        disabled={!selectedBuyerId || skusForSelectedBuyer.length === 0}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:bg-gray-100"
-                      >
-                        <option value="">
-                          {!selectedBuyerId
-                            ? 'Спочатку оберіть закупника'
-                            : skusForSelectedBuyer.length === 0
-                              ? 'У цього закупника поки немає товарів у каталозі'
-                              : 'Оберіть SKU'}
-                        </option>
-                        {skusForSelectedBuyer.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.name}
-                            {s.targetPrice ? ` (цільова: ${s.targetPrice} грн)` : ''}
-                          </option>
-                        ))}
-                      </select>
+                      {selectedProduct && (
+                        <div className="mt-2 text-sm text-indigo-700 bg-indigo-50 p-2 rounded">
+                          Обрано: <strong>{selectedProduct.productName}</strong> ({selectedProduct.uom})
+                          {!selectedProduct.skuId && ' (Новий товар)'}
+                        </div>
+                      )}
                     </div>
                   )}
+
                   <div className="flex flex-wrap gap-3">
                     <div className="w-28">
                       <label htmlFor="vendor-price" className="block text-xs font-medium text-gray-700">
@@ -306,7 +255,7 @@ export default function VendorDashboardPage(): JSX.Element {
                     </div>
                     <div className="w-24">
                       <label htmlFor="vendor-volume" className="block text-xs font-medium text-gray-700">
-                        Об'єм
+                        Об'єм ({selectedProduct?.uom || 'од.'})
                       </label>
                       <input
                         id="vendor-volume"
@@ -318,40 +267,6 @@ export default function VendorDashboardPage(): JSX.Element {
                         required
                         className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       />
-                    </div>
-                    <div className="w-36">
-                      <label htmlFor="vendor-unit" className="block text-xs font-medium text-gray-700">
-                        Од. виміру
-                      </label>
-                      <select
-                        id="vendor-unit"
-                        value={createUnit}
-                        onChange={(e) => setCreateUnit(e.target.value)}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                      >
-                        <optgroup label="Штучний">
-                          <option value="item">Штука (item)</option>
-                        </optgroup>
-                        <optgroup label="Вага">
-                          <option value="mg">Міліграм (mg)</option>
-                          <option value="g">Грам (g)</option>
-                          <option value="kg">Кілограм (kg)</option>
-                        </optgroup>
-                        <optgroup label="Об'єм">
-                          <option value="ml">Мілілітр (ml)</option>
-                          <option value="cl">Сантилітр (cl)</option>
-                          <option value="L">Літр (L)</option>
-                          <option value="m³">Куб. метр (m³)</option>
-                        </optgroup>
-                        <optgroup label="Розмір">
-                          <option value="mm">Міліметр (mm)</option>
-                          <option value="cm">Сантиметр (cm)</option>
-                          <option value="m">Метр (m)</option>
-                        </optgroup>
-                        <optgroup label="Площа">
-                          <option value="m²">Кв. метр (m²)</option>
-                        </optgroup>
-                      </select>
                     </div>
                   </div>
                   <div>
@@ -429,6 +344,11 @@ export default function VendorDashboardPage(): JSX.Element {
                       <tr key={offer.id} className="hover:bg-gray-50">
                         <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
                           {offer.sku.name}
+                          {offer.isNovelty && (
+                            <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+                              Ваша пропозиція
+                            </span>
+                          )}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
                           {offer.buyer?.companyName ?? '—'}

@@ -13,6 +13,8 @@ export interface OfferListItem {
   skuId: string | null;
   buyerId: string | null;
   productName: string | null;
+  category: string | null;
+  isNovelty: boolean;
   vendorId: string;
   initiatorRole: InitiatorRole;
   currentPrice: string;
@@ -33,6 +35,8 @@ export interface OfferDetail {
   skuId: string | null;
   buyerId: string | null;
   productName: string | null;
+  category: string | null;
+  isNovelty: boolean;
   vendorId: string;
   initiatorRole: InitiatorRole;
   currentPrice: string;

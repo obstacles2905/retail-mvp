@@ -14,6 +14,13 @@ export class CreateBuyerOrderDto {
   @MaxLength(500)
   productName?: string;
 
+  /** Категория товара (если нет skuId). */
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  category?: string;
+
   @IsNumberString()
   targetPrice!: string;
 

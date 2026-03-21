@@ -90,12 +90,20 @@ export default function DashboardPage(): JSX.Element {
             Профіль — особисті дані та аватар
           </Link>
           {user.role === 'BUYER' ? (
-            <Link
-              href="/buyer"
-              className="rounded-lg border border-gray-200 bg-white p-4 font-medium text-gray-900 shadow-sm hover:border-gray-300 hover:bg-gray-50"
-            >
-              Кабінет закупника — пропозиції за моїми SKU, порівняння цін, контрпропозиції
-            </Link>
+            <>
+              <Link
+                href="/buyer"
+                className="rounded-lg border border-gray-200 bg-white p-4 font-medium text-gray-900 shadow-sm hover:border-gray-300 hover:bg-gray-50"
+              >
+                Кабінет закупника — пропозиції за моїми SKU, порівняння цін, контрпропозиції
+              </Link>
+              <Link
+                href="/buyer/catalog"
+                className="rounded-lg border border-gray-200 bg-white p-4 font-medium text-gray-900 shadow-sm hover:border-gray-300 hover:bg-gray-50"
+              >
+                Каталог товарів (SKU) — управління матрицею товарів
+              </Link>
+            </>
           ) : (
             <Link
               href="/vendor"

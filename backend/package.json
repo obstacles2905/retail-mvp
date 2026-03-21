@@ -12,7 +12,8 @@
     "test": "jest",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "prisma:migrate:revert": "prisma migrate reset"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
