@@ -7,6 +7,8 @@ import { getStoredUser } from '@/lib/auth';
 import { getAuthApiClient } from '@/lib/api-client';
 import type { OfferListItem } from '@/lib/types/offer';
 
+import { ProductSelect } from '@/components/ProductSelect';
+
 const STATUS_LABELS: Record<string, string> = {
   NEW: 'Нова',
   IN_REVIEW: 'На розгляді',
@@ -50,17 +52,14 @@ export default function BuyerDashboardPage(): JSX.Element {
   const [creatingInvite, setCreatingInvite] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const [showOrderForm, setShowOrderForm] = useState(false);
-  const [orderProductMode, setOrderProductMode] = useState<'sku' | 'custom'>('custom');
-  const [orderSkuId, setOrderSkuId] = useState('');
-  const [orderProductName, setOrderProductName] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<{ skuId?: string; productName?: string; category?: string; uom?: string } | null>(null);
   const [orderTargetPrice, setOrderTargetPrice] = useState('');
   const [orderVolume, setOrderVolume] = useState('');
-  const [orderUnit, setOrderUnit] = useState('item');
   const [orderDeliveryTerms, setOrderDeliveryTerms] = useState('');
   const [orderVendorIds, setOrderVendorIds] = useState<string[]>([]);
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const user = getStoredUser();
@@ -68,6 +67,7 @@ export default function BuyerDashboardPage(): JSX.Element {
       router.replace('/login');
       return;
     }
+    setCurrentUserId(user.id);
     const api = getAuthApiClient();
     Promise.all([
       api.get<OfferListItem[]>('/offers').then((r) => setIncomingOffers(r.data.filter((o) => o.initiatorRole !== 'BUYER'))),
@@ -98,31 +98,30 @@ export default function BuyerDashboardPage(): JSX.Element {
     setOrderError(null);
     const hasVendors = orderVendorIds.length > 0;
     const hasBasics = !!orderTargetPrice.trim() && !!orderVolume.trim();
-    const skuOk = orderProductMode === 'sku' && !!orderSkuId;
-    const customOk = orderProductMode === 'custom' && !!orderProductName.trim();
-    if (!hasVendors || !hasBasics || (!skuOk && !customOk)) return;
+    if (!hasVendors || !hasBasics || !selectedProduct) return;
 
     setOrderLoading(true);
     const api = getAuthApiClient();
     const body: Record<string, unknown> = {
       targetPrice: orderTargetPrice.trim(),
       volume: orderVolume.trim(),
-      unit: orderUnit,
+      unit: selectedProduct.uom || 'item',
       deliveryTerms: orderDeliveryTerms.trim() || undefined,
       vendorIds: orderVendorIds,
     };
-    if (orderProductMode === 'sku') body.skuId = orderSkuId;
-    else body.productName = orderProductName.trim();
+    if (selectedProduct.skuId) {
+      body.skuId = selectedProduct.skuId;
+    } else {
+      body.productName = selectedProduct.productName;
+      body.category = selectedProduct.category;
+    }
 
     api
       .post<OfferListItem[]>('/buyer/orders', body)
       .then(() => {
-        setShowOrderForm(false);
-        setOrderSkuId('');
-        setOrderProductName('');
+        setSelectedProduct(null);
         setOrderTargetPrice('');
         setOrderVolume('');
-        setOrderUnit('item');
         setOrderDeliveryTerms('');
         setOrderVendorIds([]);
         return api.get<OfferListItem[]>('/buyer/orders').then((r) => setMyOrders(r.data));
@@ -160,7 +159,7 @@ export default function BuyerDashboardPage(): JSX.Element {
     <main className="flex min-h-screen flex-col">
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
-          <Link href="/dashboard" className="text-xl font-semibold tracking-tight text-gray-900">
+          <Link href="/" className="text-xl font-semibold tracking-tight text-gray-900">
             RetailProcure
           </Link>
           <Link
@@ -182,22 +181,14 @@ export default function BuyerDashboardPage(): JSX.Element {
         <div className="mt-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-gray-900">Мої замовлення</h2>
+              <h2 className="text-sm font-semibold text-gray-900">Створити нове замовлення</h2>
               <p className="mt-1 text-xs text-gray-600">
                 Створіть замовлення на потрібний товар і одразу розішліть його обраним постачальникам.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowOrderForm((v) => !v)}
-              className="shrink-0 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700"
-            >
-              {showOrderForm ? 'Закрити' : 'Створити нове замовлення'}
-            </button>
           </div>
 
-          {showOrderForm && (
-            <form onSubmit={createOrder} className="mt-4 space-y-4">
+          <form onSubmit={createOrder} className="mt-4 space-y-4">
               {orderError && (
                 <div className="rounded bg-red-50 p-2 text-xs text-red-700" role="alert">
                   {orderError}
@@ -205,66 +196,21 @@ export default function BuyerDashboardPage(): JSX.Element {
               )}
 
               <div>
-                <span className="block text-xs font-medium text-gray-700">Товар</span>
-                <div className="mt-1 flex gap-4">
-                  <label className="inline-flex items-center gap-1.5 text-sm">
-                    <input
-                      type="radio"
-                      name="productMode"
-                      checked={orderProductMode === 'custom'}
-                      onChange={() => { setOrderProductMode('custom'); setOrderSkuId(''); }}
-                    />
-                    Ввести назву
-                  </label>
-                  <label className="inline-flex items-center gap-1.5 text-sm">
-                    <input
-                      type="radio"
-                      name="productMode"
-                      checked={orderProductMode === 'sku'}
-                      onChange={() => { setOrderProductMode('sku'); setOrderProductName(''); }}
-                    />
-                    Обрати з SKU
-                  </label>
-                </div>
-              </div>
-
-              {orderProductMode === 'sku' ? (
-                <div>
-                  <label htmlFor="order-sku" className="block text-xs font-medium text-gray-700">
-                    SKU
-                  </label>
-                  <select
-                    id="order-sku"
-                    value={orderSkuId}
-                    onChange={(e) => setOrderSkuId(e.target.value)}
-                    required={orderProductMode === 'sku'}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                  >
-                    <option value="">Оберіть SKU</option>
-                    {skus.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}{s.targetPrice ? ` (цільова: ${s.targetPrice} грн)` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ) : (
-                <div>
-                  <label htmlFor="order-product" className="block text-xs font-medium text-gray-700">
-                    Назва товару
-                  </label>
-                  <input
-                    id="order-product"
-                    type="text"
-                    value={orderProductName}
-                    onChange={(e) => setOrderProductName(e.target.value)}
-                    placeholder="Наприклад: Кава зернова 1 кг"
-                    required={orderProductMode === 'custom'}
-                    maxLength={500}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                <label className="block text-xs font-medium text-gray-700 mb-1">Товар</label>
+                {currentUserId && (
+                  <ProductSelect
+                    buyerId={currentUserId}
+                    role="BUYER"
+                    value={selectedProduct}
+                    onChange={setSelectedProduct}
                   />
-                </div>
-              )}
+                )}
+                {selectedProduct && (
+                  <div className="mt-2 text-sm text-emerald-700 bg-emerald-50 p-2 rounded">
+                    Обрано: <strong>{selectedProduct.productName}</strong> ({selectedProduct.uom})
+                  </div>
+                )}
+              </div>
 
               <div className="flex flex-wrap gap-3">
                 <div className="w-28">
@@ -284,7 +230,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                 </div>
                 <div className="w-24">
                   <label htmlFor="order-volume" className="block text-xs font-medium text-gray-700">
-                    Об'єм
+                    Об'єм ({selectedProduct?.uom || 'од.'})
                   </label>
                   <input
                     id="order-volume"
@@ -296,40 +242,6 @@ export default function BuyerDashboardPage(): JSX.Element {
                     required
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
-                </div>
-                <div className="w-36">
-                  <label htmlFor="order-unit" className="block text-xs font-medium text-gray-700">
-                    Од. виміру
-                  </label>
-                  <select
-                    id="order-unit"
-                    value={orderUnit}
-                    onChange={(e) => setOrderUnit(e.target.value)}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                  >
-                    <optgroup label="Штучний">
-                      <option value="item">Штука (item)</option>
-                    </optgroup>
-                    <optgroup label="Вага">
-                      <option value="mg">Міліграм (mg)</option>
-                      <option value="g">Грам (g)</option>
-                      <option value="kg">Кілограм (kg)</option>
-                    </optgroup>
-                    <optgroup label="Об'єм">
-                      <option value="ml">Мілілітр (ml)</option>
-                      <option value="cl">Сантилітр (cl)</option>
-                      <option value="L">Літр (L)</option>
-                      <option value="m³">Куб. метр (m³)</option>
-                    </optgroup>
-                    <optgroup label="Розмір">
-                      <option value="mm">Міліметр (mm)</option>
-                      <option value="cm">Сантиметр (cm)</option>
-                      <option value="m">Метр (m)</option>
-                    </optgroup>
-                    <optgroup label="Площа">
-                      <option value="m²">Кв. метр (m²)</option>
-                    </optgroup>
-                  </select>
                 </div>
               </div>
 
@@ -380,8 +292,7 @@ export default function BuyerDashboardPage(): JSX.Element {
               >
                 {orderLoading ? 'Створення…' : 'Створити замовлення та надіслати'}
               </button>
-            </form>
-          )}
+          </form>
         </div>
 
         {/* Блок запрошення постачальника */}
@@ -470,6 +381,11 @@ export default function BuyerDashboardPage(): JSX.Element {
                   <tr key={offer.id} className="hover:bg-gray-50">
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
                       {offer.sku.name}
+                      {offer.isNovelty && (
+                        <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+                          Запропоновано
+                        </span>
+                      )}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
                       {offer.vendor.companyName}
@@ -538,6 +454,11 @@ export default function BuyerDashboardPage(): JSX.Element {
                   <tr key={offer.id} className="hover:bg-gray-50">
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
                       {offer.sku.name}
+                      {offer.isNovelty && (
+                        <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+                          Запропоновано
+                        </span>
+                      )}
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
                       {offer.vendor.companyName}

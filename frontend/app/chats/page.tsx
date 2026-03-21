@@ -72,7 +72,7 @@ export default function ChatsPage() {
     <main className="flex min-h-screen flex-col bg-[#f5f5f5]">
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
-          <Link href="/dashboard" className="text-xl font-semibold tracking-tight text-gray-900">
+          <Link href="/" className="text-xl font-semibold tracking-tight text-gray-900">
             RetailProcure
           </Link>
           <Link href="/dashboard" className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">

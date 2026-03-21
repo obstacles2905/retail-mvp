@@ -9,6 +9,18 @@ export class CreateSkuDto {
   @IsNotEmpty()
   category!: string;
 
+  @IsString()
+  @IsNotEmpty()
+  uom!: string;
+
+  @IsOptional()
+  @IsString()
+  articleCode?: string;
+
+  @IsOptional()
+  @IsString()
+  barcode?: string;
+
   @IsOptional()
   @IsString()
   targetPrice?: string;

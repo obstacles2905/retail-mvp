@@ -101,7 +101,7 @@ export default function OfferNegotiationPage(): JSX.Element {
       <header className="flex h-14 shrink-0 items-center border-b border-gray-200 bg-white px-4">
         <div className="flex w-full items-center justify-between gap-4">
           <Link
-            href="/dashboard"
+            href="/"
             className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-md bg-gray-100 text-gray-500">
@@ -117,9 +117,16 @@ export default function OfferNegotiationPage(): JSX.Element {
               <div className="h-5 w-48 animate-pulse rounded bg-gray-200" />
             ) : (
               <>
-                <h1 className="truncate text-center text-sm font-semibold text-gray-900 sm:text-base">
-                  {dealTitle}
-                </h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="truncate text-center text-sm font-semibold text-gray-900 sm:text-base">
+                    {dealTitle}
+                  </h1>
+                  {offer?.isNovelty && (
+                    <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+                      Запропоновано
+                    </span>
+                  )}
+                </div>
                 <div className="flex flex-col items-start">
                   <span
                     className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${

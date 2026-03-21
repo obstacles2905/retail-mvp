@@ -20,6 +20,13 @@ export class CreateOfferDto {
   @MaxLength(500)
   productName?: string;
 
+  /** Категория товара при оффере «свой товар» (без skuId). */
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  category?: string;
+
   @IsNumberString()
   currentPrice!: string;
 
