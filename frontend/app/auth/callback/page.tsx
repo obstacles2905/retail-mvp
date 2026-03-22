@@ -31,8 +31,8 @@ function AuthCallbackContent() {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
-      <p className="text-sm text-gray-600">Авторизація...</p>
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <p className="text-sm text-muted-foreground">Авторизація...</p>
     </div>
   );
 }
@@ -40,7 +40,7 @@ function AuthCallbackContent() {
 export default function AuthCallbackPage() {
   return (
     <main className="flex min-h-screen items-center justify-center">
-      <Suspense fallback={<div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />}>
+      <Suspense fallback={<div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />}>
         <AuthCallbackContent />
       </Suspense>
     </main>

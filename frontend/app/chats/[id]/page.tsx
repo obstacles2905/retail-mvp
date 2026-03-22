@@ -9,6 +9,7 @@ import type { ChatDetailsDto, ChatMessageDto } from '@/lib/types/chat';
 import { createChatsSocket, type ChatsSocket } from '@/lib/realtime/chats-socket';
 
 import { NotificationBell } from '@/components/NotificationBell';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function ChatDialogPage() {
   const params = useParams();
@@ -99,16 +100,16 @@ export default function ChatDialogPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f5f5f5]">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent" />
+      <main className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </main>
     );
   }
 
   if (error || !chat || !currentUser) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f5f5f5] px-4">
-        <div className="w-full max-w-md rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+      <main className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="w-full max-w-md rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
           {error ?? 'Чат недоступний'}
         </div>
       </main>
@@ -120,32 +121,35 @@ export default function ChatDialogPage() {
   const avatarUrl = chat.participant.avatarPath ? `${baseUrl}${chat.participant.avatarPath}` : null;
 
   return (
-    <main className="flex h-screen flex-col bg-[#f5f5f5]">
-      <header className="flex-shrink-0 border-b border-gray-200 bg-white">
+    <main className="flex h-screen flex-col bg-background">
+      <header className="flex-shrink-0 border-b border-border bg-card">
         <div className="mx-auto flex h-14 w-full max-w-4xl items-center justify-between px-4">
           <div className="flex items-center gap-3">
-            <Link href="/chats" prefetch={false} className="mr-2 text-gray-500 hover:text-gray-900">
+            <Link href="/chats" prefetch={false} className="mr-2 text-muted-foreground hover:text-foreground">
               ← Назад
             </Link>
             {avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatarUrl} alt={chat.participant.name} className="h-8 w-8 rounded-full object-cover border border-gray-200" />
+              <img src={avatarUrl} alt={chat.participant.name} className="h-8 w-8 rounded-full border border-border object-cover" />
             ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success/15 text-success">
                 <span className="text-sm font-semibold">{chat.participant.name.charAt(0).toUpperCase()}</span>
               </div>
             )}
             <div>
-              <h1 className="text-sm font-semibold text-gray-900 leading-tight">{chat.participant.name}</h1>
-              <p className="text-xs text-gray-500 leading-tight">{chat.participant.companyName}</p>
+              <h1 className="text-sm font-semibold leading-tight text-foreground">{chat.participant.name}</h1>
+              <p className="text-xs leading-tight text-muted-foreground">{chat.participant.companyName}</p>
             </div>
           </div>
-          <NotificationBell />
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <NotificationBell />
+          </div>
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col overflow-hidden bg-white shadow-sm sm:my-4 sm:rounded-lg sm:border sm:border-gray-200">
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
+      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col overflow-hidden bg-card shadow-sm sm:my-4 sm:rounded-lg sm:border sm:border-border">
+        <div className="flex-1 space-y-4 overflow-y-auto bg-muted/30 p-4">
           {messages.map((msg) => {
             const isMe = msg.senderId === currentUser.id;
             return (
@@ -153,12 +157,12 @@ export default function ChatDialogPage() {
                 <div
                   className={`max-w-[75%] rounded-2xl px-4 py-2 ${
                     isMe
-                      ? 'bg-emerald-600 text-white rounded-br-sm'
-                      : 'bg-white border border-gray-200 text-gray-900 rounded-bl-sm shadow-sm'
+                      ? 'rounded-br-sm bg-success text-success-foreground'
+                      : 'rounded-bl-sm border border-border bg-card text-foreground shadow-sm'
                   }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
-                  <div className={`mt-1 text-[10px] text-right ${isMe ? 'text-emerald-100' : 'text-gray-400'}`}>
+                  <p className="whitespace-pre-wrap break-words text-sm">{msg.content}</p>
+                  <div className={`mt-1 text-right text-[10px] ${isMe ? 'text-success-foreground/80' : 'text-muted-foreground'}`}>
                     {new Date(msg.createdAt).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
@@ -168,22 +172,22 @@ export default function ChatDialogPage() {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="flex-shrink-0 border-t border-gray-200 bg-white p-4">
+        <div className="flex-shrink-0 border-t border-border bg-card p-4">
           <form onSubmit={handleSend} className="flex gap-2">
             <input
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Напишіть повідомлення..."
-              className="flex-1 rounded-full border border-gray-300 bg-gray-50 px-4 py-2 text-sm focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              className="flex-1 rounded-full border border-input bg-muted px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:bg-card focus:outline-none focus:ring-1 focus:ring-ring"
               disabled={sending}
             />
             <button
               type="submit"
               disabled={!newMessage.trim() || sending}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-success text-success-foreground transition-colors hover:bg-success/90 disabled:opacity-50"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 ml-1">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="ml-1 h-5 w-5">
                 <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
               </svg>
             </button>

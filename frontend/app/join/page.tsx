@@ -141,7 +141,7 @@ export default function JoinByInvitePage(): JSX.Element {
   if (status === 'loading') {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-48 animate-pulse rounded bg-gray-200" />
+        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
       </main>
     );
   }
@@ -149,13 +149,13 @@ export default function JoinByInvitePage(): JSX.Element {
   if (status === 'invalid') {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-4">
-        <h1 className="text-xl font-semibold text-gray-900">Недійсне посилання</h1>
-        <p className="text-center text-gray-600">
+        <h1 className="text-xl font-semibold text-foreground">Недійсне посилання</h1>
+        <p className="text-center text-muted-foreground">
           Посилання-запрошення не знайдено, вже використане або минуло. Запросіть нове в закупника.
         </p>
         <Link
           href="/"
-          className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
           На головну
         </Link>
@@ -165,9 +165,9 @@ export default function JoinByInvitePage(): JSX.Element {
 
   return (
     <main className="flex min-h-screen flex-col">
-      <header className="border-b border-gray-200 bg-white">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-14 max-w-4xl items-center px-4">
-          <Link href="/" className="text-xl font-semibold tracking-tight text-gray-900">
+          <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
             RetailProcure
           </Link>
         </div>
@@ -175,41 +175,41 @@ export default function JoinByInvitePage(): JSX.Element {
 
       <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 px-4 py-12">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Запрошення від закупника</h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <h1 className="text-2xl font-semibold text-foreground">Запрошення від закупника</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Вас запросив закупник <strong>{buyerCompanyName || 'компанія'}</strong>.
           </p>
         </div>
 
         {currentUser ? (
           <div className="flex flex-col gap-4">
-            <div className="rounded-lg border border-gray-200 bg-white p-4">
-              <p className="text-sm text-gray-700">Ви вже увійшли як <strong>{currentUser.name}</strong> ({currentUser.companyName}).</p>
-              <p className="mt-2 text-sm text-gray-600">Бажаєте прийняти запрошення для цього акаунту?</p>
+            <div className="rounded-lg border border-border bg-card p-4">
+              <p className="text-sm text-foreground">Ви вже увійшли як <strong>{currentUser.name}</strong> ({currentUser.companyName}).</p>
+              <p className="mt-2 text-sm text-muted-foreground">Бажаєте прийняти запрошення для цього акаунту?</p>
             </div>
-            {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</div>}
+            {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
             <button
               onClick={handleAcceptExisting}
               disabled={loading}
-              className="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
               {loading ? 'Обробка…' : 'Прийняти запрошення'}
             </button>
           </div>
         ) : (
           <>
-            <div className="flex rounded-md bg-gray-100 p-1">
+            <div className="flex rounded-md bg-muted p-1">
               <button
                 type="button"
                 onClick={() => { setMode('register'); setError(null); }}
-                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${mode === 'register' ? 'bg-white text-gray-900 shadow' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${mode === 'register' ? 'bg-card text-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 Новий акаунт
               </button>
               <button
                 type="button"
                 onClick={() => { setMode('login'); setError(null); }}
-                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${mode === 'login' ? 'bg-white text-gray-900 shadow' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${mode === 'login' ? 'bg-card text-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 Вже є акаунт
               </button>
@@ -217,13 +217,13 @@ export default function JoinByInvitePage(): JSX.Element {
 
             <form onSubmit={mode === 'register' ? handleRegister : handleLogin} className="flex flex-col gap-4">
               {error && (
-                <div className="rounded-md bg-red-50 p-3 text-sm text-red-800" role="alert">
+                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive" role="alert">
                   {error}
                 </div>
               )}
 
               <div>
-                <label htmlFor="join-email" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="join-email" className="block text-sm font-medium text-foreground">
                   Email
                 </label>
                 <input
@@ -233,11 +233,11 @@ export default function JoinByInvitePage(): JSX.Element {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
               <div>
-                <label htmlFor="join-password" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="join-password" className="block text-sm font-medium text-foreground">
                   Пароль {mode === 'register' && '(не менше 8 символів)'}
                 </label>
                 <input
@@ -248,14 +248,14 @@ export default function JoinByInvitePage(): JSX.Element {
                   minLength={mode === 'register' ? 8 : 1}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
 
               {mode === 'register' && (
                 <>
                   <div>
-                    <label htmlFor="join-confirm" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="join-confirm" className="block text-sm font-medium text-foreground">
                       Підтвердження пароля
                     </label>
                     <input
@@ -266,11 +266,11 @@ export default function JoinByInvitePage(): JSX.Element {
                       minLength={8}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <div>
-                    <label htmlFor="join-name" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="join-name" className="block text-sm font-medium text-foreground">
                       Ім'я
                     </label>
                     <input
@@ -280,11 +280,11 @@ export default function JoinByInvitePage(): JSX.Element {
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <div>
-                    <label htmlFor="join-company" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="join-company" className="block text-sm font-medium text-foreground">
                       Назва компанії
                     </label>
                     <input
@@ -294,7 +294,7 @@ export default function JoinByInvitePage(): JSX.Element {
                       required
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                 </>
@@ -303,7 +303,7 @@ export default function JoinByInvitePage(): JSX.Element {
               <button
                 type="submit"
                 disabled={loading}
-                className="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 {loading ? 'Обробка…' : mode === 'register' ? 'Зареєструватися' : 'Увійти та прийняти'}
               </button>
@@ -311,16 +311,16 @@ export default function JoinByInvitePage(): JSX.Element {
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+                <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-gray-500">Або</span>
+                <span className="bg-background px-2 text-muted-foreground">Або</span>
               </div>
             </div>
 
             <a
               href={`${API_URL}/auth/google?state=${typeof window !== 'undefined' ? btoa(JSON.stringify({ inviteToken: token, role: 'VENDOR' })) : ''}`}
-              className="flex w-full items-center justify-center gap-3 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+              className="flex w-full items-center justify-center gap-3 rounded-md border border-input bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-muted/50"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -333,8 +333,8 @@ export default function JoinByInvitePage(): JSX.Element {
           </>
         )}
 
-        <p className="text-center text-sm text-gray-500">
-          <Link href="/" className="text-indigo-600 hover:text-indigo-500">
+        <p className="text-center text-sm text-muted-foreground">
+          <Link href="/" className="text-primary hover:text-primary/90">
             ← На головну
           </Link>
         </p>

@@ -10,6 +10,8 @@ import { DealChat } from './DealChat';
 import type { OfferDetail } from '@/lib/types/offer';
 
 import { NotificationBell } from '@/components/NotificationBell';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { noveltyBadgeClassName, offerStatusBadgeClassName } from '@/lib/offer-status-badge';
 
 function getInitials(companyName: string): string {
   const parts = companyName.trim().split(/\s+/).filter(Boolean);
@@ -76,8 +78,8 @@ export default function OfferNegotiationPage(): JSX.Element {
 
   if (!mounted || !user) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#f5f5f5]">
-        <div className="h-8 w-32 animate-pulse rounded bg-gray-200" />
+      <main className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-32 animate-pulse rounded bg-muted" />
       </main>
     );
   }
@@ -108,16 +110,16 @@ export default function OfferNegotiationPage(): JSX.Element {
     : 'Завантаження…';
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#f5f5f5]">
+    <main className="flex min-h-screen flex-col bg-background">
       {/* Хедер як у макету: лого, назва угоди по центру, статус, юзер */}
-      <header className="flex h-14 shrink-0 items-center border-b border-gray-200 bg-white px-4">
+      <header className="flex h-14 shrink-0 items-center border-b border-border bg-card px-4">
         <div className="flex w-full items-center justify-between gap-4">
           <Link
             href="/"
             prefetch={false}
-            className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
+            className="flex items-center gap-2 text-foreground hover:text-primary"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-gray-100 text-gray-500">
+            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
@@ -127,35 +129,31 @@ export default function OfferNegotiationPage(): JSX.Element {
 
           <div className="flex min-w-0 flex-1 items-center justify-center gap-3">
             {headerLoading ? (
-              <div className="h-5 w-48 animate-pulse rounded bg-gray-200" />
+              <div className="h-5 w-48 animate-pulse rounded bg-muted" />
             ) : (
               <>
                 <div className="flex items-center gap-2">
-                  <h1 className="truncate text-center text-sm font-semibold text-gray-900 sm:text-base">
+                  <h1 className="truncate text-center text-sm font-semibold text-foreground sm:text-base">
                     {dealTitle}
                   </h1>
                   {offer?.isNovelty && (
-                    <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+                    <span className={`shrink-0 ${noveltyBadgeClassName}`}>
                       Запропоновано
                     </span>
                   )}
                 </div>
-                <div className="flex flex-col items-start">
+                <div className="flex gap-2 items-center">
                   <span
-                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-                      offer?.status === 'DELIVERED'
-                        ? 'bg-blue-100 text-blue-800'
-                        : offer?.status === 'ACCEPTED' || offer?.status === 'AWAITING_DELIVERY'
-                          ? 'bg-green-100 text-green-800'
-                          : offer?.status === 'REJECTED'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-amber-100 text-amber-800'
-                    }`}
+                    className={
+                      offer
+                        ? offerStatusBadgeClassName(offer.status)
+                        : 'inline-flex items-center rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground'
+                    }
                   >
                     {statusLabel}
                   </span>
                   {statusHint && (
-                    <span className="mt-0.5 text-[11px] leading-4 text-gray-500">{statusHint}</span>
+                    <span className="mt-0.5 text-[11px] leading-4 text-muted-foreground">{statusHint}</span>
                   )}
                 </div>
               </>
@@ -163,18 +161,19 @@ export default function OfferNegotiationPage(): JSX.Element {
           </div>
 
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <NotificationBell />
             {getAvatarUrl(user.avatarPath) ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={getAvatarUrl(user.avatarPath)!}
                 alt="Avatar"
-                className="h-8 w-8 rounded-full object-cover border border-gray-200"
+                className="h-8 w-8 rounded-full border border-border object-cover"
                 title={user.companyName}
               />
             ) : (
               <div
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-xs font-semibold text-blue-800"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary"
                 title={user.companyName}
               >
                 {getInitials(user.companyName)}
@@ -185,8 +184,8 @@ export default function OfferNegotiationPage(): JSX.Element {
       </header>
 
       {/* Основний контент: ліва колонка (умови) + права (історія переговорів) */}
-      <section className="flex flex-1 overflow-hidden">
-        <div className="flex w-full gap-0 overflow-hidden">
+      <section className="flex min-h-0 flex-1">
+        <div className="flex min-h-0 w-full flex-1 gap-0">
           {/* Ліва колонка — умови угоди */}
           <DealSidebar
             offerId={offerId}
