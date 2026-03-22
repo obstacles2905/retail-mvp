@@ -67,6 +67,10 @@ export function DealChat({ offerId, offer, shortDealId }: DealChatProps): JSX.El
       if (action === 'BUYER_ORDER_CREATED') return 'Замовлення створено закупником';
       return 'Оновлення умов';
     }
+    if (m.eventType === 'DELIVERY_RESCHEDULED') {
+      const newDate = typeof m.metaData?.newDate === 'string' ? new Date(m.metaData.newDate).toLocaleDateString('uk-UA') : '';
+      return newDate ? `Дату доставки змінено на ${newDate}` : 'Дату доставки змінено';
+    }
     return 'Системна подія';
   };
 

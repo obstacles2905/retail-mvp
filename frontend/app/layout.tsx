@@ -13,8 +13,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }): JSX.Element {
   return (
-    <html lang="uk">
-      <body className="min-h-screen bg-background text-foreground antialiased">
+    <html lang="uk" suppressHydrationWarning>
+      <body className="min-h-screen bg-background text-foreground antialiased" suppressHydrationWarning>
         <NotificationsProvider>
           {children}
         </NotificationsProvider>

@@ -124,7 +124,7 @@ export default function ChatDialogPage() {
       <header className="flex-shrink-0 border-b border-gray-200 bg-white">
         <div className="mx-auto flex h-14 w-full max-w-4xl items-center justify-between px-4">
           <div className="flex items-center gap-3">
-            <Link href="/chats" className="mr-2 text-gray-500 hover:text-gray-900">
+            <Link href="/chats" prefetch={false} className="mr-2 text-gray-500 hover:text-gray-900">
               ← Назад
             </Link>
             {avatarUrl ? (

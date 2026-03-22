@@ -57,7 +57,15 @@ export default function DashboardPage(): JSX.Element {
           <nav className="flex items-center gap-4">
             <NotificationBell />
             <Link
+              href="/calendar"
+              prefetch={false}
+              className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+            >
+              Календар
+            </Link>
+            <Link
               href="/"
+              prefetch={false}
               className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
             >
               Головна
@@ -82,12 +90,14 @@ export default function DashboardPage(): JSX.Element {
         <div className="mt-8 flex flex-col gap-4">
           <Link
             href="/chats"
+            prefetch={false}
             className="rounded-lg border border-gray-200 bg-white p-4 font-medium text-gray-900 shadow-sm hover:border-gray-300 hover:bg-gray-50"
           >
             Повідомлення — прямі чати
           </Link>
           <Link
             href="/profile"
+            prefetch={false}
             className="rounded-lg border border-gray-200 bg-white p-4 font-medium text-gray-900 shadow-sm hover:border-gray-300 hover:bg-gray-50"
           >
             Профіль — особисті дані та аватар
@@ -96,12 +106,14 @@ export default function DashboardPage(): JSX.Element {
             <>
               <Link
                 href="/buyer"
+                prefetch={false}
                 className="rounded-lg border border-gray-200 bg-white p-4 font-medium text-gray-900 shadow-sm hover:border-gray-300 hover:bg-gray-50"
               >
                 Кабінет закупника — пропозиції за моїми SKU, порівняння цін, контрпропозиції
               </Link>
               <Link
                 href="/buyer/catalog"
+                prefetch={false}
                 className="rounded-lg border border-gray-200 bg-white p-4 font-medium text-gray-900 shadow-sm hover:border-gray-300 hover:bg-gray-50"
               >
                 Каталог товарів (SKU) — управління матрицею товарів
@@ -110,6 +122,7 @@ export default function DashboardPage(): JSX.Element {
           ) : (
             <Link
               href="/vendor"
+              prefetch={false}
               className="rounded-lg border border-gray-200 bg-white p-4 font-medium text-gray-900 shadow-sm hover:border-gray-300 hover:bg-gray-50"
             >
               Кабінет постачальника — мої пропозиції, відповіді на контрпропозиції

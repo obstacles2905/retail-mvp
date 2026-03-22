@@ -79,7 +79,7 @@ export default function ChatsPage() {
           </Link>
           <div className="flex items-center gap-4">
             <NotificationBell />
-            <Link href="/dashboard" className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+            <Link href="/dashboard" prefetch={false} className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
               ← В кабінет
             </Link>
           </div>
@@ -114,7 +114,7 @@ export default function ChatsPage() {
             {chats.map((chat) => {
               const avatarUrl = getAvatarUrl(chat.participant.avatarPath);
               return (
-                <Link
+                <a
                   key={chat.id}
                   href={`/chats/${chat.id}`}
                   className="flex items-center gap-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-colors hover:border-emerald-300 hover:shadow"
@@ -151,7 +151,7 @@ export default function ChatsPage() {
                       )}
                     </div>
                   </div>
-                </Link>
+                </a>
               );
             })}
           </div>

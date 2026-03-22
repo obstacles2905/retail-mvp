@@ -15,8 +15,8 @@ export interface SkuOption {
 export interface ProductSelectProps {
   buyerId: string;
   role: 'BUYER' | 'VENDOR';
-  value: { skuId?: string; productName?: string; category?: string; uom?: string } | null;
-  onChange: (val: { skuId?: string; productName?: string; category?: string; uom?: string } | null) => void;
+  value: { skuId?: string; productName?: string; category?: string; uom?: string; targetPrice?: string | null } | null;
+  onChange: (val: { skuId?: string; productName?: string; category?: string; uom?: string; targetPrice?: string | null } | null) => void;
   error?: boolean;
 }
 
@@ -70,7 +70,7 @@ export function ProductSelect({ buyerId, role, value, onChange, error }: Product
   }, [query, buyerId, isOpen, api]);
 
   const handleSelectSku = (sku: SkuOption) => {
-    onChange({ skuId: sku.id, productName: sku.name, uom: sku.uom });
+    onChange({ skuId: sku.id, productName: sku.name, uom: sku.uom, targetPrice: sku.targetPrice });
     setQuery(sku.name);
     setIsOpen(false);
     setIsNoveltyMode(false);

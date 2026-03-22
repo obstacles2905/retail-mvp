@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumberString, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsNumberString, IsOptional, IsString, MaxLength, IsISO8601 } from 'class-validator';
 
 export class CreateOfferDto {
   /** Существующий SKU закупщика — либо он, либо buyerId+productName. */
@@ -43,5 +43,9 @@ export class CreateOfferDto {
   @IsString()
   @MaxLength(2000)
   deliveryTerms?: string;
+
+  @IsISO8601()
+  @IsNotEmpty()
+  deliveryDate!: string;
 }
 

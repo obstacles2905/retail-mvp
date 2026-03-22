@@ -15,6 +15,7 @@ const STATUS_LABELS: Record<string, string> = {
   COUNTER_OFFER: 'Контрпропозиція',
   ACCEPTED: 'Прийнято',
   REJECTED: 'Відхилено',
+  AWAITING_DELIVERY: 'Очікує доставки',
 };
 
 interface InviteDto {
@@ -40,6 +41,7 @@ interface SkuOption {
 }
 
 import { NotificationBell } from '@/components/NotificationBell';
+import { toast } from 'react-hot-toast';
 
 export default function BuyerDashboardPage(): JSX.Element {
   const router = useRouter();
@@ -54,10 +56,11 @@ export default function BuyerDashboardPage(): JSX.Element {
   const [creatingInvite, setCreatingInvite] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const [selectedProduct, setSelectedProduct] = useState<{ skuId?: string; productName?: string; category?: string; uom?: string } | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<{ skuId?: string; productName?: string; category?: string; uom?: string; targetPrice?: string | null } | null>(null);
   const [orderTargetPrice, setOrderTargetPrice] = useState('');
   const [orderVolume, setOrderVolume] = useState('');
   const [orderDeliveryTerms, setOrderDeliveryTerms] = useState('');
+  const [orderDeliveryDate, setOrderDeliveryDate] = useState('');
   const [orderVendorIds, setOrderVendorIds] = useState<string[]>([]);
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
@@ -99,7 +102,7 @@ export default function BuyerDashboardPage(): JSX.Element {
     e.preventDefault();
     setOrderError(null);
     const hasVendors = orderVendorIds.length > 0;
-    const hasBasics = !!orderTargetPrice.trim() && !!orderVolume.trim();
+    const hasBasics = !!orderTargetPrice.trim() && !!orderVolume.trim() && !!orderDeliveryDate;
     if (!hasVendors || !hasBasics || !selectedProduct) return;
 
     setOrderLoading(true);
@@ -109,6 +112,7 @@ export default function BuyerDashboardPage(): JSX.Element {
       volume: orderVolume.trim(),
       unit: selectedProduct.uom || 'item',
       deliveryTerms: orderDeliveryTerms.trim() || undefined,
+      deliveryDate: new Date(orderDeliveryDate).toISOString(),
       vendorIds: orderVendorIds,
     };
     if (selectedProduct.skuId) {
@@ -125,7 +129,9 @@ export default function BuyerDashboardPage(): JSX.Element {
         setOrderTargetPrice('');
         setOrderVolume('');
         setOrderDeliveryTerms('');
+        setOrderDeliveryDate('');
         setOrderVendorIds([]);
+        toast.success('Замовлення успішно створено та надіслано постачальникам!');
         return api.get<OfferListItem[]>('/buyer/orders').then((r) => setMyOrders(r.data));
       })
       .catch((err: unknown) => {
@@ -166,8 +172,12 @@ export default function BuyerDashboardPage(): JSX.Element {
           </Link>
           <div className="flex items-center gap-4">
             <NotificationBell />
+            <Link href="/calendar" prefetch={false} className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+              Календар
+            </Link>
             <Link
               href="/dashboard"
+              prefetch={false}
               className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
             >
               ← В кабінет
@@ -213,6 +223,11 @@ export default function BuyerDashboardPage(): JSX.Element {
                 {selectedProduct && (
                   <div className="mt-2 text-sm text-emerald-700 bg-emerald-50 p-2 rounded">
                     Обрано: <strong>{selectedProduct.productName}</strong> ({selectedProduct.uom})
+                    {selectedProduct.targetPrice && (
+                      <span className="ml-2 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                        Цільова ціна: {selectedProduct.targetPrice} грн
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
@@ -232,6 +247,11 @@ export default function BuyerDashboardPage(): JSX.Element {
                     required
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
+                  {selectedProduct?.targetPrice && Number(orderTargetPrice) > 0 && Number(orderTargetPrice) < Number(selectedProduct.targetPrice) && (
+                    <p className="mt-1 text-[10px] text-amber-600 leading-tight">
+                      Увага: вказана ціна нижча за цільову ({selectedProduct.targetPrice} грн)
+                    </p>
+                  )}
                 </div>
                 <div className="w-24">
                   <label htmlFor="order-volume" className="block text-xs font-medium text-gray-700">
@@ -244,6 +264,19 @@ export default function BuyerDashboardPage(): JSX.Element {
                     value={orderVolume}
                     onChange={(e) => setOrderVolume(e.target.value)}
                     placeholder="100"
+                    required
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+                <div className="w-40">
+                  <label htmlFor="order-delivery-date" className="block text-xs font-medium text-gray-700">
+                    Дата доставки
+                  </label>
+                  <input
+                    id="order-delivery-date"
+                    type="date"
+                    value={orderDeliveryDate}
+                    onChange={(e) => setOrderDeliveryDate(e.target.value)}
                     required
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   />
@@ -385,7 +418,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                 {incomingOffers.map((offer) => (
                   <tr key={offer.id} className="hover:bg-gray-50">
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
-                      {offer.sku.name}
+                      {offer.sku?.name || offer.productName}
                       {offer.isNovelty && (
                         <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
                           Запропоновано
@@ -407,9 +440,9 @@ export default function BuyerDashboardPage(): JSX.Element {
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right">
-                      <Link
+                      <a
                         href={`/offers/${offer.id}`}
-                        className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+                        className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
                       >
                         Переговорна
                         {unread[offer.id] ? (
@@ -417,7 +450,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                             {unread[offer.id]}
                           </span>
                         ) : null}
-                      </Link>
+                      </a>
                     </td>
                   </tr>
                 ))}
@@ -458,7 +491,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                 {myOrders.map((offer) => (
                   <tr key={offer.id} className="hover:bg-gray-50">
                     <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
-                      {offer.sku.name}
+                      {offer.sku?.name || offer.productName}
                       {offer.isNovelty && (
                         <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
                           Запропоновано
@@ -480,9 +513,9 @@ export default function BuyerDashboardPage(): JSX.Element {
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3 text-right">
-                      <Link
+                      <a
                         href={`/offers/${offer.id}`}
-                        className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+                        className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
                       >
                         Переговорна
                         {unread[offer.id] ? (
@@ -490,7 +523,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                             {unread[offer.id]}
                           </span>
                         ) : null}
-                      </Link>
+                      </a>
                     </td>
                   </tr>
                 ))}

@@ -15,6 +15,7 @@ const STATUS_LABELS: Record<string, string> = {
   COUNTER_OFFER: 'Контрпропозиція',
   ACCEPTED: 'Прийнято',
   REJECTED: 'Відхилено',
+  AWAITING_DELIVERY: 'Очікує доставки',
 };
 
 interface LinkedBuyer {
@@ -33,6 +34,7 @@ interface SkuOption {
 }
 
 import { NotificationBell } from '@/components/NotificationBell';
+import { toast } from 'react-hot-toast';
 
 export default function VendorDashboardPage(): JSX.Element {
   const router = useRouter();
@@ -44,10 +46,11 @@ export default function VendorDashboardPage(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
 
   const [selectedBuyerId, setSelectedBuyerId] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState<{ skuId?: string; productName?: string; category?: string; uom?: string } | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<{ skuId?: string; productName?: string; category?: string; uom?: string; targetPrice?: string | null } | null>(null);
   const [createPrice, setCreatePrice] = useState('');
   const [createVolume, setCreateVolume] = useState('');
   const [createDeliveryTerms, setCreateDeliveryTerms] = useState('');
+  const [createDeliveryDate, setCreateDeliveryDate] = useState('');
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
@@ -99,6 +102,7 @@ export default function VendorDashboardPage(): JSX.Element {
       volume: createVolume.trim(),
       unit: selectedProduct.uom || 'item',
       deliveryTerms: createDeliveryTerms.trim() || undefined,
+      deliveryDate: new Date(createDeliveryDate).toISOString(),
     };
     if (selectedProduct.skuId) {
       body.skuId = selectedProduct.skuId;
@@ -116,6 +120,8 @@ export default function VendorDashboardPage(): JSX.Element {
         setCreatePrice('');
         setCreateVolume('');
         setCreateDeliveryTerms('');
+        setCreateDeliveryDate('');
+        toast.success('Пропозицію успішно створено!');
         loadData();
       })
       .catch((err: unknown) => {
@@ -139,8 +145,12 @@ export default function VendorDashboardPage(): JSX.Element {
           </Link>
           <div className="flex items-center gap-4">
             <NotificationBell />
+            <Link href="/calendar" prefetch={false} className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+              Календар
+            </Link>
             <Link
               href="/dashboard"
+              prefetch={false}
               className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
             >
               ← В кабінет
@@ -237,6 +247,11 @@ export default function VendorDashboardPage(): JSX.Element {
                         <div className="mt-2 text-sm text-indigo-700 bg-indigo-50 p-2 rounded">
                           Обрано: <strong>{selectedProduct.productName}</strong> ({selectedProduct.uom})
                           {!selectedProduct.skuId && ' (Новий товар)'}
+                          {selectedProduct.targetPrice && (
+                            <span className="ml-2 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800">
+                              Цільова ціна: {selectedProduct.targetPrice} грн
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -257,6 +272,11 @@ export default function VendorDashboardPage(): JSX.Element {
                         required
                         className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       />
+                      {selectedProduct?.targetPrice && Number(createPrice) > 0 && Number(createPrice) < Number(selectedProduct.targetPrice) && (
+                        <p className="mt-1 text-[10px] text-amber-600 leading-tight">
+                          Увага: вказана ціна нижча за цільову ({selectedProduct.targetPrice} грн)
+                        </p>
+                      )}
                     </div>
                     <div className="w-24">
                       <label htmlFor="vendor-volume" className="block text-xs font-medium text-gray-700">
@@ -269,6 +289,19 @@ export default function VendorDashboardPage(): JSX.Element {
                         value={createVolume}
                         onChange={(e) => setCreateVolume(e.target.value)}
                         placeholder="100"
+                        required
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div className="w-40">
+                      <label htmlFor="vendor-delivery-date" className="block text-xs font-medium text-gray-700">
+                        Дата доставки
+                      </label>
+                      <input
+                        id="vendor-delivery-date"
+                        type="date"
+                        value={createDeliveryDate}
+                        onChange={(e) => setCreateDeliveryDate(e.target.value)}
                         required
                         className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       />
@@ -348,7 +381,7 @@ export default function VendorDashboardPage(): JSX.Element {
                     {offers.map((offer) => (
                       <tr key={offer.id} className="hover:bg-gray-50">
                         <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
-                          {offer.sku.name}
+                          {offer.sku?.name || offer.productName}
                           {offer.isNovelty && (
                             <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
                               Ваша пропозиція
@@ -373,9 +406,9 @@ export default function VendorDashboardPage(): JSX.Element {
                           </span>
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-right">
-                          <Link
+                          <a
                             href={`/offers/${offer.id}`}
-                            className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+                            className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
                           >
                             Переговорна
                             {unread[offer.id] ? (
@@ -383,7 +416,7 @@ export default function VendorDashboardPage(): JSX.Element {
                                 {unread[offer.id]}
                               </span>
                             ) : null}
-                          </Link>
+                          </a>
                         </td>
                       </tr>
                     ))}

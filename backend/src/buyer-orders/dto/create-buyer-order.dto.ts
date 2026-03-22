@@ -1,4 +1,4 @@
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsNotEmpty, IsNumberString, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsNotEmpty, IsNumberString, IsOptional, IsString, IsUUID, MaxLength, IsISO8601 } from 'class-validator';
 
 export class CreateBuyerOrderDto {
   /** Товар из каталога закупщика. Либо skuId, либо productName. */
@@ -37,6 +37,10 @@ export class CreateBuyerOrderDto {
   @IsString()
   @MaxLength(2000)
   deliveryTerms?: string;
+
+  @IsISO8601()
+  @IsNotEmpty()
+  deliveryDate!: string;
 
   /** Список поставщиков из контактов, кому разослать заказ. */
   @IsArray()
