@@ -1,6 +1,6 @@
 ---
 description: Правила разработки бэкенда на NestJS, REST API и работы с БД Prisma
-globs: backend/**/*
+alwaysApply: false
 ---
 # Backend Development Rules (NestJS)
 

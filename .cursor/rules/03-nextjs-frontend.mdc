@@ -1,6 +1,6 @@
 ---
 description: Правила разработки фронтенда на Next.js App Router, Tailwind и shadcn/ui
-globs: frontend/**/*
+alwaysApply: false
 ---
 # Frontend Development Rules (Next.js)
 

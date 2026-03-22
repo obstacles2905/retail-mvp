@@ -22,16 +22,15 @@ export function DealSidebar({
   const [loading, setLoading] = useState(!initialOffer);
   const [error, setError] = useState<string | null>(null);
   const [proposePrice, setProposePrice] = useState('');
-  const [actionLoading, setActionLoading] = useState<'accept' | 'propose' | 'reject' | 'reschedule' | null>(null);
+  const [actionLoading, setActionLoading] = useState<'accept' | 'propose' | 'reject' | 'reschedule' | 'deliver' | 'archive' | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const [newDeliveryDate, setNewDeliveryDate] = useState('');
 
-  const api = getAuthApiClient();
-
   const fetchOffer = (): void => {
     setLoading(true);
     setError(null);
+    const api = getAuthApiClient();
     api
       .get<OfferDetail>(`/offers/${offerId}`)
       .then((res) => setOffer(res.data))
@@ -51,17 +50,15 @@ export function DealSidebar({
       return;
     }
     fetchOffer();
-  }, [offerId, initialOffer?.id]);
-
-  useEffect(() => {
-    if (initialOffer == null && offerId) fetchOffer();
-  }, [offerId]);
+  }, [offerId, initialOffer?.updatedAt]);
 
   const isMyTurn =
     !!offer && (currentUser.role === 'BUYER' ? offer.currentTurn === 'BUYER' : offer.currentTurn === 'VENDOR');
 
-  const isClosed = offer && (offer.status === 'ACCEPTED' || offer.status === 'REJECTED');
+  const isClosed = offer && (offer.status === 'ACCEPTED' || offer.status === 'REJECTED' || offer.status === 'DELIVERED');
   const isAwaitingDelivery = offer && offer.status === 'AWAITING_DELIVERY';
+  const isDelivered = offer && offer.status === 'DELIVERED';
+  const canArchive = offer && (offer.status === 'DELIVERED' || offer.status === 'REJECTED');
 
   const mergeOfferUpdate = (updated: Partial<OfferDetail>): void => {
     setOffer((prev) => (prev ? { ...prev, ...updated } : null));
@@ -71,7 +68,7 @@ export function DealSidebar({
     if (!offer || isClosed || !isMyTurn) return;
     setActionError(null);
     setActionLoading('accept');
-    api
+    getAuthApiClient()
       .post<OfferDetail>(`/offers/${offerId}/accept`)
       .then((res) => {
         mergeOfferUpdate(res.data);
@@ -88,7 +85,7 @@ export function DealSidebar({
     if (!offer || isClosed || !isMyTurn || !proposePrice.trim()) return;
     setActionError(null);
     setActionLoading('propose');
-    api
+    getAuthApiClient()
       .post<OfferDetail>(`/offers/${offerId}/propose`, { newPrice: proposePrice.trim() })
       .then((res) => {
         mergeOfferUpdate(res.data);
@@ -108,7 +105,7 @@ export function DealSidebar({
     if (!reason || !reason.trim()) return;
     setActionError(null);
     setActionLoading('reject');
-    api
+    getAuthApiClient()
       .post<OfferDetail>(`/offers/${offerId}/reject`, { reason: reason.trim() })
       .then((res) => {
         mergeOfferUpdate(res.data);
@@ -121,11 +118,45 @@ export function DealSidebar({
       .finally(() => setActionLoading(null));
   };
 
+  const handleDeliver = (): void => {
+    if (!offer || offer.status !== 'AWAITING_DELIVERY' || currentUser.role !== 'BUYER') return;
+    setActionError(null);
+    setActionLoading('deliver');
+    getAuthApiClient()
+      .patch<OfferDetail>(`/offers/${offerId}/status/delivered`)
+      .then((res) => {
+        mergeOfferUpdate(res.data);
+        onOfferUpdated?.();
+      })
+      .catch((err) => {
+        const msg = err.response?.data?.message ?? 'Не вдалося підтвердити доставку';
+        setActionError(typeof msg === 'string' ? msg : msg.join(', '));
+      })
+      .finally(() => setActionLoading(null));
+  };
+
+  const handleArchive = (): void => {
+    if (!offer) return;
+    setActionError(null);
+    setActionLoading('archive');
+    getAuthApiClient()
+      .patch<OfferDetail>(`/offers/${offerId}/archive`)
+      .then((res) => {
+        mergeOfferUpdate(res.data);
+        onOfferUpdated?.();
+      })
+      .catch((err) => {
+        const msg = err.response?.data?.message ?? 'Не вдалося архівувати';
+        setActionError(typeof msg === 'string' ? msg : msg.join(', '));
+      })
+      .finally(() => setActionLoading(null));
+  };
+
   const handleReschedule = (): void => {
     if (!offer || !isAwaitingDelivery || !newDeliveryDate) return;
     setActionError(null);
     setActionLoading('reschedule');
-    api
+    getAuthApiClient()
       .post<OfferDetail>(`/offers/${offerId}/reschedule`, { deliveryDate: new Date(newDeliveryDate).toISOString() })
       .then((res) => {
         mergeOfferUpdate(res.data);
@@ -253,7 +284,7 @@ export function DealSidebar({
                 {actionLoading === 'accept' ? 'Приймаємо…' : `Прийняти умови (${offer.currentPrice} грн)`}
               </button>
               <p className="text-center text-xs text-gray-500">або</p>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <input
                   type="text"
                   inputMode="decimal"
@@ -268,7 +299,7 @@ export function DealSidebar({
                   type="button"
                   onClick={handlePropose}
                   disabled={actionLoading !== null || !proposePrice.trim()}
-                  className="rounded-lg bg-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                  className="rounded-lg bg-gray-200 w-full px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-300 disabled:opacity-50"
                 >
                   {actionLoading === 'propose' ? '…' : 'Запропонувати'}
                 </button>
@@ -286,7 +317,45 @@ export function DealSidebar({
         </div>
       )}
 
-      {isClosed && !isAwaitingDelivery && (
+      {isDelivered && (
+        <div className="flex flex-col gap-3">
+          <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-center text-sm text-blue-800 font-medium">
+            Доставку підтверджено.
+          </div>
+          {canArchive && (
+            <button
+              type="button"
+              onClick={handleArchive}
+              disabled={actionLoading !== null}
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              {actionLoading === 'archive' ? '…' : (offer?.isArchived ? 'Розархівувати' : 'Архівувати угоду')}
+            </button>
+          )}
+          {actionError && <p className="text-xs text-red-600">{actionError}</p>}
+        </div>
+      )}
+
+      {offer?.status === 'REJECTED' && (
+        <div className="flex flex-col gap-3">
+          <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-center text-sm text-red-800 font-medium">
+            Угоду відхилено.
+          </div>
+          {canArchive && (
+            <button
+              type="button"
+              onClick={handleArchive}
+              disabled={actionLoading !== null}
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              {actionLoading === 'archive' ? '…' : (offer?.isArchived ? 'Розархівувати' : 'Архівувати угоду')}
+            </button>
+          )}
+          {actionError && <p className="text-xs text-red-600">{actionError}</p>}
+        </div>
+      )}
+
+      {offer?.status === 'ACCEPTED' && !isAwaitingDelivery && (
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 text-center text-sm text-gray-600">
           Угоду закрито. Дії недоступні.
         </div>
@@ -297,6 +366,20 @@ export function DealSidebar({
           <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-center text-sm text-emerald-800 font-medium">
             Угоду погоджено. Очікується доставка.
           </div>
+
+          {currentUser.role === 'BUYER' && (
+            <button
+              type="button"
+              onClick={handleDeliver}
+              disabled={actionLoading !== null}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              {actionLoading === 'deliver' ? 'Підтвердження…' : 'Підтвердити доставку'}
+            </button>
+          )}
           
           {!isRescheduleOpen ? (
             <button

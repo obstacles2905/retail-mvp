@@ -4,7 +4,9 @@ export type OfferStatus =
   | 'COUNTER_OFFER'
   | 'ACCEPTED'
   | 'REJECTED'
-  | 'AWAITING_DELIVERY';
+  | 'AWAITING_DELIVERY'
+  | 'DELIVERED'
+  | 'ARCHIVED';
 
 export type OfferTurn = 'BUYER' | 'VENDOR';
 export type InitiatorRole = 'BUYER' | 'VENDOR';
@@ -25,6 +27,9 @@ export interface OfferListItem {
   deliveryDate: string | null;
   status: OfferStatus;
   currentTurn: OfferTurn;
+  acceptedAt: string | null;
+  isArchived: boolean;
+  archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
   sku: { id: string; name: string; uom: string } | null;
@@ -49,6 +54,9 @@ export interface OfferDetail {
   deliveryDate: string | null;
   status: OfferStatus;
   currentTurn: OfferTurn;
+  acceptedAt: string | null;
+  isArchived: boolean;
+  archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
   sku: {
@@ -62,7 +70,7 @@ export interface OfferDetail {
   vendor: { id: string; name: string; companyName: string };
 }
 
-export type SystemEventType = 'PRICE_CHANGED' | 'DEAL_ACCEPTED' | 'TERMS_UPDATED' | 'DELIVERY_RESCHEDULED';
+export type SystemEventType = 'PRICE_CHANGED' | 'DEAL_ACCEPTED' | 'TERMS_UPDATED' | 'DELIVERY_RESCHEDULED' | 'DELIVERY_CONFIRMED' | 'OFFER_ARCHIVED';
 
 export interface OfferMessage {
   id: string;

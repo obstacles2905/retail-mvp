@@ -1,0 +1,5 @@
+-- AlterEnum
+ALTER TYPE "OfferStatus" ADD VALUE 'AWAITING_DELIVERY';
+
+-- AlterEnum
+ALTER TYPE "SystemEventType" ADD VALUE 'DELIVERY_RESCHEDULED';

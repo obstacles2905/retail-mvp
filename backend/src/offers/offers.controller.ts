@@ -27,9 +27,24 @@ export class OffersController {
   @Roles('BUYER', 'VENDOR')
   getAll(
     @CurrentUser() user: { sub: string; role: 'BUYER' | 'VENDOR' },
-    @Query('status') status?: OfferStatus,
+    @Query('status') status?: string,
+    @Query('showArchived') showArchived?: string,
+    @Query('counterpartyName') counterpartyName?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
   ): Promise<OfferListItemDto[]> {
-    return this.offersService.findAllForUser(user.sub, user.role, status);
+    let parsedStatus: OfferStatus | OfferStatus[] | undefined;
+    if (status) {
+      const parts = status.split(',').map((s) => s.trim()).filter(Boolean) as OfferStatus[];
+      parsedStatus = parts.length === 1 ? parts[0] : parts;
+    }
+    return this.offersService.findAllForUser(user.sub, user.role, {
+      status: parsedStatus,
+      showArchived: showArchived === 'true',
+      counterpartyName,
+      sortBy: sortBy === 'acceptedAt' ? 'acceptedAt' : 'createdAt',
+      sortOrder: sortOrder === 'asc' ? 'asc' : 'desc',
+    });
   }
 
   @Get(':id')
@@ -116,6 +131,24 @@ export class OffersController {
     @CurrentUser() user: { sub: string; role: 'BUYER' | 'VENDOR' },
   ): Promise<OfferDto> {
     return this.offersService.rejectDeal(id, user.sub, user.role, dto);
+  }
+
+  @Patch(':id/status/delivered')
+  @Roles('BUYER')
+  markAsDelivered(
+    @Param('id') id: string,
+    @CurrentUser() user: { sub: string; role: 'BUYER' | 'VENDOR' },
+  ): Promise<OfferDto> {
+    return this.offersService.deliverOffer(id, user.sub, user.role);
+  }
+
+  @Patch(':id/archive')
+  @Roles('BUYER', 'VENDOR')
+  toggleArchive(
+    @Param('id') id: string,
+    @CurrentUser() user: { sub: string; role: 'BUYER' | 'VENDOR' },
+  ): Promise<OfferDto> {
+    return this.offersService.archiveOffer(id, user.sub, user.role);
   }
 
   @Post(':id/read')

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getStoredUser, type AuthUser } from '@/lib/auth';
 import { getAuthApiClient } from '@/lib/api-client';
 import { DealSidebar } from './DealSidebar';
@@ -66,6 +66,14 @@ export default function OfferNegotiationPage(): JSX.Element {
     getAuthApiClient().post(`/offers/${offerId}/read`).catch(() => undefined);
   }, [mounted, offerId]);
 
+  const refreshOffer = useCallback(() => {
+    if (!offerId) return;
+    getAuthApiClient()
+      .get<OfferDetail>(`/offers/${offerId}`)
+      .then((res) => setOffer(res.data))
+      .catch(() => undefined);
+  }, [offerId]);
+
   if (!mounted || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f5f5f5]">
@@ -77,19 +85,19 @@ export default function OfferNegotiationPage(): JSX.Element {
   const isMyTurn =
     offer &&
     (user.role === 'BUYER' ? offer.currentTurn === 'BUYER' : offer.currentTurn === 'VENDOR');
-  const statusLabel = !offer
-    ? '—'
-    : offer.status === 'ACCEPTED'
-      ? 'Узгоджено'
-      : offer.status === 'REJECTED'
-        ? 'Відхилено'
-        : offer.status === 'AWAITING_DELIVERY'
-          ? 'Очікує доставки'
-          : 'На розгляді';
+  const statusLabelMap: Record<string, string> = {
+    ACCEPTED: 'Узгоджено',
+    REJECTED: 'Відхилено',
+    AWAITING_DELIVERY: 'Очікує доставки',
+    DELIVERED: 'Доставлено',
+    ARCHIVED: 'Архів',
+  };
+  const statusLabel = !offer ? '—' : (statusLabelMap[offer.status] ?? 'На розгляді');
 
+  const terminalStatuses = ['ACCEPTED', 'REJECTED', 'AWAITING_DELIVERY', 'DELIVERED', 'ARCHIVED'];
   const statusHint = !offer
     ? ''
-    : offer.status === 'ACCEPTED' || offer.status === 'REJECTED' || offer.status === 'AWAITING_DELIVERY'
+    : terminalStatuses.includes(offer.status)
       ? 'Угоду завершено'
       : user.role === 'BUYER'
         ? (offer.currentTurn === 'VENDOR' ? 'На розгляді у постачальника' : 'Очікуємо відповідь закупника')
@@ -135,11 +143,13 @@ export default function OfferNegotiationPage(): JSX.Element {
                 <div className="flex flex-col items-start">
                   <span
                     className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-                      offer?.status === 'ACCEPTED' || offer?.status === 'AWAITING_DELIVERY'
-                        ? 'bg-green-100 text-green-800'
-                        : offer?.status === 'REJECTED'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-amber-100 text-amber-800'
+                      offer?.status === 'DELIVERED'
+                        ? 'bg-blue-100 text-blue-800'
+                        : offer?.status === 'ACCEPTED' || offer?.status === 'AWAITING_DELIVERY'
+                          ? 'bg-green-100 text-green-800'
+                          : offer?.status === 'REJECTED'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-amber-100 text-amber-800'
                     }`}
                   >
                     {statusLabel}
@@ -182,11 +192,7 @@ export default function OfferNegotiationPage(): JSX.Element {
             offerId={offerId}
             currentUser={user}
             initialOffer={offer}
-            onOfferUpdated={() => {
-              getAuthApiClient()
-                .get<OfferDetail>(`/offers/${offerId}`)
-                .then((res) => setOffer(res.data));
-            }}
+            onOfferUpdated={refreshOffer}
           />
 
           {/* Права колонка — історія переговорів */}
@@ -194,6 +200,8 @@ export default function OfferNegotiationPage(): JSX.Element {
             offerId={offerId}
             offer={offer}
             shortDealId={offerId ? getShortDealId(offerId) : ''}
+            currentUserId={user.id}
+            onSystemEvent={refreshOffer}
           />
         </div>
       </section>

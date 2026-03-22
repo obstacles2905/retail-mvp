@@ -73,7 +73,7 @@ export default function HomePage(): JSX.Element {
         </div>
       </header>
 
-      <div className="mx-auto flex max-w-2xl flex-1 flex-col items-center justify-center gap-8 px-4 py-12">
+      <div className="mx-auto flex max-w-4xl flex-1 flex-col items-center justify-center gap-8 px-4 py-12">
         <div className="text-center">
           <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
             Закупки та переговори в одному місці

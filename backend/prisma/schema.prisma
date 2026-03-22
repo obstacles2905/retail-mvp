@@ -19,6 +19,8 @@ enum OfferStatus {
   ACCEPTED
   REJECTED
   AWAITING_DELIVERY
+  DELIVERED
+  ARCHIVED
 }
 
 enum OfferTurn {
@@ -31,6 +33,8 @@ enum SystemEventType {
   DEAL_ACCEPTED
   TERMS_UPDATED
   DELIVERY_RESCHEDULED
+  DELIVERY_CONFIRMED
+  OFFER_ARCHIVED
 }
 
 enum NotificationType {
@@ -120,6 +124,9 @@ model Offer {
   deliveryDate  DateTime?
   status        OfferStatus     @default(NEW)
   currentTurn   OfferTurn
+  acceptedAt    DateTime?
+  isArchived    Boolean         @default(false)
+  archivedAt    DateTime?
 
   sku          Sku?            @relation(fields: [skuId], references: [id])
   buyer        User?           @relation("OfferBuyer", fields: [buyerId], references: [id])

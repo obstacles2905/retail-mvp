@@ -226,7 +226,7 @@ export default function ProfilePage(): JSX.Element {
         </div>
       </header>
 
-      <div className="mx-auto w-full max-w-2xl px-4 py-8">
+      <div className="mx-auto w-full max-w-4xl px-4 py-8">
         <h1 className="text-2xl font-semibold text-gray-900">Профіль</h1>
 
         <div className="mt-6 grid gap-6 md:grid-cols-[220px_1fr]">
