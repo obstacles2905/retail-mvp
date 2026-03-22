@@ -1,37 +1,13 @@
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsNotEmpty, IsNumberString, IsOptional, IsString, IsUUID, MaxLength, IsISO8601 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsISO8601, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength, ValidateNested } from 'class-validator';
+import { OfferItemInputDto } from '../../offers/dto/offer-item-input.dto';
 
 export class CreateBuyerOrderDto {
-  /** Товар из каталога закупщика. Либо skuId, либо productName. */
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  skuId?: string;
-
-  /** Название товара (если нет skuId). */
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(500)
-  productName?: string;
-
-  /** Категория товара (если нет skuId). */
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100)
-  category?: string;
-
-  @IsNumberString()
-  targetPrice!: string;
-
-  @IsNumberString()
-  volume!: string;
-
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  unit?: string;
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => OfferItemInputDto)
+  items!: OfferItemInputDto[];
 
   @IsOptional()
   @IsString()
@@ -42,11 +18,9 @@ export class CreateBuyerOrderDto {
   @IsNotEmpty()
   deliveryDate!: string;
 
-  /** Список поставщиков из контактов, кому разослать заказ. */
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(50)
   @IsUUID('4', { each: true })
   vendorIds!: string[];
 }
-

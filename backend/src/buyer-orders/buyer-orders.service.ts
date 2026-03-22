@@ -6,6 +6,19 @@ import { CreateBuyerOrderDto } from './dto/create-buyer-order.dto';
 import { OfferDto, OfferListItemDto } from '../offers/offers.service';
 import { OffersRealtimeService } from '../realtime/offers-realtime.service';
 
+const ITEMS_INCLUDE = {
+  sku: {
+    select: {
+      id: true,
+      name: true,
+      uom: true,
+      category: true,
+      targetPrice: true,
+      createdBy: { select: { id: true, name: true, companyName: true } },
+    },
+  },
+} as const;
+
 @Injectable()
 export class BuyerOrdersService {
   constructor(
@@ -15,8 +28,8 @@ export class BuyerOrdersService {
   ) {}
 
   async createAndBroadcast(buyerId: string, dto: CreateBuyerOrderDto): Promise<OfferDto[]> {
-    if (!dto.skuId && !dto.productName?.trim()) {
-      throw new BadRequestException('Provide either skuId or productName');
+    if (dto.items.length === 0) {
+      throw new BadRequestException('At least one item is required');
     }
 
     const linkedVendorIds = await this.invitesService.getLinkedVendorIds(buyerId);
@@ -25,73 +38,79 @@ export class BuyerOrdersService {
       throw new ForbiddenException('You can only send orders to vendors from your contacts');
     }
 
-    const volumeInt = parseInt(dto.volume, 10);
-
-    let skuId: string | null = null;
-    let productName: string | null = null;
-    let category: string | null = null;
-    let isNovelty = false;
-
-    if (dto.skuId) {
-      const sku = await this.prisma.sku.findUnique({ where: { id: dto.skuId } });
-      if (!sku) throw new NotFoundException('SKU not found');
-      if (sku.createdById !== buyerId) {
-        throw new ForbiddenException('You can only create orders for your own SKUs');
+    for (const item of dto.items) {
+      if (item.skuId) {
+        const sku = await this.prisma.sku.findUnique({ where: { id: item.skuId } });
+        if (!sku) throw new NotFoundException(`SKU not found: ${item.skuId}`);
+        if (sku.createdById !== buyerId) {
+          throw new ForbiddenException('You can only create orders for your own SKUs');
+        }
+      } else if (!item.productName?.trim()) {
+        throw new BadRequestException('Each item must have either skuId or productName');
       }
-      skuId = sku.id;
-    } else {
-      productName = dto.productName!.trim();
-      category = dto.category?.trim() ?? null;
-      isNovelty = true;
     }
 
     const created = await this.prisma.$transaction(async (tx) => {
       const offers = await Promise.all(
-        dto.vendorIds.map((vendorId) =>
-          tx.offer.create({
+        dto.vendorIds.map(async (vendorId) => {
+          const offer = await tx.offer.create({
             data: {
-              skuId,
               buyerId,
-              productName,
-              category,
-              isNovelty,
               vendorId,
               initiatorRole: 'BUYER',
-              currentPrice: dto.targetPrice,
-              volume: volumeInt,
-          unit: dto.unit ?? 'item',
-          deliveryTerms: dto.deliveryTerms ?? null,
-          deliveryDate: new Date(dto.deliveryDate),
-          status: OfferStatus.NEW,
-          currentTurn: OfferTurn.VENDOR,
+              deliveryTerms: dto.deliveryTerms ?? null,
+              deliveryDate: new Date(dto.deliveryDate),
+              status: OfferStatus.NEW,
+              currentTurn: OfferTurn.VENDOR,
+              items: {
+                create: dto.items.map((item) => ({
+                  skuId: item.skuId ?? null,
+                  productName: item.skuId ? null : item.productName?.trim() ?? null,
+                  category: item.skuId ? null : item.category?.trim() ?? null,
+                  isNovelty: !item.skuId,
+                  currentPrice: item.currentPrice,
+                  volume: parseInt(item.volume, 10),
+                  unit: item.unit ?? 'item',
+                })),
+              },
             },
-          }),
-        ),
-      );
+            include: { items: { include: ITEMS_INCLUDE } },
+          });
 
-      await Promise.all(
-        offers.map((o) =>
-          tx.offerMessage.create({
+          await tx.offerMessage.create({
             data: {
-              offerId: o.id,
+              offerId: offer.id,
               senderId: buyerId,
               isSystemEvent: true,
               eventType: SystemEventType.TERMS_UPDATED,
               metaData: { action: 'BUYER_ORDER_CREATED' },
             },
-          }),
-        ),
-      );
+          });
 
+          return offer;
+        }),
+      );
       return offers;
     });
 
-    // Notify vendors
+    const firstItemName = dto.items[0]?.productName ?? 'Товар з каталогу';
+    const itemsLabel = dto.items.length > 1 ? ` та ще ${dto.items.length - 1}` : '';
     for (const offer of created) {
       this.realtime.emitNotificationToUser(offer.vendorId, 'notification:offer_update', {
         offerId: offer.id,
         action: 'BUYER_ORDER_CREATED',
-        message: `Нове замовлення від закупника: ${offer.productName || 'Товар з каталогу'}`,
+        message: `Нове замовлення від закупника: ${firstItemName}${itemsLabel}`,
+      });
+    }
+    // Buyer (initiator) must refresh their sidebar — vendors were notified above.
+    if (created.length > 0 && created[0].buyerId) {
+      this.realtime.emitNotificationToUser(created[0].buyerId, 'notification:offer_update', {
+        offerId: created[0].id,
+        action: 'BUYER_ORDER_SENT',
+        message:
+          created.length > 1
+            ? `Замовлення надіслано ${created.length} постачальникам`
+            : 'Замовлення надіслано постачальнику',
       });
     }
 
@@ -103,7 +122,7 @@ export class BuyerOrdersService {
       where: { buyerId, initiatorRole: 'BUYER' },
       orderBy: { createdAt: 'desc' },
       include: {
-        sku: { select: { id: true, name: true, uom: true } },
+        items: { include: ITEMS_INCLUDE },
         buyer: { select: { id: true, name: true, companyName: true } },
         vendor: { select: { id: true, name: true, companyName: true } },
       },
@@ -111,7 +130,6 @@ export class BuyerOrdersService {
 
     return offers.map((o) => ({
       ...this.toOfferDto(o),
-      sku: o.sku ? { id: o.sku.id, name: o.sku.name, uom: o.sku.uom } : null,
       vendor: o.vendor,
       buyer: o.buyer ?? null,
       hasUnread: false,
@@ -120,16 +138,9 @@ export class BuyerOrdersService {
 
   private toOfferDto(o: {
     id: string;
-    skuId: string | null;
     buyerId: string | null;
-    productName: string | null;
-    category: string | null;
-    isNovelty: boolean;
     vendorId: string;
     initiatorRole: 'BUYER' | 'VENDOR';
-    currentPrice: unknown;
-    volume: number;
-    unit: string;
     deliveryTerms: string | null;
     deliveryDate: Date | null;
     status: OfferStatus;
@@ -139,19 +150,13 @@ export class BuyerOrdersService {
     archivedAt?: Date | null;
     createdAt: Date;
     updatedAt: Date;
+    items: any[];
   }): OfferDto {
     return {
       id: o.id,
-      skuId: o.skuId,
       buyerId: o.buyerId,
-      productName: o.productName,
-      category: o.category,
-      isNovelty: o.isNovelty,
       vendorId: o.vendorId,
       initiatorRole: o.initiatorRole,
-      currentPrice: String(o.currentPrice),
-      volume: o.volume,
-      unit: o.unit,
       deliveryTerms: o.deliveryTerms,
       deliveryDate: o.deliveryDate ? o.deliveryDate.toISOString() : null,
       status: o.status,
@@ -161,7 +166,26 @@ export class BuyerOrdersService {
       archivedAt: o.archivedAt ? o.archivedAt.toISOString() : null,
       createdAt: o.createdAt,
       updatedAt: o.updatedAt,
-    } as OfferDto;
+      items: (o.items ?? []).map((item: any) => ({
+        id: item.id,
+        skuId: item.skuId,
+        productName: item.productName,
+        category: item.category,
+        isNovelty: item.isNovelty,
+        currentPrice: String(item.currentPrice),
+        volume: item.volume,
+        unit: item.unit,
+        sku: item.sku
+          ? {
+              id: item.sku.id,
+              name: item.sku.name,
+              uom: item.sku.uom,
+              category: item.sku.category,
+              targetPrice: item.sku.targetPrice != null ? String(item.sku.targetPrice) : null,
+              createdBy: item.sku.createdBy,
+            }
+          : null,
+      })),
+    };
   }
 }
-

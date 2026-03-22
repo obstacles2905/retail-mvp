@@ -1,5 +1,4 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { OfferStatus } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -7,10 +6,9 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { OffersService, OfferDetailDto, OfferDto, OfferListItemDto, OfferMessageDto } from './offers.service';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
-import { CounterOfferDto } from './dto/counter-offer.dto';
 import { ProposePriceDto } from './dto/propose-price.dto';
-import { UpdateOfferStatusDto } from './dto/update-offer-status.dto';
 import { RejectOfferDto } from './dto/reject-offer.dto';
+import { OfferStatus } from '@prisma/client';
 
 @Controller('offers')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -54,26 +52,6 @@ export class OffersController {
     @CurrentUser() user: { sub: string; role: 'BUYER' | 'VENDOR' },
   ): Promise<OfferDetailDto> {
     return this.offersService.getOne(id, user.sub, user.role);
-  }
-
-  @Patch(':id/counter')
-  @Roles('BUYER', 'VENDOR')
-  counter(
-    @Param('id') id: string,
-    @Body() dto: CounterOfferDto,
-    @CurrentUser() user: { sub: string; role: 'BUYER' | 'VENDOR' },
-  ): Promise<OfferDto> {
-    return this.offersService.counterOffer(id, user.sub, user.role, dto);
-  }
-
-  @Patch(':id/status')
-  @Roles('BUYER', 'VENDOR')
-  updateStatus(
-    @Param('id') id: string,
-    @Body() dto: UpdateOfferStatusDto,
-    @CurrentUser() user: { sub: string; role: 'BUYER' | 'VENDOR' },
-  ): Promise<OfferDto> {
-    return this.offersService.updateStatus(id, user.sub, user.role, dto);
   }
 
   @Get(':id/messages')
@@ -171,4 +149,3 @@ export class OffersController {
     return this.offersService.getUnreadCounts(offerIds, user.sub, user.role);
   }
 }
-
