@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getStoredUser, clearAuth } from '@/lib/auth';
+import GlobalHeader from '@/components/layout/GlobalHeader';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function HomePage(): JSX.Element {
   const router = useRouter();
@@ -31,45 +33,15 @@ export default function HomePage(): JSX.Element {
 
   return (
     <main className="flex min-h-screen flex-col">
-      <header className="border-b border-border bg-card/80 backdrop-blur">
+       <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
           <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
             RetailProcure
           </Link>
-          <nav className="flex items-center gap-4">
-            {user ? (
-              <>
-                <Link
-                  href="/dashboard"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
-                >
-                  Кабінет
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent"
-                >
-                  Вийти
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/login"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
-                >
-                  Увійти
-                </Link>
-                <Link
-                  href="/register"
-                  className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-                >
-                  Реєстрація
-                </Link>
-              </>
-            )}
-          </nav>
+
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 

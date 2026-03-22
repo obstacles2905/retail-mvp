@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import { createApiClient } from '@/lib/api-client';
 import { setAuth, getStoredUser, getStoredToken } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
+import GlobalHeader from '@/components/layout/GlobalHeader';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
 
@@ -165,11 +167,15 @@ export default function JoinByInvitePage(): JSX.Element {
 
   return (
     <main className="flex min-h-screen flex-col">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex h-14 max-w-4xl items-center px-4">
+       <header className="border-b border-border bg-card">
+        <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
           <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
             RetailProcure
           </Link>
+
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 

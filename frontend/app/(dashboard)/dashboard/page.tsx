@@ -15,6 +15,7 @@ import {
 
 import { NotificationBell } from '@/components/NotificationBell';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import GlobalHeader from '@/components/layout/GlobalHeader';
 
 export default function DashboardPage(): JSX.Element {
   const router = useRouter();
@@ -50,38 +51,7 @@ export default function DashboardPage(): JSX.Element {
 
   return (
     <main className="flex min-h-screen flex-col">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
-          <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
-            RetailProcure
-          </Link>
-          <nav className="flex items-center gap-4">
-            <ThemeToggle />
-            <NotificationBell />
-            <Link
-              href="/calendar"
-              prefetch={false}
-              className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
-            >
-              Календар
-            </Link>
-            <Link
-              href="/"
-              prefetch={false}
-              className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
-            >
-              Головна
-            </Link>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent"
-            >
-              Вийти
-            </button>
-          </nav>
-        </div>
-      </header>
+      <GlobalHeader /> 
 
       <div className="mx-auto w-full max-w-4xl px-4 py-8">
         <h1 className="text-2xl font-semibold text-foreground">Кабінет</h1>

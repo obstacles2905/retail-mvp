@@ -14,6 +14,7 @@ interface ConnectionDto {
 
 import { NotificationBell } from '@/components/NotificationBell';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import GlobalHeader from '@/components/layout/GlobalHeader';
 
 export default function ChatsPage() {
   const api = useMemo(() => getAuthApiClient(), []);
@@ -73,20 +74,7 @@ export default function ChatsPage() {
 
   return (
     <main className="flex min-h-screen flex-col bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
-          <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
-            RetailProcure
-          </Link>
-          <div className="flex items-center gap-4">
-            <ThemeToggle /> 
-            <NotificationBell />
-            <Link href="/dashboard" prefetch={false} className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
-              ← В кабінет
-            </Link>
-          </div>
-        </div>
-      </header>
+       <GlobalHeader /> 
 
       <div className="mx-auto w-full max-w-4xl px-4 py-8">
         <div className="mb-6 flex items-center justify-between">
