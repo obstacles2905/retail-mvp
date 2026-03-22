@@ -59,10 +59,11 @@ export class BuyerOrdersService {
               initiatorRole: 'BUYER',
               currentPrice: dto.targetPrice,
               volume: volumeInt,
-              unit: dto.unit ?? 'item',
-              deliveryTerms: dto.deliveryTerms ?? null,
-              status: OfferStatus.NEW,
-              currentTurn: OfferTurn.VENDOR,
+          unit: dto.unit ?? 'item',
+          deliveryTerms: dto.deliveryTerms ?? null,
+          deliveryDate: new Date(dto.deliveryDate),
+          status: OfferStatus.NEW,
+          currentTurn: OfferTurn.VENDOR,
             },
           }),
         ),
@@ -102,17 +103,18 @@ export class BuyerOrdersService {
       where: { buyerId, initiatorRole: 'BUYER' },
       orderBy: { createdAt: 'desc' },
       include: {
-        sku: { select: { name: true } },
-        buyer: { select: { name: true, companyName: true } },
-        vendor: { select: { name: true, companyName: true } },
+        sku: { select: { id: true, name: true, uom: true } },
+        buyer: { select: { id: true, name: true, companyName: true } },
+        vendor: { select: { id: true, name: true, companyName: true } },
       },
     });
 
     return offers.map((o) => ({
       ...this.toOfferDto(o),
-      sku: { name: o.sku?.name ?? o.productName ?? '—' },
+      sku: o.sku ? { id: o.sku.id, name: o.sku.name, uom: o.sku.uom } : null,
       vendor: o.vendor,
-      buyer: o.buyer ?? undefined,
+      buyer: o.buyer ?? null,
+      hasUnread: false,
     }));
   }
 
@@ -129,6 +131,7 @@ export class BuyerOrdersService {
     volume: number;
     unit: string;
     deliveryTerms: string | null;
+    deliveryDate: Date | null;
     status: OfferStatus;
     currentTurn: OfferTurn;
     createdAt: Date;
@@ -147,11 +150,12 @@ export class BuyerOrdersService {
       volume: o.volume,
       unit: o.unit,
       deliveryTerms: o.deliveryTerms,
+      deliveryDate: o.deliveryDate ? o.deliveryDate.toISOString() : null,
       status: o.status,
       currentTurn: o.currentTurn,
       createdAt: o.createdAt,
       updatedAt: o.updatedAt,
-    };
+    } as OfferDto;
   }
 }
 

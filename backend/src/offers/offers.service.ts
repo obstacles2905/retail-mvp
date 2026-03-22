@@ -35,6 +35,7 @@ export interface OfferDto {
   volume: number;
   unit: string;
   deliveryTerms: string | null;
+  deliveryDate: string | null;
   status: OfferStatus;
   currentTurn: OfferTurn;
   createdAt: Date;
@@ -42,15 +43,29 @@ export interface OfferDto {
 }
 
 export interface OfferDetailDto extends OfferDto {
-  sku: { id: string; name: string; category: string; targetPrice: string | null; createdBy: { id: string; name: string; companyName: string } } | null;
+  sku: { id: string; name: string; category: string; uom: string; targetPrice: string | null; createdBy: { id: string; name: string; companyName: string } } | null;
   buyer: { id: string; name: string; companyName: string } | null;
   vendor: { id: string; name: string; companyName: string };
+  histories: any[];
 }
 
-export interface OfferListItemDto extends OfferDto {
-  sku: { name: string };
-  vendor: { name: string; companyName: string };
-  buyer?: { name: string; companyName: string };
+export interface OfferListItemDto {
+  id: string;
+  sku: { id: string; name: string; uom: string } | null;
+  productName: string | null;
+  category: string | null;
+  isNovelty: boolean;
+  vendor: { id: string; name: string; companyName: string };
+  buyer: { id: string; name: string; companyName: string } | null;
+  currentPrice: string;
+  volume: number;
+  unit: string;
+  status: OfferStatus;
+  currentTurn: OfferTurn;
+  deliveryDate: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  hasUnread: boolean;
 }
 
 @Injectable()
@@ -80,6 +95,7 @@ export class OffersService {
           volume: volumeInt,
           unit: dto.unit ?? 'item',
           deliveryTerms: dto.deliveryTerms ?? null,
+          deliveryDate: new Date(dto.deliveryDate),
           status: OfferStatus.NEW,
           currentTurn: OfferTurn.BUYER,
         },
@@ -110,6 +126,7 @@ export class OffersService {
           volume: volumeInt,
           unit: dto.unit ?? 'item',
           deliveryTerms: dto.deliveryTerms ?? null,
+          deliveryDate: new Date(dto.deliveryDate),
           status: OfferStatus.NEW,
           currentTurn: OfferTurn.BUYER,
         },
@@ -127,30 +144,35 @@ export class OffersService {
     throw new BadRequestException('Provide either skuId or buyerId with productName');
   }
 
-  async findAllForUser(userId: string, role: 'BUYER' | 'VENDOR'): Promise<OfferListItemDto[]> {
+  async findAllForUser(userId: string, role: 'BUYER' | 'VENDOR', status?: OfferStatus): Promise<OfferListItemDto[]> {
     const include = {
-      sku: { select: { name: true, createdBy: { select: { name: true, companyName: true } } } },
-      buyer: { select: { name: true, companyName: true } },
-      vendor: { select: { name: true, companyName: true } },
+      sku: { select: { id: true, name: true, uom: true, createdBy: { select: { name: true, companyName: true } } } },
+      buyer: { select: { id: true, name: true, companyName: true } },
+      vendor: { select: { id: true, name: true, companyName: true } },
     };
 
-    if (role === 'VENDOR') {
-      const offers = await this.prisma.offer.findMany({
-        where: { vendorId: userId },
-        orderBy: { createdAt: 'desc' },
-        include,
-      });
-      return offers.map((o) => this.toListItemDto(o));
+    const whereClause: any = role === 'VENDOR' 
+      ? { vendorId: userId }
+      : { OR: [{ sku: { createdById: userId } }, { buyerId: userId }] };
+
+    if (status) {
+      whereClause.status = status;
     }
 
     const offers = await this.prisma.offer.findMany({
-      where: {
-        OR: [{ sku: { createdById: userId } }, { buyerId: userId }],
-      },
+      where: whereClause,
       orderBy: { createdAt: 'desc' },
       include,
     });
-    return offers.map((o) => this.toListItemDto(o));
+    
+    // Get unread counts
+    const unreadCounts = await this.getUnreadCounts(offers.map(o => o.id), userId, role);
+    
+    return offers.map((o) => {
+      const dto = this.toListItemDto(o);
+      dto.hasUnread = (unreadCounts[o.id] || 0) > 0;
+      return dto;
+    });
   }
 
   private toListItemDto(
@@ -167,20 +189,22 @@ export class OffersService {
       volume: number;
       unit: string;
       deliveryTerms: string | null;
+      deliveryDate: Date | null;
       status: OfferStatus;
       currentTurn: OfferTurn;
       createdAt: Date;
       updatedAt: Date;
-      sku: { name: string; createdBy: { name: string; companyName: string } } | null;
-      buyer: { name: string; companyName: string } | null;
-      vendor: { name: string; companyName: string };
+      sku: { id: string; name: string; uom: string; createdBy: { name: string; companyName: string } } | null;
+      buyer: { id: string; name: string; companyName: string } | null;
+      vendor: { id: string; name: string; companyName: string };
     },
   ): OfferListItemDto {
     return {
       ...this.toDto(o),
-      sku: { name: o.sku?.name ?? o.productName ?? '—' },
+      sku: o.sku ? { id: o.sku.id, name: o.sku.name, uom: o.sku.uom } : null,
       vendor: o.vendor,
-      buyer: o.buyer ?? (o.sku?.createdBy ? { name: o.sku.createdBy.name, companyName: o.sku.createdBy.companyName } : undefined),
+      buyer: o.buyer ?? (o.sku?.createdBy ? { id: o.sku.createdBy.name, name: o.sku.createdBy.name, companyName: o.sku.createdBy.companyName } : null),
+      hasUnread: false,
     };
   }
 
@@ -207,6 +231,7 @@ export class OffersService {
         ? {
             id: offer.sku.id,
             name: offer.sku.name,
+            uom: offer.sku.uom,
             category: offer.sku.category,
             targetPrice: offer.sku.targetPrice != null ? String(offer.sku.targetPrice) : null,
             createdBy: offer.sku.createdBy,
@@ -214,6 +239,7 @@ export class OffersService {
         : null,
       buyer,
       vendor: offer.vendor,
+      histories: [],
     };
   }
 
@@ -470,7 +496,7 @@ export class OffersService {
       });
       const updatedOffer = await tx.offer.update({
         where: { id: offer.id },
-        data: { status: OfferStatus.ACCEPTED },
+        data: { status: OfferStatus.AWAITING_DELIVERY },
       });
       return { updatedOffer, message: createdMessage };
     });
@@ -616,6 +642,62 @@ export class OffersService {
     return this.toDto(updated);
   }
 
+  async rescheduleDelivery(
+    offerId: string,
+    userId: string,
+    role: 'BUYER' | 'VENDOR',
+    newDate: Date,
+  ): Promise<OfferDto> {
+    const offer = await this.ensureParticipant(offerId, userId, role);
+    if (offer.status !== OfferStatus.AWAITING_DELIVERY) {
+      throw new ForbiddenException('Can only reschedule when awaiting delivery');
+    }
+
+    const { updatedOffer, message } = await this.prisma.$transaction(async (tx) => {
+      const createdMessage = await tx.offerMessage.create({
+        data: {
+          offerId: offer.id,
+          senderId: userId,
+          isSystemEvent: true,
+          eventType: SystemEventType.DELIVERY_RESCHEDULED,
+          metaData: { newDate: newDate.toISOString() },
+        },
+        include: {
+          sender: { select: { id: true, name: true, companyName: true } },
+        },
+      });
+      const updatedOffer = await tx.offer.update({
+        where: { id: offer.id },
+        data: { deliveryDate: newDate },
+      });
+      return { updatedOffer, message: createdMessage };
+    });
+
+    const dto: OfferMessageDto = {
+      id: message.id,
+      offerId: message.offerId,
+      senderId: message.senderId,
+      content: message.content,
+      isSystemEvent: message.isSystemEvent,
+      eventType: message.eventType,
+      metaData: message.metaData as Record<string, unknown> | null,
+      createdAt: message.createdAt,
+      sender: message.sender,
+    };
+    this.realtime.emitNewMessage(offer.id, dto);
+
+    const otherUserId = role === 'VENDOR' ? (offer.buyerId || offer.sku?.createdById) : offer.vendorId;
+    if (otherUserId) {
+      this.realtime.emitNotificationToUser(otherUserId, 'notification:offer_update', {
+        offerId: offer.id,
+        action: 'DELIVERY_RESCHEDULED',
+        message: `Дата доставки змінена на ${newDate.toLocaleDateString('uk-UA')}`,
+      });
+    }
+
+    return this.toDto(updatedOffer);
+  }
+
   async updateStatus(
     offerId: string,
     userId: string,
@@ -675,8 +757,9 @@ export class OffersService {
     currentPrice: unknown;
     volume: number;
     unit: string;
-    deliveryTerms: string | null;
-    status: OfferStatus;
+      deliveryTerms: string | null;
+      deliveryDate: Date | null;
+      status: OfferStatus;
     currentTurn: OfferTurn;
     createdAt: Date;
     updatedAt: Date;
@@ -694,6 +777,7 @@ export class OffersService {
       volume: offer.volume,
       unit: offer.unit,
       deliveryTerms: offer.deliveryTerms,
+      deliveryDate: offer.deliveryDate ? offer.deliveryDate.toISOString() : null,
       status: offer.status,
       currentTurn: offer.currentTurn,
       createdAt: offer.createdAt,

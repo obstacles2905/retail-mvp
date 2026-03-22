@@ -18,6 +18,7 @@ enum OfferStatus {
   COUNTER_OFFER
   ACCEPTED
   REJECTED
+  AWAITING_DELIVERY
 }
 
 enum OfferTurn {
@@ -29,6 +30,7 @@ enum SystemEventType {
   PRICE_CHANGED
   DEAL_ACCEPTED
   TERMS_UPDATED
+  DELIVERY_RESCHEDULED
 }
 
 enum NotificationType {
@@ -115,6 +117,7 @@ model Offer {
   volume        Int
   unit          String          @default("item")
   deliveryTerms String?
+  deliveryDate  DateTime?
   status        OfferStatus     @default(NEW)
   currentTurn   OfferTurn
 

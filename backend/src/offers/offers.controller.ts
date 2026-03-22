@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { OfferStatus } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -24,8 +25,11 @@ export class OffersController {
 
   @Get()
   @Roles('BUYER', 'VENDOR')
-  getAll(@CurrentUser() user: { sub: string; role: 'BUYER' | 'VENDOR' }): Promise<OfferListItemDto[]> {
-    return this.offersService.findAllForUser(user.sub, user.role);
+  getAll(
+    @CurrentUser() user: { sub: string; role: 'BUYER' | 'VENDOR' },
+    @Query('status') status?: OfferStatus,
+  ): Promise<OfferListItemDto[]> {
+    return this.offersService.findAllForUser(user.sub, user.role, status);
   }
 
   @Get(':id')
@@ -64,6 +68,15 @@ export class OffersController {
     @CurrentUser() user: { sub: string; role: 'BUYER' | 'VENDOR' },
   ): Promise<OfferMessageDto[]> {
     return this.offersService.getMessages(id, user.sub, user.role);
+  }
+
+  @Post(':id/reschedule')
+  async rescheduleDelivery(
+    @Param('id') id: string,
+    @CurrentUser() user: { sub: string; role: 'BUYER' | 'VENDOR' },
+    @Body('deliveryDate') deliveryDate: string,
+  ) {
+    return this.offersService.rescheduleDelivery(id, user.sub, user.role, new Date(deliveryDate));
   }
 
   @Post(':id/messages')

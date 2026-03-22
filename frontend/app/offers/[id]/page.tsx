@@ -83,11 +83,13 @@ export default function OfferNegotiationPage(): JSX.Element {
       ? 'Узгоджено'
       : offer.status === 'REJECTED'
         ? 'Відхилено'
-        : 'На розгляді';
+        : offer.status === 'AWAITING_DELIVERY'
+          ? 'Очікує доставки'
+          : 'На розгляді';
 
   const statusHint = !offer
     ? ''
-    : offer.status === 'ACCEPTED' || offer.status === 'REJECTED'
+    : offer.status === 'ACCEPTED' || offer.status === 'REJECTED' || offer.status === 'AWAITING_DELIVERY'
       ? 'Угоду завершено'
       : user.role === 'BUYER'
         ? (offer.currentTurn === 'VENDOR' ? 'На розгляді у постачальника' : 'Очікуємо відповідь закупника')
@@ -104,6 +106,7 @@ export default function OfferNegotiationPage(): JSX.Element {
         <div className="flex w-full items-center justify-between gap-4">
           <Link
             href="/"
+            prefetch={false}
             className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-md bg-gray-100 text-gray-500">
@@ -132,7 +135,7 @@ export default function OfferNegotiationPage(): JSX.Element {
                 <div className="flex flex-col items-start">
                   <span
                     className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-                      offer?.status === 'ACCEPTED'
+                      offer?.status === 'ACCEPTED' || offer?.status === 'AWAITING_DELIVERY'
                         ? 'bg-green-100 text-green-800'
                         : offer?.status === 'REJECTED'
                           ? 'bg-red-100 text-red-800'

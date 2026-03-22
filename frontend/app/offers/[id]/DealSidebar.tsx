@@ -22,8 +22,10 @@ export function DealSidebar({
   const [loading, setLoading] = useState(!initialOffer);
   const [error, setError] = useState<string | null>(null);
   const [proposePrice, setProposePrice] = useState('');
-  const [actionLoading, setActionLoading] = useState<'accept' | 'propose' | 'reject' | null>(null);
+  const [actionLoading, setActionLoading] = useState<'accept' | 'propose' | 'reject' | 'reschedule' | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
+  const [newDeliveryDate, setNewDeliveryDate] = useState('');
 
   const api = getAuthApiClient();
 
@@ -59,6 +61,7 @@ export function DealSidebar({
     !!offer && (currentUser.role === 'BUYER' ? offer.currentTurn === 'BUYER' : offer.currentTurn === 'VENDOR');
 
   const isClosed = offer && (offer.status === 'ACCEPTED' || offer.status === 'REJECTED');
+  const isAwaitingDelivery = offer && offer.status === 'AWAITING_DELIVERY';
 
   const mergeOfferUpdate = (updated: Partial<OfferDetail>): void => {
     setOffer((prev) => (prev ? { ...prev, ...updated } : null));
@@ -100,7 +103,7 @@ export function DealSidebar({
   };
 
   const handleReject = (): void => {
-    if (!offer || offer.status === 'REJECTED' || offer.status === 'ACCEPTED') return;
+    if (!offer || offer.status === 'REJECTED' || offer.status === 'ACCEPTED' || offer.status === 'AWAITING_DELIVERY') return;
     const reason = window.prompt('Вкажіть причину відмови від угоди:');
     if (!reason || !reason.trim()) return;
     setActionError(null);
@@ -113,6 +116,25 @@ export function DealSidebar({
       })
       .catch((err) => {
         const msg = err.response?.data?.message ?? 'Не вдалося відхилити угоду';
+        setActionError(typeof msg === 'string' ? msg : msg.join(', '));
+      })
+      .finally(() => setActionLoading(null));
+  };
+
+  const handleReschedule = (): void => {
+    if (!offer || !isAwaitingDelivery || !newDeliveryDate) return;
+    setActionError(null);
+    setActionLoading('reschedule');
+    api
+      .post<OfferDetail>(`/offers/${offerId}/reschedule`, { deliveryDate: new Date(newDeliveryDate).toISOString() })
+      .then((res) => {
+        mergeOfferUpdate(res.data);
+        setIsRescheduleOpen(false);
+        setNewDeliveryDate('');
+        onOfferUpdated?.();
+      })
+      .catch((err) => {
+        const msg = err.response?.data?.message ?? 'Не вдалося змінити дату доставки';
         setActionError(typeof msg === 'string' ? msg : msg.join(', '));
       })
       .finally(() => setActionLoading(null));
@@ -194,11 +216,17 @@ export function DealSidebar({
             <dt className="text-gray-500">Логістика</dt>
             <dd className="font-medium text-gray-900">{offer.deliveryTerms ?? 'за домовленістю'}</dd>
           </div>
+          <div className="flex justify-between text-sm">
+            <dt className="text-gray-500">Дата доставки</dt>
+            <dd className="font-medium text-gray-900">
+              {offer.deliveryDate ? new Date(offer.deliveryDate).toLocaleDateString('uk-UA') : 'Не вказано'}
+            </dd>
+          </div>
         </dl>
       </div>
 
       {/* Дії: прийняти умови або запропонувати свою ціну */}
-      {!isClosed && (
+      {(!isClosed && !isAwaitingDelivery) && (
         <div className="flex flex-col gap-3">
           {actionError && (
             <p className="text-xs text-red-600" role="alert">
@@ -258,9 +286,57 @@ export function DealSidebar({
         </div>
       )}
 
-      {isClosed && (
+      {isClosed && !isAwaitingDelivery && (
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 text-center text-sm text-gray-600">
           Угоду закрито. Дії недоступні.
+        </div>
+      )}
+
+      {isAwaitingDelivery && (
+        <div className="flex flex-col gap-3">
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-center text-sm text-emerald-800 font-medium">
+            Угоду погоджено. Очікується доставка.
+          </div>
+          
+          {!isRescheduleOpen ? (
+            <button
+              type="button"
+              onClick={() => setIsRescheduleOpen(true)}
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Змінити дату доставки
+            </button>
+          ) : (
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <h3 className="text-sm font-medium text-gray-900 mb-3">Нова дата доставки</h3>
+              <input
+                type="date"
+                value={newDeliveryDate}
+                onChange={(e) => setNewDeliveryDate(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              />
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsRescheduleOpen(false)}
+                  className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Скасувати
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReschedule}
+                  disabled={!newDeliveryDate || actionLoading === 'reschedule'}
+                  className="flex-1 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {actionLoading === 'reschedule' ? 'Збереження...' : 'Зберегти'}
+                </button>
+              </div>
+              {actionError && (
+                <p className="mt-2 text-xs text-red-600">{actionError}</p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </aside>
