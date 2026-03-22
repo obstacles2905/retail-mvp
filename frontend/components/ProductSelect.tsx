@@ -93,34 +93,34 @@ export function ProductSelect({ buyerId, role, value, onChange, error }: Product
 
   if (isNoveltyMode) {
     return (
-      <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3">
+      <div className="rounded-md border border-success/30 bg-success/10 p-3">
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-xs font-semibold text-emerald-800">Запропонувати новий товар</span>
-          <button type="button" onClick={cancelNovelty} className="text-xs text-gray-500 hover:text-gray-700">Скасувати</button>
+          <span className="text-xs font-semibold text-success">Запропонувати новий товар</span>
+          <button type="button" onClick={cancelNovelty} className="text-xs text-muted-foreground hover:text-foreground">Скасувати</button>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <label className="block text-xs font-medium text-gray-700">Назва</label>
-            <input type="text" value={noveltyName} onChange={e => setNoveltyName(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm" />
+            <label className="block text-xs font-medium text-foreground">Назва</label>
+            <input type="text" value={noveltyName} onChange={e => setNoveltyName(e.target.value)} className="mt-1 block w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700">Категорія</label>
-            <select value={noveltyCategory} onChange={e => setNoveltyCategory(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm">
+            <label className="block text-xs font-medium text-foreground">Категорія</label>
+            <select value={noveltyCategory} onChange={e => setNoveltyCategory(e.target.value)} className="mt-1 block w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground">
               {SUPERMARKET_CATEGORIES.map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700">Од. виміру</label>
-            <select value={noveltyUom} onChange={e => setNoveltyUom(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm">
+            <label className="block text-xs font-medium text-foreground">Од. виміру</label>
+            <select value={noveltyUom} onChange={e => setNoveltyUom(e.target.value)} className="mt-1 block w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground">
               <optgroup label="Штучний"><option value="item">Штука (item)</option><option value="box">Ящик (box)</option></optgroup>
               <optgroup label="Вага"><option value="g">Грам (g)</option><option value="kg">Кілограм (kg)</option></optgroup>
               <optgroup label="Об'єм"><option value="ml">Мілілітр (ml)</option><option value="L">Літр (L)</option></optgroup>
             </select>
           </div>
         </div>
-        <button type="button" onClick={confirmNovelty} disabled={!noveltyName.trim() || !noveltyCategory.trim()} className="mt-3 w-full rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50">
+        <button type="button" onClick={confirmNovelty} disabled={!noveltyName.trim() || !noveltyCategory.trim()} className="mt-3 w-full rounded-md bg-success px-3 py-1.5 text-sm font-medium text-success-foreground hover:bg-success/90 disabled:opacity-50">
           Підтвердити товар
         </button>
       </div>
@@ -139,15 +139,15 @@ export function ProductSelect({ buyerId, role, value, onChange, error }: Product
         }}
         onFocus={() => setIsOpen(true)}
         placeholder="Почніть вводити назву товару..."
-        className={`block w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-          error ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-300 focus:border-emerald-500 focus:ring-emerald-500'
+        className={`block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 ${
+          error ? 'border-destructive focus:border-destructive focus:ring-destructive' : 'focus:border-ring focus:ring-ring'
         }`}
       />
       
       {isOpen && (
-        <div className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 sm:text-sm">
+        <div className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-border bg-popover py-1 text-base text-popover-foreground shadow-lg sm:text-sm">
           {loading ? (
-            <div className="px-4 py-2 text-sm text-gray-500">Пошук...</div>
+            <div className="px-4 py-2 text-sm text-muted-foreground">Пошук...</div>
           ) : options.length > 0 ? (
             <>
               {options.map((sku) => (
@@ -155,18 +155,18 @@ export function ProductSelect({ buyerId, role, value, onChange, error }: Product
                   key={sku.id}
                   type="button"
                   onClick={() => handleSelectSku(sku)}
-                  className="w-full text-left px-4 py-2 hover:bg-emerald-50 focus:bg-emerald-50 focus:outline-none"
+                  className="w-full px-4 py-2 text-left hover:bg-accent focus:bg-accent focus:outline-none"
                 >
-                  <div className="font-medium text-gray-900">{sku.name}</div>
-                  <div className="text-xs text-gray-500">{sku.category} • {sku.uom}</div>
+                  <div className="font-medium text-foreground">{sku.name}</div>
+                  <div className="text-xs text-muted-foreground">{sku.category} • {sku.uom}</div>
                 </button>
               ))}
               {role === 'VENDOR' && query.trim() && (
-                <div className="border-t border-gray-100 mt-1 pt-1">
+                <div className="mt-1 border-t border-border pt-1">
                   <button
                     type="button"
                     onClick={startNoveltyMode}
-                    className="w-full text-left px-4 py-2 text-emerald-600 hover:bg-emerald-50 focus:bg-emerald-50 focus:outline-none"
+                    className="w-full px-4 py-2 text-left text-success hover:bg-accent focus:bg-accent focus:outline-none"
                   >
                     + Запропонувати новий товар "{query}"
                   </button>
@@ -174,13 +174,13 @@ export function ProductSelect({ buyerId, role, value, onChange, error }: Product
               )}
             </>
           ) : (
-            <div className="px-4 py-2 text-sm text-gray-500">
+            <div className="px-4 py-2 text-sm text-muted-foreground">
               Нічого не знайдено.
               {role === 'VENDOR' && query.trim() && (
                 <button
                   type="button"
                   onClick={startNoveltyMode}
-                  className="mt-2 block w-full rounded-md bg-emerald-50 px-3 py-2 text-center text-emerald-700 hover:bg-emerald-100"
+                  className="mt-2 block w-full rounded-md bg-success/10 px-3 py-2 text-center text-success hover:bg-success/20"
                 >
                   Запропонувати "{query}"
                 </button>

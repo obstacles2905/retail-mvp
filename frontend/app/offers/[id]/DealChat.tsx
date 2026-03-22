@@ -124,56 +124,56 @@ export function DealChat({ offerId, offer, shortDealId, currentUserId, onSystemE
   };
 
   return (
-    <section className="flex flex-1 flex-col overflow-hidden bg-white">
+    <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
       {/* Хедер блоку чату */}
-      <header className="flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3">
+      <header className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-500">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-muted-foreground">
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
           </span>
-          <h2 className="text-sm font-semibold text-gray-900">Історія переговорів</h2>
+          <h2 className="text-sm font-semibold text-foreground">Історія переговорів</h2>
         </div>
-        <span className="text-xs font-medium text-gray-500">{shortDealId}</span>
+        <span className="text-xs font-medium text-muted-foreground">{shortDealId}</span>
       </header>
 
       {/* Таймлайн повідомлень */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div className="flex-1 overflow-y-auto px-4 py-4 pb-20">
         <div className="mx-auto max-w-4xl space-y-4">
           {loading && (
             <div className="flex justify-center py-6">
-              <div className="h-6 w-40 animate-pulse rounded bg-gray-100" />
+              <div className="h-6 w-40 animate-pulse rounded bg-muted" />
             </div>
           )}
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
               {error}
             </div>
           )}
           {!loading && !error && messages.length === 0 && (
             <div className="flex justify-center py-4">
-              <p className="text-xs text-gray-400">Поки немає повідомлень.</p>
+              <p className="text-xs text-muted-foreground">Поки немає повідомлень.</p>
             </div>
           )}
           {messages.map((m) =>
             m.isSystemEvent ? (
               <div key={m.id} className="flex justify-center">
-                <div className="rounded-xl bg-gray-100 px-4 py-2.5 text-center text-sm text-gray-600">
+                <div className="rounded-xl bg-muted px-4 py-2.5 text-center text-sm text-muted-foreground">
                   {formatSystemEvent(m)}
                 </div>
               </div>
             ) : (
-              <div key={m.id} className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+              <div key={m.id} className="rounded-xl border border-border bg-card p-3 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="truncate text-sm font-semibold text-gray-900">
+                  <p className="truncate text-sm font-semibold text-foreground">
                     {m.sender?.companyName ?? '—'}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     {new Date(m.createdAt).toLocaleString('uk-UA')}
                   </p>
                 </div>
-                <p className="mt-2 text-sm text-gray-800 whitespace-pre-wrap">{m.content}</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">{m.content}</p>
               </div>
             ),
           )}
@@ -181,12 +181,11 @@ export function DealChat({ offerId, offer, shortDealId, currentUserId, onSystemE
         </div>
       </div>
 
-      {/* Поле вводу відповіді */}
-      <footer className="shrink-0 border-t border-gray-200 p-4">
-        <div className="mx-auto flex max-w-4xl items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 focus-within:border-emerald-400 focus-within:ring-1 focus-within:ring-emerald-400">
+      <footer className="shrink-0 border-t border-border bg-card p-4 w-[calc(100%-320px)] fixed bottom-0 right-0">
+        <div className="mx-auto flex max-w-4xl items-center gap-2 rounded-xl border border-border bg-muted px-3 py-2 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
           <button
             type="button"
-            className="rounded p-1.5 text-gray-400 hover:bg-gray-200 hover:text-gray-600"
+            className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
             aria-label="Додати файл"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -196,7 +195,7 @@ export function DealChat({ offerId, offer, shortDealId, currentUserId, onSystemE
           <input
             type="text"
             placeholder="Напишіть відповідь (можна обговорити логістику, упаковку, терміни)..."
-            className="min-w-0 flex-1 bg-transparent py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none"
+            className="min-w-0 flex-1 bg-transparent py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
@@ -208,7 +207,7 @@ export function DealChat({ offerId, offer, shortDealId, currentUserId, onSystemE
           />
           <button
             type="button"
-            className="rounded-lg bg-emerald-600 p-2 text-white hover:bg-emerald-700 disabled:opacity-50"
+            className="rounded-lg bg-success p-2 text-success-foreground hover:bg-success/90 disabled:opacity-50"
             aria-label="Надіслати"
             onClick={handleSend}
             disabled={sending || !text.trim()}

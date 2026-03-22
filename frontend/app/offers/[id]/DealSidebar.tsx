@@ -173,14 +173,14 @@ export function DealSidebar({
 
   if (loading) {
     return (
-      <aside className="flex h-full w-[320px] shrink-0 flex-col gap-4 overflow-y-auto border-r border-gray-200 bg-white p-4">
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-          <div className="h-4 w-20 rounded bg-gray-100" />
-          <div className="mt-3 h-6 w-3/4 rounded bg-gray-100" />
+      <aside className="flex h-full min-h-0 w-[320px] shrink-0 flex-col gap-4 border-r border-border bg-card p-4">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="h-4 w-20 rounded bg-muted" />
+          <div className="mt-3 h-6 w-3/4 rounded bg-muted" />
         </div>
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-          <div className="h-4 w-24 rounded bg-gray-100" />
-          <div className="mt-3 h-8 w-full rounded bg-gray-100" />
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="h-4 w-24 rounded bg-muted" />
+          <div className="mt-3 h-8 w-full rounded bg-muted" />
         </div>
       </aside>
     );
@@ -188,8 +188,8 @@ export function DealSidebar({
 
   if (error || !offer) {
     return (
-      <aside className="flex h-full w-[320px] shrink-0 flex-col border-r border-gray-200 bg-white p-4">
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+      <aside className="flex h-full min-h-0 w-[320px] shrink-0 flex-col border-r border-border bg-card p-4">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
           {error ?? 'Угоду не знайдено'}
         </div>
       </aside>
@@ -206,66 +206,68 @@ export function DealSidebar({
   const counterpartLabel = currentUser.role === 'BUYER' ? 'Постачальник' : 'Закупник';
 
   return (
-    <aside className="flex h-full w-[320px] shrink-0 flex-col gap-4 overflow-y-auto border-r border-gray-200 bg-white p-4">
-      {/* Картка контрагента — як у макеті: іконка кошика, підпис "Закупник/Постачальник", ім'я */}
-      <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+    <aside className="flex h-full min-h-0 w-[320px] shrink-0 flex-col gap-4 border-r border-border bg-card p-4">
+      <div className="sticky top-4 z-10 flex flex-col gap-4 border-b border-border bg-card pb-4">
+        {/* Картка контрагента — як у макеті: іконка кошика, підпис "Закупник/Постачальник", ім'я */}
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
         <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-success/15 text-success">
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{counterpartLabel}</p>
-            <p className="mt-0.5 font-semibold text-gray-900">{oppositeParty.companyName}</p>
-            <p className="text-sm text-gray-500">{oppositeParty.name}</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{counterpartLabel}</p>
+            <p className="mt-0.5 font-semibold text-foreground">{oppositeParty.companyName}</p>
+            <p className="text-sm text-muted-foreground">{oppositeParty.name}</p>
           </div>
         </div>
       </div>
 
       {/* Текущі умови — ціна контрагента, сітка умов */}
-      <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-        <h2 className="text-sm font-semibold text-gray-900">Поточні умови</h2>
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <h2 className="text-sm font-semibold text-foreground">Поточні умови</h2>
 
         <div className="mt-3 flex items-baseline justify-between gap-4">
           <div>
-            <p className="text-xs text-gray-500">Поточна пропозиція</p>
-            <p className="mt-0.5 text-2xl font-bold text-gray-900">{offer.currentPrice} грн/{offer.unit}</p>
+            <p className="text-xs text-muted-foreground">Поточна пропозиція</p>
+            <p className="mt-0.5 text-2xl font-bold text-foreground">{offer.currentPrice} грн/{offer.unit}</p>
           </div>
         </div>
 
-        <dl className="mt-4 grid gap-2 border-t border-gray-100 pt-3">
+        <dl className="mt-4 grid gap-2 border-t border-border pt-3">
           <div className="flex justify-between text-sm">
-            <dt className="text-gray-500">Обʼєм (на місяць)</dt>
-            <dd className="font-medium text-gray-900">{offer.volume.toLocaleString('uk-UA')} {offer.unit}</dd>
+            <dt className="text-muted-foreground">Обʼєм (на місяць)</dt>
+            <dd className="font-medium text-foreground">{offer.volume.toLocaleString('uk-UA')} {offer.unit}</dd>
           </div>
           <div className="flex justify-between text-sm">
-            <dt className="text-gray-500">Відстрочка платежу</dt>
-            <dd className="font-medium text-gray-900">за домовленістю</dd>
+            <dt className="text-muted-foreground">Відстрочка платежу</dt>
+            <dd className="font-medium text-foreground">за домовленістю</dd>
           </div>
           <div className="flex justify-between text-sm">
-            <dt className="text-gray-500">Логістика</dt>
-            <dd className="font-medium text-gray-900">{offer.deliveryTerms ?? 'за домовленістю'}</dd>
+            <dt className="text-muted-foreground">Логістика</dt>
+            <dd className="font-medium text-foreground">{offer.deliveryTerms ?? 'за домовленістю'}</dd>
           </div>
           <div className="flex justify-between text-sm">
-            <dt className="text-gray-500">Дата доставки</dt>
-            <dd className="font-medium text-gray-900">
+            <dt className="text-muted-foreground">Дата доставки</dt>
+            <dd className="font-medium text-foreground">
               {offer.deliveryDate ? new Date(offer.deliveryDate).toLocaleDateString('uk-UA') : 'Не вказано'}
             </dd>
           </div>
         </dl>
       </div>
 
+      
       {/* Дії: прийняти умови або запропонувати свою ціну */}
       {(!isClosed && !isAwaitingDelivery) && (
         <div className="flex flex-col gap-3">
           {actionError && (
-            <p className="text-xs text-red-600" role="alert">
+            <p className="text-xs text-destructive" role="alert">
               {actionError}
             </p>
           )}
           {(currentUser.role === 'BUYER' ? offer.currentTurn !== 'BUYER' : offer.currentTurn !== 'VENDOR') ? (
-            <p className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700">
+            <p className="rounded-lg bg-muted px-3 py-2 text-sm text-foreground">
               {currentUser.role === 'BUYER'
                 ? (offer.currentTurn === 'VENDOR' ? 'На розгляді у постачальника' : 'Очікуємо відповідь закупника')
                 : (offer.currentTurn === 'BUYER' ? 'На розгляді у закупника' : 'Очікуємо відповідь постачальника')}
@@ -276,14 +278,14 @@ export function DealSidebar({
                 type="button"
                 onClick={handleAccept}
                 disabled={actionLoading !== null}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-success py-3 font-semibold text-success-foreground shadow-sm hover:bg-success/90 disabled:opacity-50"
               >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 {actionLoading === 'accept' ? 'Приймаємо…' : `Прийняти умови (${offer.currentPrice} грн)`}
               </button>
-              <p className="text-center text-xs text-gray-500">або</p>
+              <p className="text-center text-xs text-muted-foreground">або</p>
               <div className="flex flex-wrap gap-2">
                 <input
                   type="text"
@@ -292,14 +294,14 @@ export function DealSidebar({
                   value={proposePrice}
                   onChange={(e) => setProposePrice(e.target.value)}
                   disabled={actionLoading !== null}
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-50"
+                  className="flex-1 rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring disabled:bg-muted"
                 />
-                <span className="flex items-center px-2 text-sm text-gray-500">грн</span>
+                <span className="flex items-center px-2 text-sm text-muted-foreground">грн</span>
                 <button
                   type="button"
                   onClick={handlePropose}
                   disabled={actionLoading !== null || !proposePrice.trim()}
-                  className="rounded-lg bg-gray-200 w-full px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                  className="w-full rounded-lg bg-muted px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted/80 disabled:opacity-50"
                 >
                   {actionLoading === 'propose' ? '…' : 'Запропонувати'}
                 </button>
@@ -308,7 +310,7 @@ export function DealSidebar({
                 type="button"
                 onClick={handleReject}
                 disabled={actionLoading !== null}
-                className="mt-2 text-xs font-medium text-red-600 hover:text-red-700"
+                className="mt-2 text-xs font-medium text-destructive hover:text-destructive/90"
               >
                 {actionLoading === 'reject' ? 'Відхиляємо угоду…' : 'Відхилити угоду з причиною'}
               </button>
@@ -319,7 +321,7 @@ export function DealSidebar({
 
       {isDelivered && (
         <div className="flex flex-col gap-3">
-          <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-center text-sm text-blue-800 font-medium">
+          <div className="rounded-xl border border-info/30 bg-info/10 p-4 text-center text-sm font-medium text-info">
             Доставку підтверджено.
           </div>
           {canArchive && (
@@ -327,18 +329,18 @@ export function DealSidebar({
               type="button"
               onClick={handleArchive}
               disabled={actionLoading !== null}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="w-full rounded-lg border border-input bg-card px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted/50 disabled:opacity-50"
             >
               {actionLoading === 'archive' ? '…' : (offer?.isArchived ? 'Розархівувати' : 'Архівувати угоду')}
             </button>
           )}
-          {actionError && <p className="text-xs text-red-600">{actionError}</p>}
+          {actionError && <p className="text-xs text-destructive">{actionError}</p>}
         </div>
       )}
 
       {offer?.status === 'REJECTED' && (
         <div className="flex flex-col gap-3">
-          <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-center text-sm text-red-800 font-medium">
+          <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-center text-sm font-medium text-destructive">
             Угоду відхилено.
           </div>
           {canArchive && (
@@ -346,24 +348,24 @@ export function DealSidebar({
               type="button"
               onClick={handleArchive}
               disabled={actionLoading !== null}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="w-full rounded-lg border border-input bg-card px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted/50 disabled:opacity-50"
             >
               {actionLoading === 'archive' ? '…' : (offer?.isArchived ? 'Розархівувати' : 'Архівувати угоду')}
             </button>
           )}
-          {actionError && <p className="text-xs text-red-600">{actionError}</p>}
+          {actionError && <p className="text-xs text-destructive">{actionError}</p>}
         </div>
       )}
 
       {offer?.status === 'ACCEPTED' && !isAwaitingDelivery && (
-        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 text-center text-sm text-gray-600">
+        <div className="rounded-xl border border-border bg-muted p-4 text-center text-sm text-muted-foreground">
           Угоду закрито. Дії недоступні.
         </div>
       )}
 
       {isAwaitingDelivery && (
         <div className="flex flex-col gap-3">
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-center text-sm text-emerald-800 font-medium">
+          <div className="rounded-xl border border-success/30 bg-success/10 p-4 text-center text-sm font-medium text-success">
             Угоду погоджено. Очікується доставка.
           </div>
 
@@ -372,7 +374,7 @@ export function DealSidebar({
               type="button"
               onClick={handleDeliver}
               disabled={actionLoading !== null}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -385,24 +387,24 @@ export function DealSidebar({
             <button
               type="button"
               onClick={() => setIsRescheduleOpen(true)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="w-full rounded-lg border border-input bg-card px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted/50"
             >
               Змінити дату доставки
             </button>
           ) : (
-            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-              <h3 className="text-sm font-medium text-gray-900 mb-3">Нова дата доставки</h3>
+            <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+              <h3 className="mb-3 text-sm font-medium text-foreground">Нова дата доставки</h3>
               <input
                 type="date"
                 value={newDeliveryDate}
                 onChange={(e) => setNewDeliveryDate(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
               />
               <div className="mt-3 flex gap-2">
                 <button
                   type="button"
                   onClick={() => setIsRescheduleOpen(false)}
-                  className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="flex-1 rounded-md border border-input bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
                 >
                   Скасувати
                 </button>
@@ -410,18 +412,20 @@ export function DealSidebar({
                   type="button"
                   onClick={handleReschedule}
                   disabled={!newDeliveryDate || actionLoading === 'reschedule'}
-                  className="flex-1 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                  className="flex-1 rounded-md bg-success px-3 py-2 text-sm font-medium text-success-foreground hover:bg-success/90 disabled:opacity-50"
                 >
                   {actionLoading === 'reschedule' ? 'Збереження...' : 'Зберегти'}
                 </button>
               </div>
               {actionError && (
-                <p className="mt-2 text-xs text-red-600">{actionError}</p>
+                <p className="mt-2 text-xs text-destructive">{actionError}</p>
               )}
             </div>
           )}
         </div>
       )}
+      </div>
+
     </aside>
   );
 }

@@ -2,14 +2,105 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light — neutral slate/zinc feel, navy–indigo primary (B2B SaaS) */
 :root {
-  --background: 210 40% 98%;
-  --foreground: 222.2 47.4% 11.2%;
+  --background: 210 20% 98%;
+  --foreground: 222 47% 11%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+
+  --primary: 226 48% 35%;
+  --primary-foreground: 210 40% 98%;
+
+  --secondary: 214 32% 93%;
+  --secondary-foreground: 222 47% 15%;
+
+  --muted: 210 24% 94%;
+  --muted-foreground: 215 16% 42%;
+
+  --accent: 214 32% 93%;
+  --accent-foreground: 222 47% 15%;
+
+  --destructive: 0 72% 48%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 214 24% 88%;
+  --input: 214 24% 88%;
+  --ring: 226 48% 40%;
+
+  --success: 142 71% 38%;
+  --success-foreground: 144 61% 97%;
+
+  --warning: 32 95% 44%;
+  --warning-foreground: 26 90% 12%;
+
+  --info: 221 83% 48%;
+  --info-foreground: 210 40% 98%;
+
+  --radius: 0.5rem;
 }
 
-body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+/* Dark — elevated surfaces, not pure black */
+.dark {
+  --background: 222 47% 7%;
+  --foreground: 210 30% 96%;
+
+  --card: 222 41% 11%;
+  --card-foreground: 210 30% 96%;
+
+  --popover: 222 41% 11%;
+  --popover-foreground: 210 30% 96%;
+
+  --primary: 226 58% 58%;
+  --primary-foreground: 222 47% 9%;
+
+  --secondary: 217 33% 18%;
+  --secondary-foreground: 210 30% 96%;
+
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 20% 62%;
+
+  --accent: 217 33% 18%;
+  --accent-foreground: 210 30% 96%;
+
+  --destructive: 0 72% 50%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 217 33% 20%;
+  --input: 217 33% 20%;
+  --ring: 226 58% 58%;
+
+  --success: 142 65% 48%;
+  --success-foreground: 144 61% 10%;
+
+  --warning: 38 92% 52%;
+  --warning-foreground: 26 90% 10%;
+
+  --info: 217 91% 62%;
+  --info-foreground: 222 47% 9%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply min-h-screen bg-background font-sans text-foreground antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display tracking-tight;
+  }
 }
 
 @keyframes page-in {
@@ -26,4 +117,3 @@ body {
 .animate-page-in {
   animation: page-in 0.25s ease-out;
 }
-

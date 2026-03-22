@@ -1,7 +1,25 @@
 import type { Metadata } from 'next';
-import NextTopLoader from 'nextjs-toploader';
-import './globals.css';
+import { Nunito, Nunito_Sans } from 'next/font/google';
+import { ThemedTopLoader } from '@/components/ThemedTopLoader';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import { NotificationsProvider } from '@/components/NotificationsProvider';
+import './globals.css';
+
+const nunitoSans = Nunito_Sans({
+  subsets: ['latin', 'cyrillic'],
+  weight: ['400', '500'],
+  variable: '--font-nunito-sans',
+  display: 'swap',
+  adjustFontFallback: false,
+});
+
+const nunito = Nunito({
+  subsets: ['latin', 'cyrillic'],
+  weight: ['600', '700', '800'],
+  variable: '--font-nunito',
+  display: 'swap',
+  adjustFontFallback: false,
+});
 
 export const metadata: Metadata = {
   title: 'RetailProcure',
@@ -14,19 +32,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }): JSX.Element {
   return (
-    <html lang="uk" suppressHydrationWarning>
-      <body className="min-h-screen bg-background text-foreground antialiased" suppressHydrationWarning>
-        <NextTopLoader
-          color="#4f46e5"
-          height={3}
-          showSpinner={false}
-          shadow="0 0 10px #4f46e5, 0 0 5px #4f46e5"
-        />
-        <NotificationsProvider>
-          {children}
-        </NotificationsProvider>
+    <html lang="uk" suppressHydrationWarning className={`${nunitoSans.variable} ${nunito.variable}`}>
+      <body suppressHydrationWarning>
+        <ThemeProvider>
+          <ThemedTopLoader />
+          <NotificationsProvider>{children}</NotificationsProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
 }
-

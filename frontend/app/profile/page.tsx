@@ -19,6 +19,7 @@ import {
 } from '@/lib/auth';
 
 import { NotificationBell } from '@/components/NotificationBell';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 type UserMe = AuthUser;
 
@@ -191,7 +192,7 @@ export default function ProfilePage(): JSX.Element {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-32 animate-pulse rounded bg-gray-200" />
+        <div className="h-8 w-32 animate-pulse rounded bg-muted" />
       </main>
     );
   }
@@ -199,7 +200,7 @@ export default function ProfilePage(): JSX.Element {
   if (error || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+        <div className="w-full max-w-md rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
           {error ?? 'Профіль недоступний'}
         </div>
       </main>
@@ -211,15 +212,16 @@ export default function ProfilePage(): JSX.Element {
   const avatarUrl = user.avatarPath ? `${baseUrl}${user.avatarPath}` : null;
 
   return (
-    <main className="flex min-h-screen flex-col bg-[#f5f5f5]">
-      <header className="border-b border-gray-200 bg-white">
+    <main className="flex min-h-screen flex-col bg-background">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
-          <Link href="/" className="text-xl font-semibold tracking-tight text-gray-900">
+          <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
             RetailProcure
           </Link>
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <NotificationBell />
-            <Link href="/dashboard" className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+            <Link href="/dashboard" className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
               ← В кабінет
             </Link>
           </div>
@@ -227,23 +229,23 @@ export default function ProfilePage(): JSX.Element {
       </header>
 
       <div className="mx-auto w-full max-w-4xl px-4 py-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Профіль</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Профіль</h1>
 
         <div className="mt-6 grid gap-6 md:grid-cols-[220px_1fr]">
-          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-900">Аватар</h2>
+          <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
+            <h2 className="text-sm font-semibold text-foreground">Аватар</h2>
             <div className="mt-3 flex items-center justify-center">
               {avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarUrl} alt="Avatar" className="h-28 w-28 rounded-full object-cover border border-gray-200" />
+                <img src={avatarUrl} alt="Avatar" className="h-28 w-28 rounded-full border border-border object-cover" />
               ) : (
-                <div className="flex h-28 w-28 items-center justify-center rounded-full bg-gray-100 text-gray-500">
+                <div className="flex h-28 w-28 items-center justify-center rounded-full bg-muted text-muted-foreground">
                   <span className="text-sm font-semibold">—</span>
                 </div>
               )}
             </div>
             {uploadError && (
-              <p className="mt-3 text-xs text-red-600" role="alert">{uploadError}</p>
+              <p className="mt-3 text-xs text-destructive" role="alert">{uploadError}</p>
             )}
             <label className="mt-4 block">
               <span className="sr-only">Завантажити аватар</span>
@@ -255,32 +257,32 @@ export default function ProfilePage(): JSX.Element {
                   const f = e.target.files?.[0];
                   if (f) uploadAvatar(f);
                 }}
-                className="block w-full text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-emerald-600 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-emerald-700 disabled:opacity-50"
+                className="block w-full text-sm text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-success file:px-3 file:py-2 file:text-sm file:font-medium file:text-success-foreground hover:file:bg-success/90 disabled:opacity-50"
               />
             </label>
-            <p className="mt-2 text-xs text-gray-500">PNG/JPG/WebP, до 5 МБ.</p>
+            <p className="mt-2 text-xs text-muted-foreground">PNG/JPG/WebP, до 5 МБ.</p>
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
               <div className="flex items-center justify-between gap-4">
-                <h2 className="text-sm font-semibold text-gray-900">Контактні дані</h2>
+                <h2 className="text-sm font-semibold text-foreground">Контактні дані</h2>
               </div>
               <div className="mt-4 grid gap-3">
                 <div className="flex flex-col gap-1">
-                  <div className="text-xs font-medium text-gray-600">Email</div>
-                  <div className="font-mono text-sm text-gray-900">{user.email}</div>
+                  <div className="text-xs font-medium text-muted-foreground">Email</div>
+                  <div className="font-mono text-sm text-foreground">{user.email}</div>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <div className="text-xs font-medium text-gray-600">Телефон</div>
-                  <div className="text-sm text-gray-900">{user.phone ? user.phone : '—'}</div>
+                  <div className="text-xs font-medium text-muted-foreground">Телефон</div>
+                  <div className="text-sm text-foreground">{user.phone ? user.phone : '—'}</div>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
               <div className="flex items-center justify-between gap-4">
-                <h2 className="text-sm font-semibold text-gray-900">Особисті дані</h2>
+                <h2 className="text-sm font-semibold text-foreground">Особисті дані</h2>
                 {!isEditMode ? (
                   <button
                     type="button"
@@ -288,7 +290,7 @@ export default function ProfilePage(): JSX.Element {
                       resetDraftFromUser(user);
                       setIsEditMode(true);
                     }}
-                    className="rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                    className="rounded-md border border-input bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-muted/50"
                   >
                     Редагувати дані
                   </button>
@@ -296,7 +298,7 @@ export default function ProfilePage(): JSX.Element {
                   <button
                     type="button"
                     onClick={cancelEdit}
-                    className="rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                    className="rounded-md border border-input bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-muted/50"
                   >
                     Скасувати
                   </button>
@@ -305,49 +307,49 @@ export default function ProfilePage(): JSX.Element {
 
               <form onSubmit={saveProfile} className="mt-4 space-y-4">
               {saveError && (
-                <div className="rounded bg-red-50 p-2 text-xs text-red-700" role="alert">{saveError}</div>
+                <div className="rounded bg-destructive/10 p-2 text-xs text-destructive" role="alert">{saveError}</div>
               )}
               <div>
-                <label htmlFor="profile-name" className="block text-sm font-medium text-gray-700">Ім'я</label>
+                <label htmlFor="profile-name" className="block text-sm font-medium text-foreground">Ім'я</label>
                 <input
                   id="profile-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={!isEditMode}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-50 disabled:text-gray-500"
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring disabled:bg-muted disabled:text-muted-foreground"
                 />
               </div>
               <div>
-                <label htmlFor="profile-company" className="block text-sm font-medium text-gray-700">Назва компанії</label>
+                <label htmlFor="profile-company" className="block text-sm font-medium text-foreground">Назва компанії</label>
                 <input
                   id="profile-company"
                   type="text"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   disabled={!isEditMode}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-50 disabled:text-gray-500"
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring disabled:bg-muted disabled:text-muted-foreground"
                 />
               </div>
 
               <div>
-                <label htmlFor="profile-phone" className="block text-sm font-medium text-gray-700">Телефон</label>
+                <label htmlFor="profile-phone" className="block text-sm font-medium text-foreground">Телефон</label>
                 <input
                   id="profile-phone"
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   disabled={!isEditMode}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-50 disabled:text-gray-500"
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring disabled:bg-muted disabled:text-muted-foreground"
                 />
-                <p className="mt-1 text-xs text-gray-500">Наприклад: +380501234567</p>
+                <p className="mt-1 text-xs text-muted-foreground">Наприклад: +380501234567</p>
               </div>
 
               {isEditMode && (
                 <button
                   type="submit"
                   disabled={saving}
-                  className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                  className="rounded-md bg-success px-4 py-2 text-sm font-medium text-success-foreground hover:bg-success/90 disabled:opacity-50"
                 >
                   {saving ? 'Збереження…' : 'Зберегти'}
                 </button>
@@ -355,14 +357,14 @@ export default function ProfilePage(): JSX.Element {
             </form>
             </div>
 
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-semibold text-gray-900">Зміна пароля</h2>
+            <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
+              <h2 className="text-sm font-semibold text-foreground">Зміна пароля</h2>
               <form onSubmit={changePassword} className="mt-4 space-y-4">
                 {changePasswordError && (
-                  <div className="rounded bg-red-50 p-2 text-xs text-red-700" role="alert">{changePasswordError}</div>
+                  <div className="rounded bg-destructive/10 p-2 text-xs text-destructive" role="alert">{changePasswordError}</div>
                 )}
                 <div>
-                  <label htmlFor="current-password" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="current-password" className="block text-sm font-medium text-foreground">
                     Поточний пароль
                   </label>
                   <input
@@ -371,11 +373,11 @@ export default function ProfilePage(): JSX.Element {
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     disabled={changingPassword}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring disabled:bg-muted disabled:text-muted-foreground"
                   />
                 </div>
                 <div>
-                  <label htmlFor="new-password" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="new-password" className="block text-sm font-medium text-foreground">
                     Новий пароль
                   </label>
                   <input
@@ -384,11 +386,11 @@ export default function ProfilePage(): JSX.Element {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     disabled={changingPassword}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring disabled:bg-muted disabled:text-muted-foreground"
                   />
                 </div>
                 <div>
-                  <label htmlFor="confirm-new-password" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="confirm-new-password" className="block text-sm font-medium text-foreground">
                     Підтвердіть новий пароль
                   </label>
                   <input
@@ -397,13 +399,13 @@ export default function ProfilePage(): JSX.Element {
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
                     disabled={changingPassword}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring disabled:bg-muted disabled:text-muted-foreground"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={changingPassword}
-                  className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+                  className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 >
                   {changingPassword ? 'Зміна…' : 'Змінити пароль'}
                 </button>

@@ -12,6 +12,7 @@ import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { uk } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const locales = {
   'uk': uk,
@@ -77,15 +78,16 @@ export default function CalendarPage() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col bg-gray-50">
-      <header className="border-b border-gray-200 bg-white">
+    <main className="flex min-h-screen flex-col bg-background">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link href="/" className="text-xl font-semibold tracking-tight text-gray-900">
+          <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
             RetailProcure
           </Link>
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <NotificationBell />
-            <Link href="/dashboard" prefetch={false} className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+            <Link href="/dashboard" prefetch={false} className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
               ← В кабінет
             </Link>
           </div>
@@ -94,23 +96,23 @@ export default function CalendarPage() {
 
       <div className="mx-auto w-full max-w-6xl px-4 py-8 flex-1 flex flex-col">
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Календар поставок</h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <h1 className="text-2xl font-semibold text-foreground">Календар поставок</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Тут відображаються всі узгоджені замовлення, які очікують доставки та доставлені.
           </p>
-          <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
-            <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-emerald-600" /> Очікує доставки</span>
-            <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-blue-600" /> Доставлено</span>
+          <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-success" /> Очікує доставки</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-info" /> Доставлено</span>
           </div>
         </div>
 
-        <div className="flex-1 rounded-xl border border-gray-200 bg-white p-4 shadow-sm min-h-[600px]">
+        <div className="min-h-[600px] flex-1 rounded-xl border border-border bg-card p-4 shadow-sm">
           {loading ? (
             <div className="flex h-full items-center justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             </div>
           ) : error ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
               {error}
             </div>
           ) : (
@@ -139,8 +141,8 @@ export default function CalendarPage() {
                 const isDelivered = event.offer.status === 'DELIVERED';
                 return {
                   className: isDelivered
-                    ? 'bg-blue-600 border-blue-700 rounded text-xs px-1 py-0.5 cursor-pointer hover:bg-blue-700'
-                    : 'bg-emerald-600 border-emerald-700 rounded text-xs px-1 py-0.5 cursor-pointer hover:bg-emerald-700',
+                    ? 'bg-info border-info rounded text-xs px-1 py-0.5 cursor-pointer hover:brightness-95 text-info-foreground'
+                    : 'bg-success border-success rounded text-xs px-1 py-0.5 cursor-pointer hover:brightness-95 text-success-foreground',
                 };
               }}
             />

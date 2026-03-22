@@ -24,16 +24,16 @@ export default function HomePage(): JSX.Element {
   if (!mounted) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4">
-        <div className="h-8 w-32 animate-pulse rounded bg-gray-200" />
+        <div className="h-8 w-32 animate-pulse rounded bg-muted" />
       </main>
     );
   }
 
   return (
     <main className="flex min-h-screen flex-col">
-      <header className="border-b border-gray-200 bg-white/80 backdrop-blur">
+      <header className="border-b border-border bg-card/80 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
-          <Link href="/" className="text-xl font-semibold tracking-tight text-gray-900">
+          <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
             RetailProcure
           </Link>
           <nav className="flex items-center gap-4">
@@ -41,14 +41,14 @@ export default function HomePage(): JSX.Element {
               <>
                 <Link
                   href="/dashboard"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                  className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
                 >
                   Кабінет
                 </Link>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+                  className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent"
                 >
                   Вийти
                 </button>
@@ -57,13 +57,13 @@ export default function HomePage(): JSX.Element {
               <>
                 <Link
                   href="/login"
-                  className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                  className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
                 >
                   Увійти
                 </Link>
                 <Link
                   href="/register"
-                  className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                  className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
                 >
                   Реєстрація
                 </Link>
@@ -75,10 +75,10 @@ export default function HomePage(): JSX.Element {
 
       <div className="mx-auto flex max-w-4xl flex-1 flex-col items-center justify-center gap-8 px-4 py-12">
         <div className="text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
             Закупки та переговори в одному місці
           </h1>
-          <p className="mt-4 text-lg text-gray-600">
+          <p className="mt-4 text-lg text-muted-foreground">
             Закупники порівнюють пропозиції постачальників. Постачальники надсилають ціни та приймають контрпропозиції.
           </p>
         </div>
@@ -87,13 +87,13 @@ export default function HomePage(): JSX.Element {
           <div className="flex flex-col items-center gap-4 sm:flex-row">
             <Link
               href="/login"
-              className="w-full rounded-lg border-2 border-gray-300 bg-white px-6 py-3 text-center font-medium text-gray-800 hover:border-gray-400 hover:bg-gray-50 sm:w-auto"
+              className="w-full rounded-lg border-2 border-input bg-card px-6 py-3 text-center font-medium text-foreground hover:border-muted-foreground/40 hover:bg-muted/50 sm:w-auto"
             >
               Увійти в акаунт
             </Link>
             <Link
               href="/register"
-              className="w-full rounded-lg bg-indigo-600 px-6 py-3 text-center font-medium text-white hover:bg-indigo-700 sm:w-auto"
+              className="w-full rounded-lg bg-primary px-6 py-3 text-center font-medium text-primary-foreground hover:bg-primary/90 sm:w-auto"
             >
               Зареєструватися
             </Link>
@@ -101,13 +101,13 @@ export default function HomePage(): JSX.Element {
         ) : (
           <Link
             href="/dashboard"
-            className="rounded-lg bg-indigo-600 px-6 py-3 font-medium text-white hover:bg-indigo-700"
+            className="rounded-lg bg-primary px-6 py-3 font-medium text-primary-foreground hover:bg-primary/90"
           >
             Перейти в кабінет
           </Link>
         )}
 
-        <div className="mt-8 flex gap-8 text-sm text-gray-500">
+        <div className="mt-8 flex gap-8 text-sm text-muted-foreground">
           <span>Закупник — створює SKU та приймає пропозиції</span>
           <span>Постачальник — надсилає ціни та веде переговори</span>
         </div>

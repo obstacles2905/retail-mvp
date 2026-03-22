@@ -43,9 +43,9 @@ export default function LoginPage(): JSX.Element {
 
   return (
     <main className="flex min-h-screen flex-col">
-      <header className="border-b border-gray-200 bg-white">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-14 max-w-4xl items-center px-4">
-          <Link href="/" className="text-xl font-semibold tracking-tight text-gray-900">
+          <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
             RetailProcure
           </Link>
         </div>
@@ -53,10 +53,10 @@ export default function LoginPage(): JSX.Element {
 
       <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 px-4 py-12">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Вхід в акаунт</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-semibold text-foreground">Вхід в акаунт</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Немає акаунта?{' '}
-            <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <Link href="/register" className="font-medium text-primary hover:text-primary/90">
               Зареєструватися
             </Link>
           </p>
@@ -64,12 +64,12 @@ export default function LoginPage(): JSX.Element {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-800" role="alert">
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive" role="alert">
               {error}
             </div>
           )}
           <div>
-            <label htmlFor="login-email" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="login-email" className="block text-sm font-medium text-foreground">
               Email
             </label>
             <input
@@ -79,11 +79,11 @@ export default function LoginPage(): JSX.Element {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           <div>
-            <label htmlFor="login-password" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="login-password" className="block text-sm font-medium text-foreground">
               Пароль
             </label>
             <input
@@ -93,13 +93,13 @@ export default function LoginPage(): JSX.Element {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             {loading ? 'Вхід…' : 'Увійти'}
           </button>
@@ -107,16 +107,16 @@ export default function LoginPage(): JSX.Element {
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300" />
+            <div className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="bg-white px-2 text-gray-500">Або</span>
+            <span className="bg-background px-2 text-muted-foreground">Або</span>
           </div>
         </div>
 
         <a
           href={`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'}/auth/google`}
-          className="flex w-full items-center justify-center gap-3 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+          className="flex w-full items-center justify-center gap-3 rounded-md border border-input bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-muted/50"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path
@@ -139,8 +139,8 @@ export default function LoginPage(): JSX.Element {
           Увійти через Google
         </a>
 
-        <p className="text-center text-sm text-gray-500">
-          <Link href="/" className="text-indigo-600 hover:text-indigo-500">
+        <p className="text-center text-sm text-muted-foreground">
+          <Link href="/" className="text-primary hover:text-primary/90">
             ← На головну
           </Link>
         </p>

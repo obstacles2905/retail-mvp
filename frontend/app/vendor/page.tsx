@@ -39,6 +39,8 @@ interface SkuOption {
 }
 
 import { NotificationBell } from '@/components/NotificationBell';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { noveltyBadgeClassName, offerStatusBadgeClassName } from '@/lib/offer-status-badge';
 import { toast } from 'react-hot-toast';
 
 export default function VendorDashboardPage(): JSX.Element {
@@ -185,20 +187,21 @@ export default function VendorDashboardPage(): JSX.Element {
 
   return (
     <main className="flex min-h-screen flex-col">
-      <header className="border-b border-gray-200 bg-white">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
-          <Link href="/" className="text-xl font-semibold tracking-tight text-gray-900">
+          <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
             RetailProcure
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
             <NotificationBell />
-            <Link href="/calendar" prefetch={false} className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+            <Link href="/calendar" prefetch={false} className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
               Календар
             </Link>
             <Link
               href="/dashboard"
               prefetch={false}
-              className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+              className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
             >
               ← В кабінет
             </Link>
@@ -207,19 +210,19 @@ export default function VendorDashboardPage(): JSX.Element {
       </header>
 
       <div className="mx-auto w-full max-w-4xl px-4 py-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Кабінет постачальника</h1>
-        <p className="mt-1 text-gray-600">
+        <h1 className="text-2xl font-semibold text-foreground">Кабінет постачальника</h1>
+        <p className="mt-1 text-muted-foreground">
           Ваші пропозиції та переговорні. Створіть пропозицію за товарами закупників, до яких ви підключені.
         </p>
 
         {loading && (
           <div className="mt-6 flex justify-center py-12">
-            <div className="h-8 w-48 animate-pulse rounded bg-gray-200" />
+            <div className="h-8 w-48 animate-pulse rounded bg-muted" />
           </div>
         )}
 
         {error && (
-          <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+          <div className="mt-6 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
             {error}
           </div>
         )}
@@ -227,18 +230,18 @@ export default function VendorDashboardPage(): JSX.Element {
         {!loading && !error && (
           <>
             {/* Підключені закупники */}
-            <div className="mt-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-semibold text-gray-900">Підключені закупники</h2>
+            <div className="mt-6 rounded-lg border border-border bg-card p-4 shadow-sm">
+              <h2 className="text-sm font-semibold text-foreground">Підключені закупники</h2>
               {connections.length === 0 ? (
-                <p className="mt-2 text-sm text-gray-500">
+                <p className="mt-2 text-sm text-muted-foreground">
                   Поки немає. Перейдіть за посиланням-запрошенням від закупника, щоб зареєструватися та підключитися.
                 </p>
               ) : (
                 <ul className="mt-2 space-y-1">
                   {connections.map((c) => (
-                    <li key={c.buyerId} className="text-sm text-gray-700">
+                    <li key={c.buyerId} className="text-sm text-foreground">
                       <span className="font-medium">{c.buyerCompanyName}</span>
-                      {c.buyerName && <span className="text-gray-500"> — {c.buyerName}</span>}
+                      {c.buyerName && <span className="text-muted-foreground"> — {c.buyerName}</span>}
                     </li>
                   ))}
                 </ul>
@@ -247,19 +250,19 @@ export default function VendorDashboardPage(): JSX.Element {
 
             {/* Створити пропозицію */}
             {connections.length > 0 && (
-              <div className="mt-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                <h2 className="text-sm font-semibold text-gray-900">Створити пропозицію</h2>
-                <p className="mt-1 text-xs text-gray-500">
+              <div className="mt-6 rounded-lg border border-border bg-card p-4 shadow-sm">
+                <h2 className="text-sm font-semibold text-foreground">Створити пропозицію</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
                   Оберіть закупника. Можна запропонувати товар з його каталогу (SKU) або свій товар — закупник побачить пропозицію в переговорній.
                 </p>
                 <form onSubmit={handleCreateOffer} className="mt-4 space-y-4">
                   {createError && (
-                    <div className="rounded bg-red-50 p-2 text-xs text-red-700" role="alert">
+                    <div className="rounded bg-destructive/10 p-2 text-xs text-destructive" role="alert">
                       {createError}
                     </div>
                   )}
                   <div>
-                    <label htmlFor="vendor-buyer" className="block text-xs font-medium text-gray-700">
+                    <label htmlFor="vendor-buyer" className="block text-xs font-medium text-foreground">
                       Закупник (кому пропозиція)
                     </label>
                     <select
@@ -270,7 +273,7 @@ export default function VendorDashboardPage(): JSX.Element {
                         setSelectedProduct(null);
                       }}
                       required
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                     >
                       <option value="">Оберіть закупника</option>
                       {connections.map((c) => (
@@ -283,7 +286,7 @@ export default function VendorDashboardPage(): JSX.Element {
 
                   {selectedBuyerId && (
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Товар</label>
+                      <label className="block text-xs font-medium text-foreground mb-1">Товар</label>
                       <ProductSelect
                         buyerId={selectedBuyerId}
                         role="VENDOR"
@@ -291,11 +294,11 @@ export default function VendorDashboardPage(): JSX.Element {
                         onChange={setSelectedProduct}
                       />
                       {selectedProduct && (
-                        <div className="mt-2 text-sm text-indigo-700 bg-indigo-50 p-2 rounded">
+                        <div className="mt-2 rounded bg-primary/10 p-2 text-sm text-primary">
                           Обрано: <strong>{selectedProduct.productName}</strong> ({selectedProduct.uom})
                           {!selectedProduct.skuId && ' (Новий товар)'}
                           {selectedProduct.targetPrice && (
-                            <span className="ml-2 inline-flex items-center rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800">
+                            <span className="ml-2 inline-flex items-center rounded-full border border-primary/30 bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary">
                               Цільова ціна: {selectedProduct.targetPrice} грн
                             </span>
                           )}
@@ -306,7 +309,7 @@ export default function VendorDashboardPage(): JSX.Element {
 
                   <div className="flex flex-wrap gap-3">
                     <div className="w-28">
-                      <label htmlFor="vendor-price" className="block text-xs font-medium text-gray-700">
+                      <label htmlFor="vendor-price" className="block text-xs font-medium text-foreground">
                         Ціна, грн
                       </label>
                       <input
@@ -317,16 +320,16 @@ export default function VendorDashboardPage(): JSX.Element {
                         onChange={(e) => setCreatePrice(e.target.value)}
                         placeholder="0.00"
                         required
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                       {selectedProduct?.targetPrice && Number(createPrice) > 0 && Number(createPrice) < Number(selectedProduct.targetPrice) && (
-                        <p className="mt-1 text-[10px] text-amber-600 leading-tight">
+                        <p className="mt-1 text-[10px] text-warning leading-tight">
                           Увага: вказана ціна нижча за цільову ({selectedProduct.targetPrice} грн)
                         </p>
                       )}
                     </div>
                     <div className="w-24">
-                      <label htmlFor="vendor-volume" className="block text-xs font-medium text-gray-700">
+                      <label htmlFor="vendor-volume" className="block text-xs font-medium text-foreground">
                         Об'єм ({selectedProduct?.uom || 'од.'})
                       </label>
                       <input
@@ -337,11 +340,11 @@ export default function VendorDashboardPage(): JSX.Element {
                         onChange={(e) => setCreateVolume(e.target.value)}
                         placeholder="100"
                         required
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div className="w-40">
-                      <label htmlFor="vendor-delivery-date" className="block text-xs font-medium text-gray-700">
+                      <label htmlFor="vendor-delivery-date" className="block text-xs font-medium text-foreground">
                         Дата доставки
                       </label>
                       <input
@@ -350,12 +353,12 @@ export default function VendorDashboardPage(): JSX.Element {
                         value={createDeliveryDate}
                         onChange={(e) => setCreateDeliveryDate(e.target.value)}
                         required
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="vendor-delivery" className="block text-xs font-medium text-gray-700">
+                    <label htmlFor="vendor-delivery" className="block text-xs font-medium text-foreground">
                       Терміни та умови доставки
                     </label>
                     <textarea
@@ -365,13 +368,13 @@ export default function VendorDashboardPage(): JSX.Element {
                       onChange={(e) => setCreateDeliveryTerms(e.target.value)}
                       placeholder="Наприклад: 5–7 робочих днів, самовивіз зі складу"
                       maxLength={2000}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={createLoading}
-                    className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                   >
                     {createLoading ? 'Створення…' : 'Створити пропозицію'}
                   </button>
@@ -380,31 +383,31 @@ export default function VendorDashboardPage(): JSX.Element {
             )}
 
             {!loading && connections.length > 0 && skus.length === 0 && (
-              <p className="mt-4 text-sm text-gray-500">
+              <p className="mt-4 text-sm text-muted-foreground">
                 У закупників поки немає товарів у каталозі — створіть пропозицію «Свій товар» вище.
               </p>
             )}
 
-            <div className="mt-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm space-y-3">
-              <h2 className="text-sm font-semibold text-gray-900">Фільтри та сортування</h2>
+            <div className="mt-6 rounded-lg border border-border bg-card p-4 shadow-sm space-y-3">
+              <h2 className="text-sm font-semibold text-foreground">Фільтри та сортування</h2>
               <div className="flex flex-wrap gap-3 items-end">
                 <div className="flex-1 min-w-[200px]">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Закупник</label>
+                  <label className="block text-xs font-medium text-foreground mb-1">Закупник</label>
                   <input
                     type="text"
                     placeholder="Пошук за назвою..."
                     value={counterpartySearch}
                     onChange={(e) => setCounterpartySearch(e.target.value)}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    className="w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Сортувати за</label>
+                  <label className="block text-xs font-medium text-foreground mb-1">Сортувати за</label>
                   <div className="flex gap-1">
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as 'createdAt' | 'acceptedAt')}
-                      className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className="rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                     >
                       <option value="createdAt">Дата створення</option>
                       <option value="acceptedAt">Дата погодження</option>
@@ -412,20 +415,20 @@ export default function VendorDashboardPage(): JSX.Element {
                     <button
                       type="button"
                       onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
-                      className="rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+                      className="rounded-md border border-input px-3 py-2 text-sm hover:bg-muted/50"
                       title={sortOrder === 'asc' ? 'За зростанням' : 'За спаданням'}
                     >
                       {sortOrder === 'asc' ? '↑' : '↓'}
                     </button>
                   </div>
                 </div>
-                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer pb-2">
+                <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer pb-2">
                   <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
                   Показати архівні
                 </label>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-700 mb-1">Статус</p>
+                <p className="text-xs font-medium text-foreground mb-1">Статус</p>
                 <div className="flex flex-wrap gap-1.5">
                   {ALL_STATUSES.map((s) => (
                     <button
@@ -434,8 +437,8 @@ export default function VendorDashboardPage(): JSX.Element {
                       onClick={() => toggleStatusFilter(s)}
                       className={`rounded-full px-2.5 py-1 text-xs font-medium border transition-colors ${
                         statusFilter.includes(s)
-                          ? 'bg-indigo-600 text-white border-indigo-600'
-                          : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-input bg-card text-muted-foreground hover:bg-muted/50'
                       }`}
                     >
                       {STATUS_LABELS[s]}
@@ -445,7 +448,7 @@ export default function VendorDashboardPage(): JSX.Element {
                     <button
                       type="button"
                       onClick={() => setStatusFilter([])}
-                      className="text-xs text-gray-500 hover:text-gray-700 underline ml-1"
+                      className="text-xs text-muted-foreground hover:text-foreground underline ml-1"
                     >
                       Скинути
                     </button>
@@ -455,57 +458,52 @@ export default function VendorDashboardPage(): JSX.Element {
             </div>
 
             {offers.length === 0 ? (
-              <div className="mt-8 rounded-lg border border-gray-200 bg-gray-50 p-8 text-center">
-                <p className="text-gray-600">У вас поки немає пропозицій.</p>
-                <p className="mt-1 text-sm text-gray-500">
+              <div className="mt-8 rounded-lg border border-border bg-muted p-8 text-center">
+                <p className="text-muted-foreground">У вас поки немає пропозицій.</p>
+                <p className="mt-1 text-sm text-muted-foreground">
                   Створіть пропозицію вище — потім відкрийте переговорну для переговорів із закупником.
                 </p>
               </div>
             ) : (
-              <div className="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white">
-                <h2 className="border-b border-gray-200 bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-900">
+              <div className="mt-6 overflow-hidden rounded-lg border border-border bg-card">
+                <h2 className="border-b border-border bg-muted px-4 py-2 text-sm font-semibold text-foreground">
                   Ваші пропозиції
                 </h2>
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-border">
+                  <thead className="bg-muted">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Товар</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Закупник</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Ціна</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Об&apos;єм</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Доставка</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Статус</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Дія</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Товар</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Закупник</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-muted-foreground">Ціна</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-muted-foreground">Об&apos;єм</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Доставка</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Статус</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-muted-foreground">Дія</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
+                  <tbody className="divide-y divide-border bg-card">
                     {offers.map((offer) => (
-                      <tr key={offer.id} className={`hover:bg-gray-50 ${offer.isArchived ? 'opacity-60' : ''}`}>
-                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
+                      <tr key={offer.id} className={`hover:bg-muted ${offer.isArchived ? 'opacity-60' : ''}`}>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm text-foreground">
                           {offer.sku?.name || offer.productName}
                           {offer.isNovelty && (
-                            <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">
+                            <span className={`ml-2 ${noveltyBadgeClassName}`}>
                               Ваша пропозиція
                             </span>
                           )}
                         </td>
-                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">{offer.buyer?.companyName ?? '—'}</td>
-                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium text-gray-900">{offer.currentPrice} грн</td>
-                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-600">{offer.volume} {offer.unit}</td>
-                        <td className="max-w-[180px] truncate px-4 py-3 text-sm text-gray-600" title={offer.deliveryTerms ?? undefined}>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm text-muted-foreground">{offer.buyer?.companyName ?? '—'}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium text-foreground">{offer.currentPrice} грн</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-muted-foreground">{offer.volume} {offer.unit}</td>
+                        <td className="max-w-[180px] truncate px-4 py-3 text-sm text-muted-foreground" title={offer.deliveryTerms ?? undefined}>
                           {offer.deliveryTerms || '—'}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3">
-                          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                            offer.status === 'DELIVERED' ? 'bg-blue-100 text-blue-800' :
-                            offer.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
-                            offer.status === 'AWAITING_DELIVERY' ? 'bg-emerald-100 text-emerald-800' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
+                          <span className={offerStatusBadgeClassName(offer.status)}>
                             {STATUS_LABELS[offer.status] ?? offer.status}
                           </span>
                           {offer.isArchived && (
-                            <span className="ml-1 inline-flex rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-medium text-gray-500">Архів</span>
+                            <span className="ml-1 inline-flex rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">Архів</span>
                           )}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-right">
@@ -515,7 +513,7 @@ export default function VendorDashboardPage(): JSX.Element {
                                 type="button"
                                 onClick={() => handleArchive(offer.id)}
                                 disabled={actionInProgress === offer.id}
-                                className="rounded p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                                className="rounded p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
                                 title={offer.isArchived ? 'Розархівувати' : 'Архівувати'}
                               >
                                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -525,11 +523,11 @@ export default function VendorDashboardPage(): JSX.Element {
                             )}
                             <a
                               href={`/offers/${offer.id}`}
-                              className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+                              className="inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
                             >
                               Переговорна
                               {unread[offer.id] ? (
-                                <span className="ml-2 inline-flex min-w-[20px] justify-center rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
+                                <span className="ml-2 inline-flex min-w-[20px] justify-center rounded-full bg-primary-foreground/20 px-2 py-0.5 text-xs font-semibold">
                                   {unread[offer.id]}
                                 </span>
                               ) : null}

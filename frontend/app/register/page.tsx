@@ -66,9 +66,9 @@ export default function RegisterPage(): JSX.Element {
 
   return (
     <main className="flex min-h-screen flex-col">
-      <header className="border-b border-gray-200 bg-white">
+      <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-14 max-w-4xl items-center px-4">
-          <Link href="/" className="text-xl font-semibold tracking-tight text-gray-900">
+          <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
             RetailProcure
           </Link>
         </div>
@@ -76,10 +76,10 @@ export default function RegisterPage(): JSX.Element {
 
       <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 px-4 py-12">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Реєстрація</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-semibold text-foreground">Реєстрація</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Вже є акаунт?{' '}
-            <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <Link href="/login" className="font-medium text-primary hover:text-primary/90">
               Увійти
             </Link>
           </p>
@@ -87,20 +87,20 @@ export default function RegisterPage(): JSX.Element {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-800" role="alert">
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive" role="alert">
               {error}
             </div>
           )}
 
           <div>
-            <label htmlFor="reg-role" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="reg-role" className="block text-sm font-medium text-foreground">
               Я реєструюся як
             </label>
             <select
               id="reg-role"
               value={role}
               onChange={(e) => setRole(e.target.value as Role)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
             >
               <option value="BUYER">Закупник</option>
               <option value="VENDOR">Постачальник</option>
@@ -108,7 +108,7 @@ export default function RegisterPage(): JSX.Element {
           </div>
 
           <div>
-            <label htmlFor="reg-email" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="reg-email" className="block text-sm font-medium text-foreground">
               Email
             </label>
             <input
@@ -118,11 +118,11 @@ export default function RegisterPage(): JSX.Element {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           <div>
-            <label htmlFor="reg-password" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="reg-password" className="block text-sm font-medium text-foreground">
               Пароль (не менше 8 символів)
             </label>
             <input
@@ -133,11 +133,11 @@ export default function RegisterPage(): JSX.Element {
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           <div>
-            <label htmlFor="reg-password-confirm" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="reg-password-confirm" className="block text-sm font-medium text-foreground">
               Підтвердження пароля
             </label>
             <input
@@ -148,11 +148,11 @@ export default function RegisterPage(): JSX.Element {
               minLength={8}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           <div>
-            <label htmlFor="reg-name" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="reg-name" className="block text-sm font-medium text-foreground">
               Ім'я
             </label>
             <input
@@ -162,11 +162,11 @@ export default function RegisterPage(): JSX.Element {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           <div>
-            <label htmlFor="reg-company" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="reg-company" className="block text-sm font-medium text-foreground">
               Назва компанії
             </label>
             <input
@@ -176,14 +176,14 @@ export default function RegisterPage(): JSX.Element {
               required
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
             {loading ? 'Реєстрація…' : 'Зареєструватися'}
           </button>
@@ -191,16 +191,16 @@ export default function RegisterPage(): JSX.Element {
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300" />
+            <div className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="bg-white px-2 text-gray-500">Або</span>
+            <span className="bg-background px-2 text-muted-foreground">Або</span>
           </div>
         </div>
 
         <a
           href={`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'}/auth/google?state=${typeof window !== 'undefined' ? btoa(JSON.stringify({ role: role })) : ''}`}
-          className="flex w-full items-center justify-center gap-3 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+          className="flex w-full items-center justify-center gap-3 rounded-md border border-input bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-muted/50"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -211,8 +211,8 @@ export default function RegisterPage(): JSX.Element {
           Продовжити через Google
         </a>
 
-        <p className="text-center text-sm text-gray-500">
-          <Link href="/" className="text-indigo-600 hover:text-indigo-500">
+        <p className="text-center text-sm text-muted-foreground">
+          <Link href="/" className="text-primary hover:text-primary/90">
             ← На головну
           </Link>
         </p>
