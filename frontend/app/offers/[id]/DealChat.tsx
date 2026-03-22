@@ -9,9 +9,11 @@ interface DealChatProps {
   offerId: string;
   offer: OfferDetail | null;
   shortDealId: string;
+  currentUserId: string;
+  onSystemEvent?: () => void;
 }
 
-export function DealChat({ offerId, offer, shortDealId }: DealChatProps): JSX.Element {
+export function DealChat({ offerId, offer, shortDealId, currentUserId, onSystemEvent }: DealChatProps): JSX.Element {
   const [messages, setMessages] = useState<OfferMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,6 +21,8 @@ export function DealChat({ offerId, offer, shortDealId }: DealChatProps): JSX.El
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const socketRef = useRef<ReturnType<typeof createOffersSocket> | null>(null);
+  const onSystemEventRef = useRef(onSystemEvent);
+  onSystemEventRef.current = onSystemEvent;
 
   const api = useMemo(() => getAuthApiClient(), []);
 
@@ -38,6 +42,9 @@ export function DealChat({ offerId, offer, shortDealId }: DealChatProps): JSX.El
     socket.emit('offers:join', { offerId });
     socket.on('offers:message:new', (msg) => {
       setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
+      if (msg.isSystemEvent) {
+        onSystemEventRef.current?.();
+      }
     });
 
     return () => {
@@ -51,25 +58,51 @@ export function DealChat({ offerId, offer, shortDealId }: DealChatProps): JSX.El
     bottomRef.current?.scrollIntoView({ block: 'end' });
   }, [messages.length]);
 
+  const getActorLabel = (m: OfferMessage): string => {
+    if (m.senderId === currentUserId) return 'Ви';
+    if (m.senderId === offer?.vendorId) return offer?.vendor?.name ?? 'Постачальник';
+    if (m.senderId === offer?.buyerId) return offer?.buyer?.name ?? 'Закупник';
+    return m.sender?.name ?? 'Учасник';
+  };
+
   const formatSystemEvent = (m: OfferMessage): string => {
+    const actor = getActorLabel(m);
+    const isSelf = m.senderId === currentUserId;
+
     if (m.eventType === 'PRICE_CHANGED') {
       const oldPrice = typeof m.metaData?.oldPrice === 'string' ? m.metaData.oldPrice : '';
       const newPrice = typeof m.metaData?.newPrice === 'string' ? m.metaData.newPrice : '';
-      return oldPrice && newPrice ? `Зміна ціни: ${oldPrice} → ${newPrice} грн` : 'Зміна ціни';
+      const verb = isSelf ? 'змінили' : 'змінив(-ла)';
+      const priceDetails = oldPrice && newPrice ? `: ${oldPrice} → ${newPrice} грн` : '';
+      return `${actor} ${verb} ціну${priceDetails}`;
     }
-    if (m.eventType === 'DEAL_ACCEPTED') return 'Угоду узгоджено';
+    if (m.eventType === 'DEAL_ACCEPTED') {
+      const verb = isSelf ? 'прийняли' : 'прийняв(-ла)';
+      return `${actor} ${verb} умови угоди`;
+    }
     if (m.eventType === 'TERMS_UPDATED') {
       const action = typeof m.metaData?.action === 'string' ? m.metaData.action : '';
       if (action === 'REJECTED') {
         const reason = typeof m.metaData?.reason === 'string' ? m.metaData.reason : '';
-        return reason ? `Угоду відхилено: ${reason}` : 'Угоду відхилено';
+        const verb = isSelf ? 'відхилили' : 'відхилив(-ла)';
+        return reason ? `${actor} ${verb} угоду: ${reason}` : `${actor} ${verb} угоду`;
       }
       if (action === 'BUYER_ORDER_CREATED') return 'Замовлення створено закупником';
-      return 'Оновлення умов';
+      const verb = isSelf ? 'оновили' : 'оновив(-ла)';
+      return `${actor} ${verb} умови`;
     }
     if (m.eventType === 'DELIVERY_RESCHEDULED') {
       const newDate = typeof m.metaData?.newDate === 'string' ? new Date(m.metaData.newDate).toLocaleDateString('uk-UA') : '';
-      return newDate ? `Дату доставки змінено на ${newDate}` : 'Дату доставки змінено';
+      const verb = isSelf ? 'змінили' : 'змінив(-ла)';
+      return newDate ? `${actor} ${verb} дату доставки на ${newDate}` : `${actor} ${verb} дату доставки`;
+    }
+    if (m.eventType === 'DELIVERY_CONFIRMED') {
+      const verb = isSelf ? 'підтвердили' : 'підтвердив(-ла)';
+      return `${actor} ${verb} отримання доставки`;
+    }
+    if (m.eventType === 'OFFER_ARCHIVED') {
+      const verb = isSelf ? 'архівували' : 'архівував(-ла)';
+      return `${actor} ${verb} угоду`;
     }
     return 'Системна подія';
   };
@@ -107,7 +140,7 @@ export function DealChat({ offerId, offer, shortDealId }: DealChatProps): JSX.El
 
       {/* Таймлайн повідомлень */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
-        <div className="mx-auto max-w-2xl space-y-4">
+        <div className="mx-auto max-w-4xl space-y-4">
           {loading && (
             <div className="flex justify-center py-6">
               <div className="h-6 w-40 animate-pulse rounded bg-gray-100" />
@@ -150,7 +183,7 @@ export function DealChat({ offerId, offer, shortDealId }: DealChatProps): JSX.El
 
       {/* Поле вводу відповіді */}
       <footer className="shrink-0 border-t border-gray-200 p-4">
-        <div className="mx-auto flex max-w-2xl items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 focus-within:border-emerald-400 focus-within:ring-1 focus-within:ring-emerald-400">
+        <div className="mx-auto flex max-w-4xl items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 focus-within:border-emerald-400 focus-within:ring-1 focus-within:ring-emerald-400">
           <button
             type="button"
             className="rounded p-1.5 text-gray-400 hover:bg-gray-200 hover:text-gray-600"

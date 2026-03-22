@@ -16,7 +16,12 @@ const STATUS_LABELS: Record<string, string> = {
   ACCEPTED: 'Прийнято',
   REJECTED: 'Відхилено',
   AWAITING_DELIVERY: 'Очікує доставки',
+  DELIVERED: 'Доставлено',
+  ARCHIVED: 'Архів',
 };
+
+const ALL_STATUSES = ['NEW', 'IN_REVIEW', 'COUNTER_OFFER', 'ACCEPTED', 'REJECTED', 'AWAITING_DELIVERY', 'DELIVERED'] as const;
+const TERMINAL_STATUSES = ['DELIVERED', 'REJECTED'];
 
 interface LinkedBuyer {
   buyerId: string;
@@ -54,9 +59,28 @@ export default function VendorDashboardPage(): JSX.Element {
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [counterpartySearch, setCounterpartySearch] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
+  const [sortBy, setSortBy] = useState<'createdAt' | 'acceptedAt'>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+
   const skusForSelectedBuyer = selectedBuyerId
     ? skus.filter((s) => s.createdById === selectedBuyerId || s.createdBy?.id === selectedBuyerId)
     : [];
+
+  const loadOffers = (): void => {
+    const api = getAuthApiClient();
+    const params: Record<string, string> = {
+      showArchived: String(showArchived),
+      sortBy,
+      sortOrder,
+    };
+    if (statusFilter.length > 0) params.status = statusFilter.join(',');
+    if (counterpartySearch.trim()) params.counterpartyName = counterpartySearch.trim();
+    api.get<OfferListItem[]>('/offers', { params }).then((r) => setOffers(r.data)).catch(() => undefined);
+  };
 
   const loadData = (): void => {
     const user = getStoredUser();
@@ -79,6 +103,11 @@ export default function VendorDashboardPage(): JSX.Element {
   useEffect(() => {
     loadData();
   }, [router]);
+
+  useEffect(() => {
+    if (loading) return;
+    loadOffers();
+  }, [statusFilter, counterpartySearch, showArchived, sortBy, sortOrder]);
 
   useEffect(() => {
     const api = getAuthApiClient();
@@ -134,6 +163,24 @@ export default function VendorDashboardPage(): JSX.Element {
         );
       })
       .finally(() => setCreateLoading(false));
+  };
+
+  const handleArchive = (offerId: string): void => {
+    setActionInProgress(offerId);
+    getAuthApiClient()
+      .patch(`/offers/${offerId}/archive`)
+      .then(() => {
+        toast.success('Статус архівації змінено');
+        loadOffers();
+      })
+      .catch(() => toast.error('Не вдалося архівувати'))
+      .finally(() => setActionInProgress(null));
+  };
+
+  const toggleStatusFilter = (status: string): void => {
+    setStatusFilter((prev) =>
+      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status],
+    );
   };
 
   return (
@@ -338,7 +385,75 @@ export default function VendorDashboardPage(): JSX.Element {
               </p>
             )}
 
-            {/* Список пропозицій */}
+            <div className="mt-6 rounded-lg border border-gray-200 bg-white p-4 shadow-sm space-y-3">
+              <h2 className="text-sm font-semibold text-gray-900">Фільтри та сортування</h2>
+              <div className="flex flex-wrap gap-3 items-end">
+                <div className="flex-1 min-w-[200px]">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Закупник</label>
+                  <input
+                    type="text"
+                    placeholder="Пошук за назвою..."
+                    value={counterpartySearch}
+                    onChange={(e) => setCounterpartySearch(e.target.value)}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Сортувати за</label>
+                  <div className="flex gap-1">
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as 'createdAt' | 'acceptedAt')}
+                      className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    >
+                      <option value="createdAt">Дата створення</option>
+                      <option value="acceptedAt">Дата погодження</option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))}
+                      className="rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+                      title={sortOrder === 'asc' ? 'За зростанням' : 'За спаданням'}
+                    >
+                      {sortOrder === 'asc' ? '↑' : '↓'}
+                    </button>
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer pb-2">
+                  <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
+                  Показати архівні
+                </label>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-700 mb-1">Статус</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {ALL_STATUSES.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => toggleStatusFilter(s)}
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium border transition-colors ${
+                        statusFilter.includes(s)
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {STATUS_LABELS[s]}
+                    </button>
+                  ))}
+                  {statusFilter.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter([])}
+                      className="text-xs text-gray-500 hover:text-gray-700 underline ml-1"
+                    >
+                      Скинути
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {offers.length === 0 ? (
               <div className="mt-8 rounded-lg border border-gray-200 bg-gray-50 p-8 text-center">
                 <p className="text-gray-600">У вас поки немає пропозицій.</p>
@@ -354,32 +469,18 @@ export default function VendorDashboardPage(): JSX.Element {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                        Товар
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                        Закупник
-                      </th>
-                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">
-                        Ціна
-                      </th>
-                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">
-                        Об'єм
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                        Доставка
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                        Статус
-                      </th>
-                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">
-                        Дія
-                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Товар</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Закупник</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Ціна</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Об&apos;єм</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Доставка</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Статус</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Дія</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
                     {offers.map((offer) => (
-                      <tr key={offer.id} className="hover:bg-gray-50">
+                      <tr key={offer.id} className={`hover:bg-gray-50 ${offer.isArchived ? 'opacity-60' : ''}`}>
                         <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900">
                           {offer.sku?.name || offer.productName}
                           {offer.isNovelty && (
@@ -388,35 +489,52 @@ export default function VendorDashboardPage(): JSX.Element {
                             </span>
                           )}
                         </td>
-                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
-                          {offer.buyer?.companyName ?? '—'}
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium text-gray-900">
-                          {offer.currentPrice} грн
-                        </td>
-                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-600">
-                          {offer.volume} {offer.unit}
-                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">{offer.buyer?.companyName ?? '—'}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium text-gray-900">{offer.currentPrice} грн</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-600">{offer.volume} {offer.unit}</td>
                         <td className="max-w-[180px] truncate px-4 py-3 text-sm text-gray-600" title={offer.deliveryTerms ?? undefined}>
                           {offer.deliveryTerms || '—'}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3">
-                          <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                            offer.status === 'DELIVERED' ? 'bg-blue-100 text-blue-800' :
+                            offer.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
+                            offer.status === 'AWAITING_DELIVERY' ? 'bg-emerald-100 text-emerald-800' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
                             {STATUS_LABELS[offer.status] ?? offer.status}
                           </span>
+                          {offer.isArchived && (
+                            <span className="ml-1 inline-flex rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-medium text-gray-500">Архів</span>
+                          )}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-right">
-                          <a
-                            href={`/offers/${offer.id}`}
-                            className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-                          >
-                            Переговорна
-                            {unread[offer.id] ? (
-                              <span className="ml-2 inline-flex min-w-[20px] justify-center rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
-                                {unread[offer.id]}
-                              </span>
-                            ) : null}
-                          </a>
+                          <div className="flex items-center justify-end gap-1.5">
+                            {TERMINAL_STATUSES.includes(offer.status) && (
+                              <button
+                                type="button"
+                                onClick={() => handleArchive(offer.id)}
+                                disabled={actionInProgress === offer.id}
+                                className="rounded p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                                title={offer.isArchived ? 'Розархівувати' : 'Архівувати'}
+                              >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                </svg>
+                              </button>
+                            )}
+                            <a
+                              href={`/offers/${offer.id}`}
+                              className="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+                            >
+                              Переговорна
+                              {unread[offer.id] ? (
+                                <span className="ml-2 inline-flex min-w-[20px] justify-center rounded-full bg-white/20 px-2 py-0.5 text-xs font-semibold">
+                                  {unread[offer.id]}
+                                </span>
+                              ) : null}
+                            </a>
+                          </div>
                         </td>
                       </tr>
                     ))}

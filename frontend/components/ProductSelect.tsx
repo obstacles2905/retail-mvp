@@ -32,15 +32,6 @@ export function ProductSelect({ buyerId, role, value, onChange, error }: Product
   const [noveltyUom, setNoveltyUom] = useState('item');
 
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const api = getAuthApiClient();
-
-  useEffect(() => {
-    if (value?.skuId) {
-      // If a value is already selected, we don't necessarily need to fetch it unless we want to display its name.
-      // Assuming the parent component passes the initial state correctly or we just show "Selected".
-      // For simplicity, we'll rely on the user typing to search.
-    }
-  }, [value]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -60,6 +51,7 @@ export function ProductSelect({ buyerId, role, value, onChange, error }: Product
 
     const delayDebounceFn = setTimeout(() => {
       setLoading(true);
+      const api = getAuthApiClient();
       api.get<SkuOption[]>(`/skus/search`, { params: { q: query, buyerId } })
         .then(res => setOptions(res.data))
         .catch(() => setOptions([]))
@@ -67,7 +59,7 @@ export function ProductSelect({ buyerId, role, value, onChange, error }: Product
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [query, buyerId, isOpen, api]);
+  }, [query, buyerId, isOpen]);
 
   const handleSelectSku = (sku: SkuOption) => {
     onChange({ skuId: sku.id, productName: sku.name, uom: sku.uom, targetPrice: sku.targetPrice });

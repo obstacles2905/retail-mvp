@@ -134,6 +134,9 @@ export class BuyerOrdersService {
     deliveryDate: Date | null;
     status: OfferStatus;
     currentTurn: OfferTurn;
+    acceptedAt?: Date | null;
+    isArchived?: boolean;
+    archivedAt?: Date | null;
     createdAt: Date;
     updatedAt: Date;
   }): OfferDto {
@@ -153,6 +156,9 @@ export class BuyerOrdersService {
       deliveryDate: o.deliveryDate ? o.deliveryDate.toISOString() : null,
       status: o.status,
       currentTurn: o.currentTurn,
+      acceptedAt: o.acceptedAt ? o.acceptedAt.toISOString() : null,
+      isArchived: o.isArchived ?? false,
+      archivedAt: o.archivedAt ? o.archivedAt.toISOString() : null,
       createdAt: o.createdAt,
       updatedAt: o.updatedAt,
     } as OfferDto;

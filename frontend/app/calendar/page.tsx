@@ -50,15 +50,16 @@ export default function CalendarPage() {
     const api = getAuthApiClient();
     setLoading(true);
     api
-      .get<OfferListItem[]>('/offers?status=AWAITING_DELIVERY')
+      .get<OfferListItem[]>('/offers', { params: { status: 'AWAITING_DELIVERY,DELIVERED' } })
       .then((res) => {
         const calendarEvents = res.data
           .filter(offer => offer.deliveryDate)
           .map(offer => {
             const date = new Date(offer.deliveryDate!);
+            const isDelivered = offer.status === 'DELIVERED';
             return {
               id: offer.id,
-              title: `${offer.sku?.name || offer.productName} (${offer.volume} ${offer.unit})`,
+              title: `${isDelivered ? '✓ ' : ''}${offer.sku?.name || offer.productName} (${offer.volume} ${offer.unit})`,
               start: date,
               end: date,
               allDay: true,
@@ -95,8 +96,12 @@ export default function CalendarPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">Календар поставок</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Тут відображаються всі узгоджені замовлення, які очікують доставки.
+            Тут відображаються всі узгоджені замовлення, які очікують доставки та доставлені.
           </p>
+          <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
+            <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-emerald-600" /> Очікує доставки</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded bg-blue-600" /> Доставлено</span>
+          </div>
         </div>
 
         <div className="flex-1 rounded-xl border border-gray-200 bg-white p-4 shadow-sm min-h-[600px]">
@@ -130,9 +135,14 @@ export default function CalendarPage() {
                 event: "Подія",
                 noEventsInRange: "Немає поставок у цьому періоді.",
               }}
-              eventPropGetter={(event) => ({
-                className: 'bg-emerald-600 border-emerald-700 rounded text-xs px-1 py-0.5 cursor-pointer hover:bg-emerald-700',
-              })}
+              eventPropGetter={(event) => {
+                const isDelivered = event.offer.status === 'DELIVERED';
+                return {
+                  className: isDelivered
+                    ? 'bg-blue-600 border-blue-700 rounded text-xs px-1 py-0.5 cursor-pointer hover:bg-blue-700'
+                    : 'bg-emerald-600 border-emerald-700 rounded text-xs px-1 py-0.5 cursor-pointer hover:bg-emerald-700',
+                };
+              }}
             />
           )}
         </div>

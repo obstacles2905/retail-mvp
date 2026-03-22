@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import NextTopLoader from 'nextjs-toploader';
 import './globals.css';
 import { NotificationsProvider } from '@/components/NotificationsProvider';
 
@@ -15,6 +16,12 @@ export default function RootLayout({
   return (
     <html lang="uk" suppressHydrationWarning>
       <body className="min-h-screen bg-background text-foreground antialiased" suppressHydrationWarning>
+        <NextTopLoader
+          color="#4f46e5"
+          height={3}
+          showSpinner={false}
+          shadow="0 0 10px #4f46e5, 0 0 5px #4f46e5"
+        />
         <NotificationsProvider>
           {children}
         </NotificationsProvider>

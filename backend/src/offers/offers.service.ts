@@ -38,6 +38,9 @@ export interface OfferDto {
   deliveryDate: string | null;
   status: OfferStatus;
   currentTurn: OfferTurn;
+  acceptedAt: string | null;
+  isArchived: boolean;
+  archivedAt: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -63,9 +66,14 @@ export interface OfferListItemDto {
   status: OfferStatus;
   currentTurn: OfferTurn;
   deliveryDate: string | null;
+  acceptedAt: string | null;
+  isArchived: boolean;
+  archivedAt: string | null;
   createdAt: Date;
   updatedAt: Date;
   hasUnread: boolean;
+  initiatorRole: 'BUYER' | 'VENDOR';
+  deliveryTerms: string | null;
 }
 
 @Injectable()
@@ -144,9 +152,19 @@ export class OffersService {
     throw new BadRequestException('Provide either skuId or buyerId with productName');
   }
 
-  async findAllForUser(userId: string, role: 'BUYER' | 'VENDOR', status?: OfferStatus): Promise<OfferListItemDto[]> {
+  async findAllForUser(
+    userId: string,
+    role: 'BUYER' | 'VENDOR',
+    options?: {
+      status?: OfferStatus | OfferStatus[];
+      showArchived?: boolean;
+      counterpartyName?: string;
+      sortBy?: 'createdAt' | 'acceptedAt';
+      sortOrder?: 'asc' | 'desc';
+    },
+  ): Promise<OfferListItemDto[]> {
     const include = {
-      sku: { select: { id: true, name: true, uom: true, createdBy: { select: { name: true, companyName: true } } } },
+      sku: { select: { id: true, name: true, uom: true, createdBy: { select: { id: true, name: true, companyName: true } } } },
       buyer: { select: { id: true, name: true, companyName: true } },
       vendor: { select: { id: true, name: true, companyName: true } },
     };
@@ -155,17 +173,50 @@ export class OffersService {
       ? { vendorId: userId }
       : { OR: [{ sku: { createdById: userId } }, { buyerId: userId }] };
 
-    if (status) {
-      whereClause.status = status;
+    if (!options?.showArchived) {
+      whereClause.isArchived = false;
     }
+
+    if (options?.status) {
+      if (Array.isArray(options.status)) {
+        whereClause.status = { in: options.status };
+      } else {
+        whereClause.status = options.status;
+      }
+    }
+
+    if (options?.counterpartyName?.trim()) {
+      const search = options.counterpartyName.trim();
+      const nameFilter = { contains: search, mode: 'insensitive' as const };
+      if (role === 'BUYER') {
+        whereClause.vendor = {
+          OR: [{ name: nameFilter }, { companyName: nameFilter }],
+        };
+      } else {
+        whereClause.AND = [
+          ...(whereClause.AND || []),
+          {
+            OR: [
+              { buyer: { OR: [{ name: nameFilter }, { companyName: nameFilter }] } },
+              { sku: { createdBy: { OR: [{ name: nameFilter }, { companyName: nameFilter }] } } },
+            ],
+          },
+        ];
+      }
+    }
+
+    const sortField = options?.sortBy ?? 'createdAt';
+    const sortOrder = options?.sortOrder ?? 'desc';
+    const orderBy: any = sortField === 'acceptedAt'
+      ? { acceptedAt: { sort: sortOrder, nulls: 'last' as const } }
+      : { [sortField]: sortOrder };
 
     const offers = await this.prisma.offer.findMany({
       where: whereClause,
-      orderBy: { createdAt: 'desc' },
+      orderBy,
       include,
     });
     
-    // Get unread counts
     const unreadCounts = await this.getUnreadCounts(offers.map(o => o.id), userId, role);
     
     return offers.map((o) => {
@@ -496,7 +547,7 @@ export class OffersService {
       });
       const updatedOffer = await tx.offer.update({
         where: { id: offer.id },
-        data: { status: OfferStatus.AWAITING_DELIVERY },
+        data: { status: OfferStatus.AWAITING_DELIVERY, acceptedAt: new Date() },
       });
       return { updatedOffer, message: createdMessage };
     });
@@ -577,6 +628,76 @@ export class OffersService {
         message: `Угоду відхилено. Причина: ${dto.reason}`,
       });
     }
+
+    return this.toDto(updatedOffer);
+  }
+
+  async deliverOffer(offerId: string, userId: string, role: 'BUYER' | 'VENDOR'): Promise<OfferDto> {
+    if (role !== 'BUYER') {
+      throw new ForbiddenException('Only the buyer can confirm delivery');
+    }
+    const offer = await this.ensureParticipant(offerId, userId, role);
+    if (offer.status !== OfferStatus.AWAITING_DELIVERY) {
+      throw new ForbiddenException('Can only mark as delivered when status is AWAITING_DELIVERY');
+    }
+
+    const { updatedOffer, message } = await this.prisma.$transaction(async (tx) => {
+      const createdMessage = await tx.offerMessage.create({
+        data: {
+          offerId: offer.id,
+          senderId: userId,
+          isSystemEvent: true,
+          eventType: SystemEventType.DELIVERY_CONFIRMED,
+        },
+        include: {
+          sender: { select: { id: true, name: true, companyName: true } },
+        },
+      });
+      const updatedOffer = await tx.offer.update({
+        where: { id: offer.id },
+        data: { status: OfferStatus.DELIVERED },
+      });
+      return { updatedOffer, message: createdMessage };
+    });
+
+    const dto: OfferMessageDto = {
+      id: message.id,
+      offerId: message.offerId,
+      senderId: message.senderId,
+      content: message.content,
+      isSystemEvent: message.isSystemEvent,
+      eventType: message.eventType,
+      metaData: message.metaData as Record<string, unknown> | null,
+      createdAt: message.createdAt,
+      sender: message.sender,
+    };
+    this.realtime.emitNewMessage(offer.id, dto);
+
+    const otherUserId = offer.vendorId;
+    this.realtime.emitNotificationToUser(otherUserId, 'notification:offer_update', {
+      offerId: offer.id,
+      action: 'DELIVERED',
+      message: 'Доставку підтверджено закупником',
+    });
+
+    return this.toDto(updatedOffer);
+  }
+
+  async archiveOffer(offerId: string, userId: string, role: 'BUYER' | 'VENDOR'): Promise<OfferDto> {
+    const offer = await this.ensureParticipant(offerId, userId, role);
+    const terminalStatuses: OfferStatus[] = [OfferStatus.DELIVERED, OfferStatus.REJECTED];
+    if (!terminalStatuses.includes(offer.status)) {
+      throw new ForbiddenException('Can only archive orders with terminal status (DELIVERED or REJECTED)');
+    }
+
+    const nowArchived = !(offer as any).isArchived;
+    const updatedOffer = await this.prisma.offer.update({
+      where: { id: offerId },
+      data: {
+        isArchived: nowArchived,
+        archivedAt: nowArchived ? new Date() : null,
+      },
+    });
 
     return this.toDto(updatedOffer);
   }
@@ -757,10 +878,13 @@ export class OffersService {
     currentPrice: unknown;
     volume: number;
     unit: string;
-      deliveryTerms: string | null;
-      deliveryDate: Date | null;
-      status: OfferStatus;
+    deliveryTerms: string | null;
+    deliveryDate: Date | null;
+    status: OfferStatus;
     currentTurn: OfferTurn;
+    acceptedAt?: Date | null;
+    isArchived?: boolean;
+    archivedAt?: Date | null;
     createdAt: Date;
     updatedAt: Date;
   }): OfferDto {
@@ -780,6 +904,9 @@ export class OffersService {
       deliveryDate: offer.deliveryDate ? offer.deliveryDate.toISOString() : null,
       status: offer.status,
       currentTurn: offer.currentTurn,
+      acceptedAt: offer.acceptedAt ? offer.acceptedAt.toISOString() : null,
+      isArchived: offer.isArchived ?? false,
+      archivedAt: offer.archivedAt ? offer.archivedAt.toISOString() : null,
       createdAt: offer.createdAt,
       updatedAt: offer.updatedAt,
     };

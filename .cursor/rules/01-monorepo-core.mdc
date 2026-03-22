@@ -1,6 +1,5 @@
 ---
-description: Глобальные правила и архитектура монорепозитория RetailProcure
-globs: **/*
+alwaysApply: true
 ---
 # Core Monorepo Rules for RetailProcure
 
