@@ -8,10 +8,6 @@ import { getStoredUser } from '@/lib/auth';
 import type { ChatDetailsDto, ChatMessageDto } from '@/lib/types/chat';
 import { createChatsSocket, type ChatsSocket } from '@/lib/realtime/chats-socket';
 
-import { NotificationBell } from '@/components/NotificationBell';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import GlobalHeader from '@/components/layout/GlobalHeader';
-
 export default function ChatDialogPage() {
   const params = useParams();
   const chatId = params.id as string;
@@ -123,8 +119,6 @@ export default function ChatDialogPage() {
 
   return (
     <main className="flex h-screen flex-col bg-background">
-      <GlobalHeader /> 
-
       <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col overflow-hidden bg-card shadow-sm sm:my-4 sm:rounded-lg sm:border sm:border-border">
         <div className="flex items-center justify-between border-b border-border p-4">
           <div className="flex items-center gap-3">

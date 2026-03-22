@@ -71,9 +71,14 @@ export function DealChat({ offerId, offer, shortDealId, currentUserId, onSystemE
     const isSelf = m.senderId === currentUserId;
 
     if (m.eventType === 'PRICE_CHANGED') {
+      const verb = isSelf ? 'змінили' : 'змінив(-ла)';
+      const items = Array.isArray(m.metaData?.items) ? (m.metaData!.items as { productName?: string; oldPrice?: string; newPrice?: string }[]) : [];
+      if (items.length > 0) {
+        const details = items.map(i => `${i.productName ?? 'Товар'}: ${i.oldPrice} → ${i.newPrice} грн`).join('; ');
+        return `${actor} ${verb} ціни: ${details}`;
+      }
       const oldPrice = typeof m.metaData?.oldPrice === 'string' ? m.metaData.oldPrice : '';
       const newPrice = typeof m.metaData?.newPrice === 'string' ? m.metaData.newPrice : '';
-      const verb = isSelf ? 'змінили' : 'змінив(-ла)';
       const priceDetails = oldPrice && newPrice ? `: ${oldPrice} → ${newPrice} грн` : '';
       return `${actor} ${verb} ціну${priceDetails}`;
     }
@@ -170,7 +175,7 @@ export function DealChat({ offerId, offer, shortDealId, currentUserId, onSystemE
         </div>
       </div>
 
-      <footer className="shrink-0 border-t border-border bg-card p-4 w-[calc(100%-675px)] fixed bottom-0 left-[calc(260px+80px)]">
+      <footer className="shrink-0 border-t border-border bg-card p-4 w-[calc(100%-80px-360px-260px)] fixed bottom-0 left-[calc(260px+80px)]">
         <div className="mx-auto flex max-w-4xl items-center gap-2 rounded-xl border border-border bg-muted px-3 py-2 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
           <button
             type="button"

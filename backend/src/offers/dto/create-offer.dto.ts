@@ -1,43 +1,18 @@
-import { IsNotEmpty, IsNumberString, IsOptional, IsString, MaxLength, IsISO8601 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ArrayMinSize, IsArray, IsISO8601, IsNotEmpty, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
+import { OfferItemInputDto } from './offer-item-input.dto';
 
 export class CreateOfferDto {
-  /** Существующий SKU закупщика — либо он, либо buyerId+productName. */
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  skuId?: string;
-
-  /** Закупщик (кому оффер) — обязателен при оффере «свой товар» (без skuId). */
   @IsOptional()
   @IsString()
   @IsNotEmpty()
   buyerId?: string;
 
-  /** Название товара при оффере «свой товар» (без skuId). */
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(500)
-  productName?: string;
-
-  /** Категория товара при оффере «свой товар» (без skuId). */
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100)
-  category?: string;
-
-  @IsNumberString()
-  currentPrice!: string;
-
-  @IsNumberString()
-  volume!: string;
-
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(50)
-  unit?: string;
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => OfferItemInputDto)
+  items!: OfferItemInputDto[];
 
   @IsOptional()
   @IsString()
@@ -48,4 +23,3 @@ export class CreateOfferDto {
   @IsNotEmpty()
   deliveryDate!: string;
 }
-

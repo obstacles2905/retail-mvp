@@ -13,10 +13,6 @@ import {
   getStoredUser,
 } from '@/lib/auth';
 
-import { NotificationBell } from '@/components/NotificationBell';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import GlobalHeader from '@/components/layout/GlobalHeader';
-
 export default function DashboardPage(): JSX.Element {
   const router = useRouter();
   const [user, setUser] = useState<ReturnType<typeof getStoredUser>>(null);
@@ -51,8 +47,6 @@ export default function DashboardPage(): JSX.Element {
 
   return (
     <main className="flex min-h-screen flex-col">
-      <GlobalHeader /> 
-
       <div className="mx-auto w-full max-w-4xl px-4 py-8">
         <h1 className="text-2xl font-semibold text-foreground">Кабінет</h1>
         <p className="mt-1 text-muted-foreground">

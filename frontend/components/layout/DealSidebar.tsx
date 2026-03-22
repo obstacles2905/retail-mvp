@@ -1,12 +1,17 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Plus, Package, Inbox } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getStoredUser, type AuthUser } from '@/lib/auth';
 import { getAuthApiClient } from '@/lib/api-client';
+import {
+  connectNotifications,
+  getNotificationsSocket,
+} from '@/lib/realtime/notifications-socket';
+import { OFFERS_LIST_REFRESH_EVENT } from '@/lib/offers-list-refresh';
 import type { OfferListItem, OfferStatus } from '@/lib/types/offer';
 
 const HIDDEN_STATUSES: OfferStatus[] = ['ARCHIVED'];
@@ -39,7 +44,23 @@ function getCounterpartyName(offer: OfferListItem, role: AuthUser['role']): stri
 }
 
 function getProductName(offer: OfferListItem): string {
-  return offer.sku?.name ?? offer.productName ?? '—';
+  const items = offer.items ?? [];
+  if (items.length === 0) return '—';
+  const firstName = items[0].sku?.name ?? items[0].productName ?? '—';
+  if (items.length === 1) return firstName;
+  return `${firstName} +${items.length - 1}`;
+}
+
+/** Prefer API count; if not loaded yet, fall back to list `hasUnread` so the badge is never missing. */
+function effectiveUnread(
+  offer: OfferListItem,
+  unreadMap: Record<string, number>,
+): number {
+  const id = offer.id;
+  if (Object.prototype.hasOwnProperty.call(unreadMap, id)) {
+    return unreadMap[id] ?? 0;
+  }
+  return offer.hasUnread ? 1 : 0;
 }
 
 function DealCard({
@@ -64,19 +85,22 @@ function DealCard({
           : 'hover:bg-muted/50',
       )}
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted">
-        <Package className="h-4 w-4 text-muted-foreground" />
+      <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted">
+        <Package className="h-4 w-4 text-muted-foreground" aria-hidden />
+        {unreadCount > 0 && (
+          <span
+            className="absolute -right-1 -top-1 z-10 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground shadow-sm ring-2 ring-card"
+            aria-label={`Непрочитані: ${unreadCount}`}
+          >
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
           <span className="truncate text-sm font-medium">
             {getProductName(offer)}
           </span>
-          {unreadCount > 0 && (
-            <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
-              {unreadCount}
-            </span>
-          )}
         </div>
         <p className="truncate text-xs text-muted-foreground">
           {getCounterpartyName(offer, userRole)}
@@ -89,6 +113,8 @@ function DealCard({
   );
 }
 
+const REFRESH_DEBOUNCE_MS = 500;
+
 export function DealSidebar(): JSX.Element | null {
   const pathname = usePathname();
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -96,10 +122,24 @@ export function DealSidebar(): JSX.Element | null {
   const [offers, setOffers] = useState<OfferListItem[]>([]);
   const [unread, setUnread] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setUser(getStoredUser());
     setMounted(true);
+  }, []);
+
+  const fetchUnreadCounts = useCallback((offerIds: string[]) => {
+    if (offerIds.length === 0) {
+      setUnread({});
+      return;
+    }
+    getAuthApiClient()
+      .get<Record<string, number>>('/offers/unread-counts', {
+        params: { ids: offerIds.join(',') },
+      })
+      .then((r) => setUnread(r.data))
+      .catch(() => undefined);
   }, []);
 
   const fetchOffers = useCallback(() => {
@@ -111,26 +151,71 @@ export function DealSidebar(): JSX.Element | null {
           (o) => !HIDDEN_STATUSES.includes(o.status) && !o.isArchived,
         );
         setOffers(active);
+        fetchUnreadCounts(active.map((o) => o.id));
       })
-      .catch(() => setOffers([]))
+      .catch(() => {
+        setOffers([]);
+        setUnread({});
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [fetchUnreadCounts]);
+
+  const debouncedRefresh = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchOffers();
+    }, REFRESH_DEBOUNCE_MS);
+  }, [fetchOffers]);
+
+  // Initial load + refetch when navigating (e.g. after archive, create offer redirect, /offers list).
+  useEffect(() => {
+    if (!mounted || !user) return;
+    connectNotifications();
+    fetchOffers();
+  }, [mounted, user, pathname, fetchOffers]);
 
   useEffect(() => {
     if (!mounted || !user) return;
-    fetchOffers();
+
+    const socket = getNotificationsSocket();
+
+    const handleOfferEvent = () => {
+      debouncedRefresh();
+    };
+
+    socket.on('notification:offer_message', handleOfferEvent);
+    socket.on('notification:offer_update', handleOfferEvent);
+    socket.on('connect', handleOfferEvent);
+
+    return () => {
+      socket.off('notification:offer_message', handleOfferEvent);
+      socket.off('notification:offer_update', handleOfferEvent);
+      socket.off('connect', handleOfferEvent);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [mounted, user, debouncedRefresh]);
+
+  // If the socket missed an event, catch up when the tab becomes visible again.
+  useEffect(() => {
+    if (!mounted || !user) return;
+    const onVisible = (): void => {
+      if (document.visibilityState === 'visible') fetchOffers();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
   }, [mounted, user, fetchOffers]);
 
   useEffect(() => {
-    if (offers.length === 0) return;
-    const ids = offers.map((o) => o.id);
-    getAuthApiClient()
-      .get<Record<string, number>>('/offers/unread-counts', {
-        params: { ids: ids.join(',') },
-      })
-      .then((r) => setUnread(r.data))
-      .catch(() => undefined);
-  }, [offers]);
+    if (!mounted || !user) return;
+    const onClientRefresh = (): void => fetchOffers();
+    window.addEventListener(OFFERS_LIST_REFRESH_EVENT, onClientRefresh);
+    return () => window.removeEventListener(OFFERS_LIST_REFRESH_EVENT, onClientRefresh);
+  }, [mounted, user, fetchOffers]);
+
+  const totalUnread = offers.reduce(
+    (sum, o) => sum + effectiveUnread(o, unread),
+    0,
+  );
 
   if (!mounted || !user) return null;
 
@@ -143,9 +228,16 @@ export function DealSidebar(): JSX.Element | null {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-border px-4 py-3 h-14">
-        <h2 className="font-display text-sm font-semibold tracking-tight">
-          Активні угоди
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2 className="font-display text-sm font-semibold tracking-tight">
+            Активні угоди
+          </h2>
+          {totalUnread > 0 && (
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold leading-none text-destructive-foreground">
+              {totalUnread > 99 ? '99+' : totalUnread}
+            </span>
+          )}
+        </div>
         <Link
           href={createHref}
           prefetch={false}
@@ -196,7 +288,7 @@ export function DealSidebar(): JSX.Element | null {
                 key={offer.id}
                 offer={offer}
                 isActive={offer.id === activeOfferId}
-                unreadCount={unread[offer.id] ?? 0}
+                unreadCount={effectiveUnread(offer, unread)}
                 userRole={user.role}
               />
             ))}

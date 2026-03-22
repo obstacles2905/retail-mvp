@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Package,
+  ScrollText,
   Calendar,
   MessageCircle,
   User,
@@ -17,13 +18,16 @@ import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import { getStoredUser, clearAuth, type AuthUser } from '@/lib/auth';
 import { getAuthApiClient } from '@/lib/api-client';
+import { getNotificationsSocket } from '@/lib/realtime/notifications-socket';
 import type { ChatListDto } from '@/lib/types/chat';
+import type { OfferListItem } from '@/lib/types/offer';
 
 interface NavItem {
   href: string;
   icon: React.ElementType;
   label: string;
   matchPrefix: string;
+  badge?: number;
 }
 
 function getNavItems(role: AuthUser['role']): NavItem[] {
@@ -44,6 +48,7 @@ function getNavItems(role: AuthUser['role']): NavItem[] {
   }
 
   items.push(
+    { href: '/offers', icon: ScrollText, label: 'Угоди', matchPrefix: '/offers' },
     { href: '/calendar', icon: Calendar, label: 'Календар', matchPrefix: '/calendar' },
     { href: '/chats', icon: MessageCircle, label: 'Повідомлення', matchPrefix: '/chats' },
     { href: '/profile', icon: User, label: 'Профіль', matchPrefix: '/profile' },
@@ -52,12 +57,16 @@ function getNavItems(role: AuthUser['role']): NavItem[] {
   return items;
 }
 
+const DEBOUNCE_MS = 500;
+
 export function GlobalNav(): JSX.Element | null {
   const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [mounted, setMounted] = useState(false);
   const [unreadChats, setUnreadChats] = useState(0);
+  const [unreadDeals, setUnreadDeals] = useState(0);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchUnreadChats = useCallback(() => {
     getAuthApiClient()
@@ -69,6 +78,37 @@ export function GlobalNav(): JSX.Element | null {
       .catch(() => undefined);
   }, []);
 
+  const fetchUnreadDeals = useCallback(() => {
+    const api = getAuthApiClient();
+    api
+      .get<OfferListItem[]>('/offers', { params: { showArchived: 'false' } })
+      .then((r) => {
+        const active = r.data.filter((o) => !o.isArchived);
+        const ids = active.map((o) => o.id);
+        if (ids.length === 0) {
+          setUnreadDeals(0);
+          return;
+        }
+        return api
+          .get<Record<string, number>>('/offers/unread-counts', {
+            params: { ids: ids.join(',') },
+          })
+          .then((cr) => {
+            const total = Object.values(cr.data).reduce((s, n) => s + n, 0);
+            setUnreadDeals(total);
+          });
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const debouncedRefresh = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      fetchUnreadChats();
+      fetchUnreadDeals();
+    }, DEBOUNCE_MS);
+  }, [fetchUnreadChats, fetchUnreadDeals]);
+
   useEffect(() => {
     setUser(getStoredUser());
     setMounted(true);
@@ -77,13 +117,36 @@ export function GlobalNav(): JSX.Element | null {
   useEffect(() => {
     if (!mounted || !user) return;
     fetchUnreadChats();
-    const interval = setInterval(fetchUnreadChats, 30_000);
-    return () => clearInterval(interval);
-  }, [mounted, user, fetchUnreadChats]);
+    fetchUnreadDeals();
+  }, [mounted, user, fetchUnreadChats, fetchUnreadDeals]);
+
+  useEffect(() => {
+    if (!mounted || !user) return;
+
+    const socket = getNotificationsSocket();
+
+    const handleOfferEvent = () => debouncedRefresh();
+    const handleChatEvent = () => debouncedRefresh();
+
+    socket.on('notification:offer_message', handleOfferEvent);
+    socket.on('notification:offer_update', handleOfferEvent);
+    socket.on('notification:chat_message', handleChatEvent);
+
+    return () => {
+      socket.off('notification:offer_message', handleOfferEvent);
+      socket.off('notification:offer_update', handleOfferEvent);
+      socket.off('notification:chat_message', handleChatEvent);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [mounted, user, debouncedRefresh]);
 
   if (!mounted || !user) return null;
 
-  const navItems = getNavItems(user.role);
+  const navItems = getNavItems(user.role).map((item) => {
+    if (item.matchPrefix === '/chats') return { ...item, badge: unreadChats };
+    if (item.matchPrefix === '/offers') return { ...item, badge: unreadDeals };
+    return item;
+  });
 
   const isActive = (item: NavItem): boolean => {
     if (item.matchPrefix === '/buyer' && pathname === '/buyer') return true;
@@ -105,6 +168,7 @@ export function GlobalNav(): JSX.Element | null {
         {navItems.map((item) => {
           const active = isActive(item);
           const Icon = item.icon;
+          const badge = item.badge ?? 0;
           return (
             <Link
               key={item.href}
@@ -122,9 +186,9 @@ export function GlobalNav(): JSX.Element | null {
                 <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-x-[7px] -translate-y-1/2 rounded-r-full bg-primary" />
               )}
               <Icon className="h-5 w-5" />
-              {item.matchPrefix === '/chats' && unreadChats > 0 && (
+              {badge > 0 && (
                 <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground">
-                  {unreadChats > 99 ? '99+' : unreadChats}
+                  {badge > 99 ? '99+' : badge}
                 </span>
               )}
             </Link>

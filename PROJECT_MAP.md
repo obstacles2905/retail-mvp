@@ -627,12 +627,18 @@ The current sprint is expanding the `OfferStatus` lifecycle to cover post-accept
 - Node.js ≥18, npm ≥9
 - PostgreSQL running on port `5433` (or update `DATABASE_URL`)
 
+### Docker compose
+
+```bash
+docker compose up -d
+```
+
 ### Backend
 ```bash
 cd backend
 npm install
 cp .env.example .env   # fill DATABASE_URL, JWT_SECRET, GOOGLE_CLIENT_*
-npx prisma migrate dev
+npm run prisma:migrate
 npm run start:dev       # http://localhost:3001
 ```
 

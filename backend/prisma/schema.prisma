@@ -101,25 +101,18 @@ model Sku {
   createdById String
   createdBy   User     @relation("BuyerSkus", fields: [createdById], references: [id])
 
-  offers      Offer[]
+  offerItems  OfferItem[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
-/// Оффер: либо по существующему SKU закупщика (skuId), либо «свой товар» поставщика (buyerId + productName).
+/// Оффер-контейнер: спільні поля (контрагенти, статус, доставка). Товари — в OfferItem.
 model Offer {
   id            String          @id @default(uuid())
-  skuId         String?
   buyerId       String?
-  productName   String?
-  category      String?
-  isNovelty     Boolean         @default(false)
   vendorId      String
   initiatorRole UserRole
-  currentPrice  Decimal
-  volume        Int
-  unit          String          @default("item")
   deliveryTerms String?
   deliveryDate  DateTime?
   status        OfferStatus     @default(NEW)
@@ -128,15 +121,32 @@ model Offer {
   isArchived    Boolean         @default(false)
   archivedAt    DateTime?
 
-  sku          Sku?            @relation(fields: [skuId], references: [id])
   buyer        User?           @relation("OfferBuyer", fields: [buyerId], references: [id])
   vendor       User            @relation("VendorOffers", fields: [vendorId], references: [id])
+  items        OfferItem[]
   histories    OfferHistory[]
   messages     OfferMessage[]
   readStates   OfferReadState[]
 
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
+}
+
+model OfferItem {
+  id           String   @id @default(uuid())
+  offerId      String
+  offer        Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  skuId        String?
+  sku          Sku?     @relation(fields: [skuId], references: [id])
+  productName  String?
+  category     String?
+  isNovelty    Boolean  @default(false)
+  currentPrice Decimal
+  volume       Int
+  unit         String   @default("item")
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model OfferHistory {

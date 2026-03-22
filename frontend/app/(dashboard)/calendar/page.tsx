@@ -70,9 +70,13 @@ export default function CalendarPage() {
             .map((offer) => {
               const date = new Date(offer.deliveryDate!);
               const isDelivered = offer.status === 'DELIVERED';
+              const firstItem = offer.items?.[0];
+              const productLabel = firstItem?.sku?.name ?? firstItem?.productName ?? 'Товар';
+              const itemsExtra = (offer.items?.length ?? 0) > 1 ? ` +${(offer.items?.length ?? 1) - 1}` : '';
+              const volumeLabel = firstItem ? `${firstItem.volume} ${firstItem.unit}` : '';
               return {
                 id: offer.id,
-                title: `${isDelivered ? '✓ ' : ''}${offer.sku?.name || offer.productName} (${offer.volume} ${offer.unit})`,
+                title: `${isDelivered ? '✓ ' : ''}${productLabel}${itemsExtra} (${volumeLabel})`,
                 start: date,
                 end: date,
                 allDay: true,
@@ -114,7 +118,9 @@ export default function CalendarPage() {
   }, []);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden p-6">
+    <>
+    <div className="flex max-w-4xl mx-auto h-full flex-col overflow-hidden p-6">
+      
       <div className="mb-4 shrink-0">
         <h1 className="text-2xl font-semibold text-foreground">
           Календар поставок
@@ -163,5 +169,7 @@ export default function CalendarPage() {
         )}
       </div>
     </div>
+    </>
+    
   );
 }

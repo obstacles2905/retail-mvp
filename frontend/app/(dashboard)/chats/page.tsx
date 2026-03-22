@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getAuthApiClient } from '@/lib/api-client';
 import type { ChatListDto } from '@/lib/types/chat';
@@ -11,10 +10,6 @@ interface ConnectionDto {
   name: string;
   companyName: string;
 }
-
-import { NotificationBell } from '@/components/NotificationBell';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import GlobalHeader from '@/components/layout/GlobalHeader';
 
 export default function ChatsPage() {
   const api = useMemo(() => getAuthApiClient(), []);
@@ -74,7 +69,6 @@ export default function ChatsPage() {
 
   return (
     <main className="flex min-h-screen flex-col bg-background">
-       <GlobalHeader /> 
 
       <div className="mx-auto w-full max-w-4xl px-4 py-8">
         <div className="mb-6 flex items-center justify-between">
