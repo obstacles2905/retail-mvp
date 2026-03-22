@@ -8,6 +8,7 @@ import {
 
 import Link from 'next/link';
 import type { AxiosError } from 'axios';
+import { toast } from 'react-hot-toast';
 
 import { getAuthApiClient } from '@/lib/api-client';
 import {
@@ -16,6 +17,8 @@ import {
   getStoredUser,
   setAuth,
 } from '@/lib/auth';
+
+import { NotificationBell } from '@/components/NotificationBell';
 
 type UserMe = AuthUser;
 
@@ -32,18 +35,15 @@ export default function ProfilePage(): JSX.Element {
   const [phone, setPhone] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
 
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
   const [changePasswordError, setChangePasswordError] = useState<string | null>(null);
-  const [changePasswordSuccess, setChangePasswordSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = getStoredUser();
@@ -81,7 +81,6 @@ export default function ProfilePage(): JSX.Element {
     e.preventDefault();
     if (!user) return;
     setSaveError(null);
-    setSaveSuccess(null);
     setSaving(true);
     api
       .patch<UserMe>('/users/me', {
@@ -92,11 +91,10 @@ export default function ProfilePage(): JSX.Element {
       .then((res) => {
         setUser(res.data);
         persistUser(res.data);
-        setSaveSuccess('Зміни збережено');
+        toast.success('Зміни успішно збережено');
         setIsEditMode(false);
-        window.setTimeout(() => setSaveSuccess(null), 2500);
       })
-      .catch(() => setSaveError('Не вдалося зберегти зміни'))
+      .catch(() => toast.error('Не вдалося зберегти зміни'))
       .finally(() => setSaving(false));
   };
 
@@ -104,14 +102,12 @@ export default function ProfilePage(): JSX.Element {
     if (!user) return;
     resetDraftFromUser(user);
     setSaveError(null);
-    setSaveSuccess(null);
     setIsEditMode(false);
   };
 
   const uploadAvatar = (file: File): void => {
     if (!user) return;
     setUploadError(null);
-    setUploadSuccess(null);
     setUploading(true);
     const form = new FormData();
     form.append('file', file);
@@ -120,17 +116,15 @@ export default function ProfilePage(): JSX.Element {
       .then((res) => {
         setUser(res.data);
         persistUser(res.data);
-        setUploadSuccess('Аватар оновлено');
-        window.setTimeout(() => setUploadSuccess(null), 2500);
+        toast.success('Аватар успішно оновлено');
       })
-      .catch(() => setUploadError('Не вдалося завантажити аватар'))
+      .catch(() => toast.error('Не вдалося завантажити аватар'))
       .finally(() => setUploading(false));
   };
 
   const changePassword = (e: React.FormEvent): void => {
     e.preventDefault();
     setChangePasswordError(null);
-    setChangePasswordSuccess(null);
 
     const trimmedCurrent = currentPassword;
     const trimmedNew = newPassword;
@@ -152,8 +146,7 @@ export default function ProfilePage(): JSX.Element {
         setCurrentPassword('');
         setNewPassword('');
         setConfirmNewPassword('');
-        setChangePasswordSuccess('Пароль змінено');
-        window.setTimeout(() => setChangePasswordSuccess(null), 2500);
+        toast.success('Пароль успішно змінено');
       })
       .catch((err: unknown) => {
         const fallback = 'Не вдалося змінити пароль';
@@ -224,9 +217,12 @@ export default function ProfilePage(): JSX.Element {
           <Link href="/" className="text-xl font-semibold tracking-tight text-gray-900">
             RetailProcure
           </Link>
-          <Link href="/dashboard" className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
-            ← В кабінет
-          </Link>
+          <div className="flex items-center gap-4">
+            <NotificationBell />
+            <Link href="/dashboard" className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+              ← В кабінет
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -248,9 +244,6 @@ export default function ProfilePage(): JSX.Element {
             </div>
             {uploadError && (
               <p className="mt-3 text-xs text-red-600" role="alert">{uploadError}</p>
-            )}
-            {uploadSuccess && (
-              <p className="mt-3 text-xs text-emerald-700" role="status">{uploadSuccess}</p>
             )}
             <label className="mt-4 block">
               <span className="sr-only">Завантажити аватар</span>
@@ -314,9 +307,6 @@ export default function ProfilePage(): JSX.Element {
               {saveError && (
                 <div className="rounded bg-red-50 p-2 text-xs text-red-700" role="alert">{saveError}</div>
               )}
-              {saveSuccess && (
-                <div className="rounded bg-emerald-50 p-2 text-xs text-emerald-800" role="status">{saveSuccess}</div>
-              )}
               <div>
                 <label htmlFor="profile-name" className="block text-sm font-medium text-gray-700">Ім'я</label>
                 <input
@@ -370,11 +360,6 @@ export default function ProfilePage(): JSX.Element {
               <form onSubmit={changePassword} className="mt-4 space-y-4">
                 {changePasswordError && (
                   <div className="rounded bg-red-50 p-2 text-xs text-red-700" role="alert">{changePasswordError}</div>
-                )}
-                {changePasswordSuccess && (
-                  <div className="rounded bg-emerald-50 p-2 text-xs text-emerald-800" role="status">
-                    {changePasswordSuccess}
-                  </div>
                 )}
                 <div>
                   <label htmlFor="current-password" className="block text-sm font-medium text-gray-700">

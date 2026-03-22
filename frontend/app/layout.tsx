@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { NotificationsProvider } from '@/components/NotificationsProvider';
 
 export const metadata: Metadata = {
   title: 'RetailProcure',
@@ -14,7 +15,9 @@ export default function RootLayout({
   return (
     <html lang="uk">
       <body className="min-h-screen bg-background text-foreground antialiased">
-        {children}
+        <NotificationsProvider>
+          {children}
+        </NotificationsProvider>
       </body>
     </html>
   );

@@ -13,6 +13,8 @@ import {
   getStoredUser,
 } from '@/lib/auth';
 
+import { NotificationBell } from '@/components/NotificationBell';
+
 export default function DashboardPage(): JSX.Element {
   const router = useRouter();
   const [user, setUser] = useState<ReturnType<typeof getStoredUser>>(null);
@@ -53,6 +55,7 @@ export default function DashboardPage(): JSX.Element {
             RetailProcure
           </Link>
           <nav className="flex items-center gap-4">
+            <NotificationBell />
             <Link
               href="/"
               className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
