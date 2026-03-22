@@ -31,6 +31,13 @@ enum SystemEventType {
   TERMS_UPDATED
 }
 
+enum NotificationType {
+  OFFER_MESSAGE
+  CHAT_MESSAGE
+  OFFER_UPDATE
+  SYSTEM
+}
+
 model User {
   id           String         @id @default(uuid())
   email        String         @unique
@@ -56,6 +63,8 @@ model User {
 
   invitesSent    Invite[]     @relation("InviteBuyer")
   invitesUsedAsVendor Invite[] @relation("InviteUsedByVendor")
+
+  notifications  Notification[]
 
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
@@ -191,6 +200,20 @@ model ChatMessage {
 
   chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
   sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
 }
 
 

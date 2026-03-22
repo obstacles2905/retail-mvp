@@ -10,10 +10,8 @@ import { Server, Socket } from 'socket.io';
 import { UseGuards, ForbiddenException } from '@nestjs/common';
 import { WsJwtGuard } from './ws-jwt.guard';
 import { ChatsRealtimeService } from './chats-realtime.service';
-
-// We'll use a circular dependency or just inject Prisma to verify access.
-// To avoid circular dependency with ChatsModule, we can just inject PrismaService here.
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @WebSocketGateway({
   cors: {
@@ -28,10 +26,19 @@ export class ChatsGateway implements OnGatewayInit {
   constructor(
     private readonly chatsRealtime: ChatsRealtimeService,
     private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   afterInit(server: Server) {
     this.chatsRealtime.setServer(server);
+  }
+
+  @SubscribeMessage('notifications:join')
+  async joinNotifications(@ConnectedSocket() client: Socket) {
+    const user = client.data.user;
+    if (!user) throw new ForbiddenException('Not authenticated');
+    await client.join(`user_${user.sub}`);
+    return { ok: true };
   }
 
   @SubscribeMessage('chat:join')
@@ -94,6 +101,25 @@ export class ChatsGateway implements OnGatewayInit {
     });
 
     this.chatsRealtime.emitNewMessage(data.chatId, message);
+
+    // Notify the other participant
+    const otherUserId = chat.participant1Id === user.sub ? chat.participant2Id : chat.participant1Id;
+    
+    const notification = await this.notificationsService.create({
+      userId: otherUserId,
+      type: 'CHAT_MESSAGE',
+      title: 'Нове повідомлення',
+      message: `Від ${message.sender.name}: ${message.content}`,
+      link: `/chats/${data.chatId}`,
+    });
+
+    this.server.to(`user_${otherUserId}`).emit('notification:chat_message', {
+      chatId: data.chatId,
+      senderName: message.sender.name,
+      content: message.content,
+      notification,
+    });
+
     return { ok: true, message };
   }
 }

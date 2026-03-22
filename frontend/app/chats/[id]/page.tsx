@@ -8,6 +8,8 @@ import { getStoredUser } from '@/lib/auth';
 import type { ChatDetailsDto, ChatMessageDto } from '@/lib/types/chat';
 import { createChatsSocket, type ChatsSocket } from '@/lib/realtime/chats-socket';
 
+import { NotificationBell } from '@/components/NotificationBell';
+
 export default function ChatDialogPage() {
   const params = useParams();
   const chatId = params.id as string;
@@ -138,6 +140,7 @@ export default function ChatDialogPage() {
               <p className="text-xs text-gray-500 leading-tight">{chat.participant.companyName}</p>
             </div>
           </div>
+          <NotificationBell />
         </div>
       </header>
 

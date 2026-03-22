@@ -16,6 +16,8 @@ interface SkuDto {
   isArchived: boolean;
 }
 
+import { NotificationBell } from '@/components/NotificationBell';
+
 export default function BuyerCatalogPage() {
   const [skus, setSkus] = useState<SkuDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,9 +110,12 @@ export default function BuyerCatalogPage() {
           <Link href="/" className="text-xl font-semibold tracking-tight text-gray-900">
             RetailProcure
           </Link>
-          <Link href="/dashboard" className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
-            ← В кабінет
-          </Link>
+          <div className="flex items-center gap-4">
+            <NotificationBell />
+            <Link href="/dashboard" className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+              ← В кабінет
+            </Link>
+          </div>
         </div>
       </header>
 

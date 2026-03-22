@@ -5,9 +5,10 @@ import { SkuModule } from './sku/sku.module';
 import { OffersModule } from './offers/offers.module';
 import { BuyerOrdersModule } from './buyer-orders/buyer-orders.module';
 import { ChatsModule } from './chats/chats.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
-  imports: [AuthModule, InvitesModule, SkuModule, OffersModule, BuyerOrdersModule, ChatsModule],
+  imports: [AuthModule, InvitesModule, SkuModule, OffersModule, BuyerOrdersModule, ChatsModule, NotificationsModule],
 })
 export class AppModule {}
 

@@ -4,12 +4,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { InvitesService } from '../invites/invites.service';
 import { CreateBuyerOrderDto } from './dto/create-buyer-order.dto';
 import { OfferDto, OfferListItemDto } from '../offers/offers.service';
+import { OffersRealtimeService } from '../realtime/offers-realtime.service';
 
 @Injectable()
 export class BuyerOrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly invitesService: InvitesService,
+    private readonly realtime: OffersRealtimeService,
   ) {}
 
   async createAndBroadcast(buyerId: string, dto: CreateBuyerOrderDto): Promise<OfferDto[]> {
@@ -82,6 +84,15 @@ export class BuyerOrdersService {
 
       return offers;
     });
+
+    // Notify vendors
+    for (const offer of created) {
+      this.realtime.emitNotificationToUser(offer.vendorId, 'notification:offer_update', {
+        offerId: offer.id,
+        action: 'BUYER_ORDER_CREATED',
+        message: `Нове замовлення від закупника: ${offer.productName || 'Товар з каталогу'}`,
+      });
+    }
 
     return created.map((o) => this.toOfferDto(o));
   }

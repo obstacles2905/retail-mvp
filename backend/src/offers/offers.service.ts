@@ -84,6 +84,13 @@ export class OffersService {
           currentTurn: OfferTurn.BUYER,
         },
       });
+      
+      this.realtime.emitNotificationToUser(sku.createdById, 'notification:offer_update', {
+        offerId: offer.id,
+        action: 'NEW_OFFER',
+        message: `Нова пропозиція від постачальника на товар: ${sku.name}`,
+      });
+      
       return this.toDto(offer);
     }
 
@@ -107,6 +114,13 @@ export class OffersService {
           currentTurn: OfferTurn.BUYER,
         },
       });
+      
+      this.realtime.emitNotificationToUser(dto.buyerId, 'notification:offer_update', {
+        offerId: offer.id,
+        action: 'NEW_OFFER',
+        message: `Нова пропозиція від постачальника (Свій товар): ${dto.productName.trim()}`,
+      });
+      
       return this.toDto(offer);
     }
 
@@ -320,7 +334,7 @@ export class OffersService {
     role: 'BUYER' | 'VENDOR',
     dto: CreateMessageDto,
   ): Promise<OfferMessageDto> {
-    await this.ensureParticipant(offerId, userId, role);
+    const offer = await this.ensureParticipant(offerId, userId, role);
     const message = await this.prisma.offerMessage.create({
       data: {
         offerId,
@@ -332,7 +346,8 @@ export class OffersService {
         sender: { select: { id: true, name: true, companyName: true } },
       },
     });
-    return {
+    
+    const messageDto = {
       id: message.id,
       offerId: message.offerId,
       senderId: message.senderId,
@@ -343,6 +358,18 @@ export class OffersService {
       createdAt: message.createdAt,
       sender: message.sender,
     };
+
+    // Notify the other participant
+    const otherUserId = role === 'VENDOR' ? (offer.buyerId || offer.sku?.createdById) : offer.vendorId;
+    if (otherUserId) {
+      this.realtime.emitNotificationToUser(otherUserId, 'notification:offer_message', {
+        offerId,
+        senderName: message.sender.name,
+        message: `Від ${message.sender.name}: ${message.content || 'Файл/Подія'}`,
+      });
+    }
+
+    return messageDto;
   }
 
   async proposePrice(
@@ -402,6 +429,16 @@ export class OffersService {
       sender: message.sender,
     };
     this.realtime.emitNewMessage(offer.id, messageDto);
+    
+    const otherUserId = role === 'VENDOR' ? (offer.buyerId || offer.sku?.createdById) : offer.vendorId;
+    if (otherUserId) {
+      this.realtime.emitNotificationToUser(otherUserId, 'notification:offer_update', {
+        offerId: offer.id,
+        action: 'COUNTER_OFFER',
+        message: `Запропонована нова ціна: ${newPrice} грн`,
+      });
+    }
+
     return this.toDto(updatedOffer);
   }
 
@@ -449,6 +486,16 @@ export class OffersService {
       sender: message.sender,
     };
     this.realtime.emitNewMessage(offer.id, dto);
+    
+    const otherUserId = role === 'VENDOR' ? (offer.buyerId || offer.sku?.createdById) : offer.vendorId;
+    if (otherUserId) {
+      this.realtime.emitNotificationToUser(otherUserId, 'notification:offer_update', {
+        offerId: offer.id,
+        action: 'ACCEPTED',
+        message: `Угоду погоджено`,
+      });
+    }
+
     return this.toDto(updatedOffer);
   }
 
@@ -495,6 +542,16 @@ export class OffersService {
       sender: message.sender,
     };
     this.realtime.emitNewMessage(offer.id, messageDto);
+    
+    const otherUserId = role === 'VENDOR' ? (offer.buyerId || offer.sku?.createdById) : offer.vendorId;
+    if (otherUserId) {
+      this.realtime.emitNotificationToUser(otherUserId, 'notification:offer_update', {
+        offerId: offer.id,
+        action: 'REJECTED',
+        message: `Угоду відхилено. Причина: ${dto.reason}`,
+      });
+    }
+
     return this.toDto(updatedOffer);
   }
 

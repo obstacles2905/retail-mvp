@@ -12,6 +12,8 @@ interface ConnectionDto {
   companyName: string;
 }
 
+import { NotificationBell } from '@/components/NotificationBell';
+
 export default function ChatsPage() {
   const api = useMemo(() => getAuthApiClient(), []);
   const router = useRouter();
@@ -75,9 +77,12 @@ export default function ChatsPage() {
           <Link href="/" className="text-xl font-semibold tracking-tight text-gray-900">
             RetailProcure
           </Link>
-          <Link href="/dashboard" className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
-            ← В кабінет
-          </Link>
+          <div className="flex items-center gap-4">
+            <NotificationBell />
+            <Link href="/dashboard" className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+              ← В кабінет
+            </Link>
+          </div>
         </div>
       </header>
 

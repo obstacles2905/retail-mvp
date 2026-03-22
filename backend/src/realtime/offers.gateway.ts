@@ -29,6 +29,14 @@ export class OffersGateway {
     this.realtime.setServer(this.server);
   }
 
+  @SubscribeMessage('notifications:join')
+  async joinNotifications(@ConnectedSocket() client: Socket): Promise<{ ok: true }> {
+    const user = client.data.user as WsAuthUser | undefined;
+    if (!user) throw new ForbiddenException('Unauthorized');
+    await client.join(`user_${user.sub}`);
+    return { ok: true };
+  }
+
   @SubscribeMessage('offers:join')
   async joinOffer(
     @ConnectedSocket() client: Socket,
