@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { getAuthApiClient } from '@/lib/api-client';
 import { createOffersSocket } from '@/lib/realtime/offers-socket';
 import type { OfferDetail, OfferMessage } from '@/lib/types/offer';
+import GlobalHeader from '@/components/layout/GlobalHeader';
 
 interface DealChatProps {
   offerId: string;
@@ -125,18 +126,6 @@ export function DealChat({ offerId, offer, shortDealId, currentUserId, onSystemE
 
   return (
     <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
-      {/* Хедер блоку чату */}
-      <header className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-          </span>
-          <h2 className="text-sm font-semibold text-foreground">Історія переговорів</h2>
-        </div>
-        <span className="text-xs font-medium text-muted-foreground">{shortDealId}</span>
-      </header>
 
       {/* Таймлайн повідомлень */}
       <div className="flex-1 overflow-y-auto px-4 py-4 pb-20">
@@ -181,7 +170,7 @@ export function DealChat({ offerId, offer, shortDealId, currentUserId, onSystemE
         </div>
       </div>
 
-      <footer className="shrink-0 border-t border-border bg-card p-4 w-[calc(100%-320px)] fixed bottom-0 right-0">
+      <footer className="shrink-0 border-t border-border bg-card p-4 w-[calc(100%-675px)] fixed bottom-0 left-[calc(260px+80px)]">
         <div className="mx-auto flex max-w-4xl items-center gap-2 rounded-xl border border-border bg-muted px-3 py-2 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
           <button
             type="button"

@@ -23,15 +23,6 @@ const STATUS_LABELS: Record<string, string> = {
 const ALL_STATUSES = ['NEW', 'IN_REVIEW', 'COUNTER_OFFER', 'ACCEPTED', 'REJECTED', 'AWAITING_DELIVERY', 'DELIVERED'] as const;
 const TERMINAL_STATUSES = ['DELIVERED', 'REJECTED'];
 
-interface InviteDto {
-  id: string;
-  token: string;
-  inviteUrl: string;
-  usedByVendorId: string | null;
-  expiresAt: string | null;
-  createdAt: string;
-}
-
 interface VendorConnectionDto {
   vendorId: string;
   vendorName: string;
@@ -55,13 +46,10 @@ export default function BuyerDashboardPage(): JSX.Element {
   const [incomingOffers, setIncomingOffers] = useState<OfferListItem[]>([]);
   const [myOrders, setMyOrders] = useState<OfferListItem[]>([]);
   const [unread, setUnread] = useState<Record<string, number>>({});
-  const [myInvite, setMyInvite] = useState<{ token: string; inviteUrl: string } | null>(null);
   const [vendorConnections, setVendorConnections] = useState<VendorConnectionDto[]>([]);
   const [skus, setSkus] = useState<SkuOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [creatingInvite, setCreatingInvite] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const [selectedProduct, setSelectedProduct] = useState<{ skuId?: string; productName?: string; category?: string; uom?: string; targetPrice?: string | null } | null>(null);
   const [orderTargetPrice, setOrderTargetPrice] = useState('');
@@ -107,7 +95,6 @@ export default function BuyerDashboardPage(): JSX.Element {
     Promise.all([
       api.get<OfferListItem[]>('/offers').then((r) => setIncomingOffers(r.data.filter((o) => o.initiatorRole !== 'BUYER'))),
       api.get<OfferListItem[]>('/buyer/orders').then((r) => setMyOrders(r.data)),
-      api.get<{ token: string; inviteUrl: string }>('/invites/mine').then((r) => setMyInvite(r.data)),
       api.get<VendorConnectionDto[]>('/invites/vendor-connections').then((r) => setVendorConnections(r.data)),
       api.get<SkuOption[]>('/skus').then((r) => setSkus(r.data)),
     ]).catch(() => setError('Не вдалося завантажити дані'))
@@ -181,23 +168,6 @@ export default function BuyerDashboardPage(): JSX.Element {
       .finally(() => setOrderLoading(false));
   };
 
-  const createInvite = (): void => {
-    const api = getAuthApiClient();
-    setCreatingInvite(true);
-    api
-      .get<{ token: string; inviteUrl: string }>('/invites/mine')
-      .then((res) => setMyInvite(res.data))
-      .catch(() => setError('Не вдалося отримати запрошення'))
-      .finally(() => setCreatingInvite(false));
-  };
-
-  const copyLink = (url: string, id: string): void => {
-    navigator.clipboard.writeText(url).then(() => {
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    });
-  };
-
   const handleMarkDelivered = (offerId: string): void => {
     setActionInProgress(offerId);
     getAuthApiClient()
@@ -230,27 +200,6 @@ export default function BuyerDashboardPage(): JSX.Element {
 
   return (
     <main className="flex min-h-screen flex-col">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
-          <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
-            RetailProcure
-          </Link>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <NotificationBell />
-            <Link href="/calendar" prefetch={false} className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
-              Календар
-            </Link>
-            <Link
-              href="/dashboard"
-              prefetch={false}
-              className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
-            >
-              ← В кабінет
-            </Link>
-          </div>
-        </div>
-      </header>
 
       <div className="mx-auto w-full max-w-4xl px-4 py-8">
         <h1 className="text-2xl font-semibold text-foreground">Кабінет закупника</h1>
@@ -311,7 +260,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                     onChange={(e) => setOrderTargetPrice(e.target.value)}
                     placeholder="0.00"
                     required
-                    className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                   {selectedProduct?.targetPrice && Number(orderTargetPrice) > 0 && Number(orderTargetPrice) < Number(selectedProduct.targetPrice) && (
                     <p className="mt-1 text-[10px] text-warning leading-tight">
@@ -331,7 +280,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                     onChange={(e) => setOrderVolume(e.target.value)}
                     placeholder="100"
                     required
-                    className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div className="w-40">
@@ -344,7 +293,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                     value={orderDeliveryDate}
                     onChange={(e) => setOrderDeliveryDate(e.target.value)}
                     required
-                    className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -360,7 +309,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                   onChange={(e) => setOrderDeliveryTerms(e.target.value)}
                   placeholder="Наприклад: доставка на РЦ, DDP, 3–5 робочих днів"
                   maxLength={2000}
-                  className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
 
@@ -376,6 +325,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                       <label key={v.vendorId} className="flex items-center gap-2 rounded border border-border bg-muted px-3 py-2 text-sm">
                         <input
                           type="checkbox"
+                          className="bg-background"
                           checked={orderVendorIds.includes(v.vendorId)}
                           onChange={() => toggleVendor(v.vendorId)}
                         />
@@ -397,38 +347,6 @@ export default function BuyerDashboardPage(): JSX.Element {
                 {orderLoading ? 'Створення…' : 'Створити замовлення та надіслати'}
               </button>
           </form>
-        </div>
-
-        {/* Блок запрошення постачальника */}
-        <div className="mt-6 rounded-lg border border-border bg-card p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-foreground">Запросити постачальника</h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Надішліть це посилання постачальнику (наприклад, по пошті або в месенджері). За посиланням він зареєструється та отримає доступ до ваших SKU для створення пропозицій.
-          </p>
-          
-          {myInvite ? (
-            <div className="mt-4 flex items-center justify-between gap-2 rounded border border-border bg-muted px-3 py-2 text-sm">
-              <code className="truncate flex-1 text-foreground" title={myInvite.inviteUrl}>
-                {myInvite.inviteUrl}
-              </code>
-              <button
-                type="button"
-                onClick={() => copyLink(myInvite.inviteUrl, myInvite.token)}
-                className="shrink-0 rounded px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10"
-              >
-                {copiedId === myInvite.token ? 'Скопійовано' : 'Копіювати'}
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={createInvite}
-              disabled={creatingInvite}
-              className="mt-3 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
-              {creatingInvite ? 'Отримання…' : 'Отримати посилання-запрошення'}
-            </button>
-          )}
         </div>
 
         {loading && (
@@ -454,7 +372,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                   placeholder="Пошук за назвою..."
                   value={counterpartySearch}
                   onChange={(e) => setCounterpartySearch(e.target.value)}
-                  className="w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
               <div>
@@ -463,7 +381,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as 'createdAt' | 'acceptedAt')}
-                    className="rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="rounded-md bg-background border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                   >
                     <option value="createdAt">Дата створення</option>
                     <option value="acceptedAt">Дата погодження</option>
@@ -479,7 +397,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                 </div>
               </div>
               <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer pb-2">
-                <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
+                <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="bg-background" />
                 Показати архівні
               </label>
             </div>

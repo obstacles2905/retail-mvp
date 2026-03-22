@@ -20,6 +20,7 @@ import {
 
 import { NotificationBell } from '@/components/NotificationBell';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import GlobalHeader from '@/components/layout/GlobalHeader';
 
 type UserMe = AuthUser;
 
@@ -46,6 +47,10 @@ export default function ProfilePage(): JSX.Element {
   const [changingPassword, setChangingPassword] = useState(false);
   const [changePasswordError, setChangePasswordError] = useState<string | null>(null);
 
+  const [myInvite, setMyInvite] = useState<{ token: string; inviteUrl: string } | null>(null);
+  const [creatingInvite, setCreatingInvite] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
   useEffect(() => {
     const stored = getStoredUser();
     if (!stored) {
@@ -61,6 +66,12 @@ export default function ProfilePage(): JSX.Element {
         setName(res.data.name);
         setCompanyName(res.data.companyName);
         setPhone((res.data.phone ?? '').toString());
+        if (res.data.role === 'BUYER') {
+          api
+            .get<{ token: string; inviteUrl: string }>('/invites/mine')
+            .then((inv) => setMyInvite(inv.data))
+            .catch(() => undefined);
+        }
       })
       .catch(() => setError('Не вдалося завантажити профіль'))
       .finally(() => setLoading(false));
@@ -189,6 +200,22 @@ export default function ProfilePage(): JSX.Element {
       .finally(() => setChangingPassword(false));
   };
 
+  const createInvite = (): void => {
+    setCreatingInvite(true);
+    api
+      .get<{ token: string; inviteUrl: string }>('/invites/mine')
+      .then((res) => setMyInvite(res.data))
+      .catch(() => toast.error('Не вдалося отримати запрошення'))
+      .finally(() => setCreatingInvite(false));
+  };
+
+  const copyLink = (url: string, id: string): void => {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
+
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center">
@@ -213,28 +240,15 @@ export default function ProfilePage(): JSX.Element {
 
   return (
     <main className="flex min-h-screen flex-col bg-background">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
-          <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
-            RetailProcure
-          </Link>
-          <div className="flex items-center gap-4">
-            <ThemeToggle />
-            <NotificationBell />
-            <Link href="/dashboard" className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
-              ← В кабінет
-            </Link>
-          </div>
-        </div>
-      </header>
+      <GlobalHeader /> 
 
       <div className="mx-auto w-full max-w-4xl px-4 py-8">
-        <h1 className="text-2xl font-semibold text-foreground">Профіль</h1>
-
-        <div className="mt-6 grid gap-6 md:grid-cols-[220px_1fr]">
+        <h1 className="text-2xl mb-4 font-semibold text-foreground">Профіль</h1>
+          <div className="space-y-6">
           <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
             <h2 className="text-sm font-semibold text-foreground">Аватар</h2>
-            <div className="mt-3 flex items-center justify-center">
+            <div className="flex gap-4 items-center">
+            <div className="mt-3 flex items-center justify-start">
               {avatarUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={avatarUrl} alt="Avatar" className="h-28 w-28 rounded-full border border-border object-cover" />
@@ -244,6 +258,7 @@ export default function ProfilePage(): JSX.Element {
                 </div>
               )}
             </div>
+            <div>
             {uploadError && (
               <p className="mt-3 text-xs text-destructive" role="alert">{uploadError}</p>
             )}
@@ -261,9 +276,10 @@ export default function ProfilePage(): JSX.Element {
               />
             </label>
             <p className="mt-2 text-xs text-muted-foreground">PNG/JPG/WebP, до 5 МБ.</p>
+            </div>
+            </div>
           </div>
 
-          <div className="space-y-6">
             <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
               <div className="flex items-center justify-between gap-4">
                 <h2 className="text-sm font-semibold text-foreground">Контактні дані</h2>
@@ -357,6 +373,39 @@ export default function ProfilePage(): JSX.Element {
             </form>
             </div>
 
+            {user.role === 'BUYER' && (
+              <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
+                <h2 className="text-sm font-semibold text-foreground">Запросити постачальника</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Надішліть це посилання постачальнику (наприклад, по пошті або в месенджері). За посиланням він зареєструється та отримає доступ до ваших SKU для створення пропозицій.
+                </p>
+
+                {myInvite ? (
+                  <div className="mt-4 flex items-center justify-between gap-2 rounded border border-border bg-muted px-3 py-2 text-sm">
+                    <code className="truncate flex-1 text-foreground" title={myInvite.inviteUrl}>
+                      {myInvite.inviteUrl}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={() => copyLink(myInvite.inviteUrl, myInvite.token)}
+                      className="shrink-0 rounded px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10"
+                    >
+                      {copiedId === myInvite.token ? 'Скопійовано' : 'Копіювати'}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={createInvite}
+                    disabled={creatingInvite}
+                    className="mt-3 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {creatingInvite ? 'Отримання…' : 'Отримати посилання-запрошення'}
+                  </button>
+                )}
+              </div>
+            )}
+
             <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
               <h2 className="text-sm font-semibold text-foreground">Зміна пароля</h2>
               <form onSubmit={changePassword} className="mt-4 space-y-4">
@@ -411,8 +460,9 @@ export default function ProfilePage(): JSX.Element {
                 </button>
               </form>
             </div>
+
+        
           </div>
-        </div>
       </div>
     </main>
   );

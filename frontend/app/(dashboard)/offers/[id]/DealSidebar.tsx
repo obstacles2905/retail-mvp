@@ -173,7 +173,7 @@ export function DealSidebar({
 
   if (loading) {
     return (
-      <aside className="flex h-full min-h-0 w-[320px] shrink-0 flex-col gap-4 border-r border-border bg-card p-4">
+      <aside className="flex h-full min-h-0 w-[320px] shrink-0 flex-col gap-4 border-l border-border bg-card p-4">
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
           <div className="h-4 w-20 rounded bg-muted" />
           <div className="mt-3 h-6 w-3/4 rounded bg-muted" />
@@ -188,7 +188,7 @@ export function DealSidebar({
 
   if (error || !offer) {
     return (
-      <aside className="flex h-full min-h-0 w-[320px] shrink-0 flex-col border-r border-border bg-card p-4">
+      <aside className="flex h-full min-h-0 w-[320px] shrink-0 flex-col border-l border-border bg-card p-4">
         <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
           {error ?? 'Угоду не знайдено'}
         </div>
@@ -206,8 +206,8 @@ export function DealSidebar({
   const counterpartLabel = currentUser.role === 'BUYER' ? 'Постачальник' : 'Закупник';
 
   return (
-    <aside className="flex h-full min-h-0 w-[320px] shrink-0 flex-col gap-4 border-r border-border bg-card p-4">
-      <div className="sticky top-4 z-10 flex flex-col gap-4 border-b border-border bg-card pb-4">
+    <aside className="flex h-full min-h-0 w-[320px] shrink-0 flex-col gap-4 border-l border-border bg-card p-4">
+      <div className="sticky top-20 z-10 flex flex-col gap-4 border-b border-border bg-card pb-4">
         {/* Картка контрагента — як у макеті: іконка кошика, підпис "Закупник/Постачальник", ім'я */}
       <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
         <div className="flex items-start gap-3">

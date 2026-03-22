@@ -10,6 +10,7 @@ import { createChatsSocket, type ChatsSocket } from '@/lib/realtime/chats-socket
 
 import { NotificationBell } from '@/components/NotificationBell';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import GlobalHeader from '@/components/layout/GlobalHeader';
 
 export default function ChatDialogPage() {
   const params = useParams();
@@ -122,33 +123,23 @@ export default function ChatDialogPage() {
 
   return (
     <main className="flex h-screen flex-col bg-background">
-      <header className="flex-shrink-0 border-b border-border bg-card">
-        <div className="mx-auto flex h-14 w-full max-w-4xl items-center justify-between px-4">
-          <div className="flex items-center gap-3">
-            <Link href="/chats" prefetch={false} className="mr-2 text-muted-foreground hover:text-foreground">
-              ← Назад
-            </Link>
-            {avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={avatarUrl} alt={chat.participant.name} className="h-8 w-8 rounded-full border border-border object-cover" />
-            ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-success/15 text-success">
-                <span className="text-sm font-semibold">{chat.participant.name.charAt(0).toUpperCase()}</span>
-              </div>
-            )}
-            <div>
-              <h1 className="text-sm font-semibold leading-tight text-foreground">{chat.participant.name}</h1>
-              <p className="text-xs leading-tight text-muted-foreground">{chat.participant.companyName}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <ThemeToggle />
-            <NotificationBell />
-          </div>
-        </div>
-      </header>
+      <GlobalHeader /> 
 
       <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col overflow-hidden bg-card shadow-sm sm:my-4 sm:rounded-lg sm:border sm:border-border">
+        <div className="flex items-center justify-between border-b border-border p-4">
+          <div className="flex items-center gap-3">
+          {avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={avatarUrl} alt={chat.participant.name} className="h-12 w-12 rounded-full border border-border object-cover" />
+                    ) : (
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/15 text-success">
+                        <span className="text-lg font-semibold">{chat.participant.name.charAt(0).toUpperCase()}</span>
+                      </div>
+                    )}
+            <p className="text-sm font-medium text-foreground"><strong>{chat.participant.name}</strong> ({chat.participant.companyName})</p>
+          </div>
+        </div>
+        
         <div className="flex-1 space-y-4 overflow-y-auto bg-muted/30 p-4">
           {messages.map((msg) => {
             const isMe = msg.senderId === currentUser.id;

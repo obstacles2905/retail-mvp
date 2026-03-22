@@ -49,7 +49,7 @@ export function NotificationBell() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-2 w-80 origin-top-right rounded-md border border-border bg-popover py-1 text-popover-foreground shadow-lg focus:outline-none">
+        <div className="absolute right-0 z-100 mt-2 w-80 origin-top-right rounded-md border border-border bg-popover py-1 text-popover-foreground shadow-lg focus:outline-none">
           <div className="flex items-center justify-between border-b border-border px-4 py-2">
             <h3 className="text-sm font-semibold text-foreground">Сповіщення</h3>
             {unreadCount > 0 && (

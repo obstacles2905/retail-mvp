@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { createApiClient } from '@/lib/api-client';
 import { setAuth } from '@/lib/auth';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function LoginPage(): JSX.Element {
   const router = useRouter();
@@ -44,10 +45,14 @@ export default function LoginPage(): JSX.Element {
   return (
     <main className="flex min-h-screen flex-col">
       <header className="border-b border-border bg-card">
-        <div className="mx-auto flex h-14 max-w-4xl items-center px-4">
+        <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
           <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
             RetailProcure
           </Link>
+
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
@@ -116,7 +121,7 @@ export default function LoginPage(): JSX.Element {
 
         <a
           href={`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'}/auth/google`}
-          className="flex w-full items-center justify-center gap-3 rounded-md border border-input bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-muted/50"
+          className="flex w-full items-center justify-center gap-3 rounded-md border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-foreground/90"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path
@@ -139,8 +144,8 @@ export default function LoginPage(): JSX.Element {
           Увійти через Google
         </a>
 
-        <p className="text-center text-sm text-muted-foreground">
-          <Link href="/" className="text-primary hover:text-primary/90">
+        <p className="text-center text-sm text-gray-500">
+          <Link href="/" className="text-indigo-600 hover:text-indigo-500">
             ← На головну
           </Link>
         </p>

@@ -38,10 +38,9 @@ interface SkuOption {
   createdBy?: { id: string; companyName: string };
 }
 
-import { NotificationBell } from '@/components/NotificationBell';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { noveltyBadgeClassName, offerStatusBadgeClassName } from '@/lib/offer-status-badge';
 import { toast } from 'react-hot-toast';
+import GlobalHeader from '@/components/layout/GlobalHeader';
 
 export default function VendorDashboardPage(): JSX.Element {
   const router = useRouter();
@@ -187,27 +186,7 @@ export default function VendorDashboardPage(): JSX.Element {
 
   return (
     <main className="flex min-h-screen flex-col">
-      <header className="border-b border-border bg-card">
-        <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
-          <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
-            RetailProcure
-          </Link>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <NotificationBell />
-            <Link href="/calendar" prefetch={false} className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent">
-              Календар
-            </Link>
-            <Link
-              href="/dashboard"
-              prefetch={false}
-              className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
-            >
-              ← В кабінет
-            </Link>
-          </div>
-        </div>
-      </header>
+     <GlobalHeader /> 
 
       <div className="mx-auto w-full max-w-4xl px-4 py-8">
         <h1 className="text-2xl font-semibold text-foreground">Кабінет постачальника</h1>
@@ -320,7 +299,7 @@ export default function VendorDashboardPage(): JSX.Element {
                         onChange={(e) => setCreatePrice(e.target.value)}
                         placeholder="0.00"
                         required
-                        className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                        className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                       {selectedProduct?.targetPrice && Number(createPrice) > 0 && Number(createPrice) < Number(selectedProduct.targetPrice) && (
                         <p className="mt-1 text-[10px] text-warning leading-tight">
@@ -340,7 +319,7 @@ export default function VendorDashboardPage(): JSX.Element {
                         onChange={(e) => setCreateVolume(e.target.value)}
                         placeholder="100"
                         required
-                        className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                        className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div className="w-40">
@@ -353,7 +332,7 @@ export default function VendorDashboardPage(): JSX.Element {
                         value={createDeliveryDate}
                         onChange={(e) => setCreateDeliveryDate(e.target.value)}
                         required
-                        className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                        className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                   </div>
@@ -368,7 +347,7 @@ export default function VendorDashboardPage(): JSX.Element {
                       onChange={(e) => setCreateDeliveryTerms(e.target.value)}
                       placeholder="Наприклад: 5–7 робочих днів, самовивіз зі складу"
                       maxLength={2000}
-                      className="mt-1 block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <button
@@ -398,7 +377,7 @@ export default function VendorDashboardPage(): JSX.Element {
                     placeholder="Пошук за назвою..."
                     value={counterpartySearch}
                     onChange={(e) => setCounterpartySearch(e.target.value)}
-                    className="w-full rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="w-full rounded-md bg-background border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -407,7 +386,7 @@ export default function VendorDashboardPage(): JSX.Element {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as 'createdAt' | 'acceptedAt')}
-                      className="rounded-md border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="rounded-md bg-background border border-input px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
                     >
                       <option value="createdAt">Дата створення</option>
                       <option value="acceptedAt">Дата погодження</option>
@@ -423,7 +402,7 @@ export default function VendorDashboardPage(): JSX.Element {
                   </div>
                 </div>
                 <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer pb-2">
-                  <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
+                  <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="bg-background" />
                   Показати архівні
                 </label>
               </div>
