@@ -240,8 +240,6 @@ export default function ProfilePage(): JSX.Element {
 
   return (
     <main className="flex min-h-screen flex-col bg-background">
-      <GlobalHeader /> 
-
       <div className="mx-auto w-full max-w-4xl px-4 py-8">
         <h1 className="text-2xl mb-4 font-semibold text-foreground">Профіль</h1>
           <div className="space-y-6">

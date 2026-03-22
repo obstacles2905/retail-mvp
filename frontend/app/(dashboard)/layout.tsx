@@ -1,5 +1,6 @@
 import { GlobalNav } from '@/components/layout/GlobalNav';
 import { DealSidebar } from '@/components/layout/DealSidebar';
+import GlobalHeader from '@/components/layout/GlobalHeader';
 
 export default function DashboardLayout({
   children,
@@ -19,7 +20,10 @@ export default function DashboardLayout({
       </aside>
 
       {/* Column 3 — Main Content */}
-      <main className="flex-1 overflow-y-auto bg-background">{children}</main>
+      <main className="flex-1 overflow-y-auto bg-background">
+        <GlobalHeader />
+        {children}
+      </main>
     </div>
   );
 }

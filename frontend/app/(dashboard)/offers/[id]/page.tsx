@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { getStoredUser, type AuthUser } from '@/lib/auth';
 import { getAuthApiClient } from '@/lib/api-client';
+import { dispatchOffersListRefresh } from '@/lib/offers-list-refresh';
 import { DealSidebar } from './DealSidebar';
 import { DealChat } from './DealChat';
 import type { OfferDetail } from '@/lib/types/offer';
@@ -66,7 +67,10 @@ export default function OfferNegotiationPage(): JSX.Element {
 
   useEffect(() => {
     if (!mounted || !offerId) return;
-    getAuthApiClient().post(`/offers/${offerId}/read`).catch(() => undefined);
+    getAuthApiClient()
+      .post(`/offers/${offerId}/read`)
+      .then(() => dispatchOffersListRefresh())
+      .catch(() => undefined);
   }, [mounted, offerId]);
 
   const refreshOffer = useCallback(() => {
@@ -106,14 +110,13 @@ export default function OfferNegotiationPage(): JSX.Element {
         ? (offer.currentTurn === 'VENDOR' ? 'На розгляді у постачальника' : 'Очікуємо відповідь закупника')
         : (offer.currentTurn === 'BUYER' ? 'На розгляді у закупника' : 'Очікуємо відповідь постачальника');
 
+  const firstItem = offer?.items?.[0];
   const dealTitle = offer
-    ? offer.sku?.name ?? offer.productName ?? 'Умови угоди'
+    ? firstItem?.sku?.name ?? firstItem?.productName ?? 'Умови угоди'
     : 'Завантаження…';
 
   return (
     <main className="flex min-h-screen flex-col bg-background">
-      <GlobalHeader /> 
-
       {/* Основний контент: ліва колонка (умови) + права (історія переговорів) */}
       <section className="flex min-h-0 flex-1">
         <div className="flex flex-row-reverse min-h-0 w-full flex-1 gap-0">

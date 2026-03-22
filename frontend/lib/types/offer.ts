@@ -11,18 +11,30 @@ export type OfferStatus =
 export type OfferTurn = 'BUYER' | 'VENDOR';
 export type InitiatorRole = 'BUYER' | 'VENDOR';
 
-export interface OfferListItem {
+export interface OfferItemDetail {
   id: string;
   skuId: string | null;
-  buyerId: string | null;
   productName: string | null;
   category: string | null;
   isNovelty: boolean;
-  vendorId: string;
-  initiatorRole: InitiatorRole;
   currentPrice: string;
   volume: number;
   unit: string;
+  sku: {
+    id: string;
+    name: string;
+    uom: string;
+    category: string;
+    targetPrice: string | null;
+    createdBy: { id: string; name: string; companyName: string };
+  } | null;
+}
+
+export interface OfferListItem {
+  id: string;
+  buyerId: string | null;
+  vendorId: string;
+  initiatorRole: InitiatorRole;
   deliveryTerms: string | null;
   deliveryDate: string | null;
   status: OfferStatus;
@@ -32,7 +44,7 @@ export interface OfferListItem {
   archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  sku: { id: string; name: string; uom: string } | null;
+  items: OfferItemDetail[];
   vendor: { id: string; name: string; companyName: string };
   buyer?: { id: string; name: string; companyName: string } | null;
   hasUnread?: boolean;
@@ -40,16 +52,9 @@ export interface OfferListItem {
 
 export interface OfferDetail {
   id: string;
-  skuId: string | null;
   buyerId: string | null;
-  productName: string | null;
-  category: string | null;
-  isNovelty: boolean;
   vendorId: string;
   initiatorRole: InitiatorRole;
-  currentPrice: string;
-  volume: number;
-  unit: string;
   deliveryTerms: string | null;
   deliveryDate: string | null;
   status: OfferStatus;
@@ -59,13 +64,7 @@ export interface OfferDetail {
   archivedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  sku: {
-    id: string;
-    name: string;
-    category: string;
-    targetPrice: string | null;
-    createdBy: { id: string; name: string; companyName: string };
-  } | null;
+  items: OfferItemDetail[];
   buyer: { id: string; name: string; companyName: string } | null;
   vendor: { id: string; name: string; companyName: string };
 }

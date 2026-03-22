@@ -16,10 +16,6 @@ interface SkuDto {
   isArchived: boolean;
 }
 
-import { NotificationBell } from '@/components/NotificationBell';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import GlobalHeader from '@/components/layout/GlobalHeader';
-
 export default function BuyerCatalogPage() {
   const [skus, setSkus] = useState<SkuDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,8 +106,6 @@ export default function BuyerCatalogPage() {
 
   return (
     <main className="flex min-h-screen flex-col bg-background">
-      <GlobalHeader /> 
-
       <div className="mx-auto w-full max-w-4xl px-4 py-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
