@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { UserRole } from '@prisma/client';
 
 export interface UserSafe {
   id: string;
@@ -60,6 +61,36 @@ export class UsersService {
       ...this.toUserSafe(user),
       passwordHash,
     };
+  }
+
+  async findByPhone(phone: string): Promise<UserSafe | null> {
+    const user = await this.prisma.user.findUnique({ where: { phone } });
+    if (!user) return null;
+    return this.toUserSafe(user);
+  }
+
+  async createUserByPhone(data: { phone: string; name: string; companyName: string; role: UserRole }): Promise<UserSafe> {
+    // Email is mandatory in the current Prisma schema, so for phone-only accounts we generate a deterministic email
+    // derived from the phone number. This ensures the account remains compatible with existing auth endpoints.
+    const email = `${data.phone}@otp.retailprocure.local`;
+
+    // If the email already exists (e.g., due to a rare collision), fail loudly to keep security expectations clear.
+    const existingByEmail = await this.prisma.user.findUnique({ where: { email } });
+    if (existingByEmail) {
+      throw new ConflictException('Користувач із таким номером телефону вже існує');
+    }
+
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        phone: data.phone,
+        name: data.name,
+        companyName: data.companyName,
+        role: data.role,
+      },
+    });
+
+    return this.toUserSafe(user);
   }
 
   async findSafeById(userId: string): Promise<UserSafe | null> {

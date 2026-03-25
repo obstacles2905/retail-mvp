@@ -2,17 +2,22 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createApiClient } from '@/lib/api-client';
 import { setAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
-import GlobalHeader from '@/components/layout/GlobalHeader';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import PhoneNumberInput from '@/components/auth/PhoneNumberInput';
+import OtpCodeInput from '@/components/auth/OtpCodeInput';
 
 type Role = 'BUYER' | 'VENDOR';
 
 export default function RegisterPage(): JSX.Element {
   const router = useRouter();
+  const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
+  const [otpStep, setOtpStep] = useState<'phone' | 'code'>('phone');
+  const [phone, setPhone] = useState('');
+  const [otpCode, setOtpCode] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -21,8 +26,57 @@ export default function RegisterPage(): JSX.Element {
   const [role, setRole] = useState<Role>('BUYER');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fromLoginOtpHint, setFromLoginOtpHint] = useState(false);
+  const [phoneLocked, setPhoneLocked] = useState(false);
 
   const api = createApiClient();
+
+  const OTP_CONTINUE_KEY = 'otpContinueRegistration';
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    let raw: string | null = null;
+    try {
+      raw = sessionStorage.getItem(OTP_CONTINUE_KEY);
+    } catch {
+      return;
+    }
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw) as { phone?: string; code?: string };
+      if (parsed.phone && parsed.code) {
+        setAuthMethod('phone');
+        setPhone(parsed.phone);
+        setOtpCode(parsed.code);
+        setOtpStep('code');
+        setPhoneLocked(true);
+        setFromLoginOtpHint(true);
+        setError(null);
+      }
+    } catch {
+      // ignore
+    }
+    try {
+      sessionStorage.removeItem(OTP_CONTINUE_KEY);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const getApiErrorMessage = (err: unknown, fallback: string): string => {
+    const ax = err && typeof err === 'object' && 'response' in err
+      ? (err as { response?: { data?: { message?: string | string[] }; status?: number } })
+      : undefined;
+
+    const data = ax?.response?.data;
+    const msg = data?.message;
+    if (typeof msg === 'string') return msg;
+    if (Array.isArray(msg)) return msg.join(', ');
+    if (ax?.response?.status === 400) return 'Перевірте номер телефону та код.';
+    if (ax?.response?.status === 409) return 'Користувач з таким номером телефону вже існує.';
+    if (ax?.response?.status === 402) return 'Недостатньо коштів для відправки SMS.';
+    return fallback;
+  };
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -66,6 +120,42 @@ export default function RegisterPage(): JSX.Element {
     }
   };
 
+  const requestOtp = async (): Promise<void> => {
+    setError(null);
+    setLoading(true);
+    try {
+      await api.post('/auth/otp/request', { phone });
+      setOtpStep('code');
+      setOtpCode('');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Не вдалося надіслати код підтвердження'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyOtp = async (): Promise<void> => {
+    setError(null);
+    setLoading(true);
+    try {
+      const { data } = await api.post<{ accessToken: string; user: AuthUser }>('/auth/otp/verify', {
+        phone,
+        code: otpCode,
+        name,
+        companyName,
+        role,
+      });
+
+      setAuth({ accessToken: data.accessToken, user: data.user });
+      router.push('/dashboard');
+      router.refresh();
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Не вдалося підтвердити код підтвердження'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="flex min-h-screen flex-col">
        <header className="border-b border-border bg-card">
@@ -91,12 +181,60 @@ export default function RegisterPage(): JSX.Element {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form
+          onSubmit={(e) => {
+            if (authMethod === 'email') void handleSubmit(e);
+            else {
+              e.preventDefault();
+              if (otpStep === 'phone') void requestOtp();
+              else void verifyOtp();
+            }
+          }}
+          className="flex flex-col gap-4"
+        >
+          {fromLoginOtpHint && (
+            <div className="rounded-md border border-border bg-muted/50 p-3 text-sm text-foreground" role="status">
+              Цей номер ще не зареєстрований. Заповніть ім'я та компанію, потім натисніть «Підтвердити та зареєструватися» — той самий код з SMS залишається дійсним.
+            </div>
+          )}
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive" role="alert">
               {error}
             </div>
           )}
+
+          <div className="flex rounded-md bg-muted p-1">
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMethod('email');
+                setOtpStep('phone');
+                setPhone('');
+                setOtpCode('');
+                setPhoneLocked(false);
+                setFromLoginOtpHint(false);
+                setError(null);
+              }}
+              className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${authMethod === 'email' ? 'bg-card text-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              Email
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMethod('phone');
+                setOtpStep('phone');
+                setPhone('');
+                setOtpCode('');
+                setPhoneLocked(false);
+                setFromLoginOtpHint(false);
+                setError(null);
+              }}
+              className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${authMethod === 'phone' ? 'bg-card text-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              Телефон (OTP)
+            </button>
+          </div>
 
           <div>
             <label htmlFor="reg-role" className="block text-sm font-medium text-foreground">
@@ -113,86 +251,164 @@ export default function RegisterPage(): JSX.Element {
             </select>
           </div>
 
-          <div>
-            <label htmlFor="reg-email" className="block text-sm font-medium text-foreground">
-              Email
-            </label>
-            <input
-              id="reg-email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <div>
-            <label htmlFor="reg-password" className="block text-sm font-medium text-foreground">
-              Пароль (не менше 8 символів)
-            </label>
-            <input
-              id="reg-password"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <div>
-            <label htmlFor="reg-password-confirm" className="block text-sm font-medium text-foreground">
-              Підтвердження пароля
-            </label>
-            <input
-              id="reg-password-confirm"
-              type="password"
-              autoComplete="new-password"
-              required
-              minLength={8}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <div>
-            <label htmlFor="reg-name" className="block text-sm font-medium text-foreground">
-              Ім'я
-            </label>
-            <input
-              id="reg-name"
-              type="text"
-              autoComplete="name"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <div>
-            <label htmlFor="reg-company" className="block text-sm font-medium text-foreground">
-              Назва компанії
-            </label>
-            <input
-              id="reg-company"
-              type="text"
-              autoComplete="organization"
-              required
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
+          {authMethod === 'email' ? (
+            <>
+              <div>
+                <label htmlFor="reg-email" className="block text-sm font-medium text-foreground">
+                  Email
+                </label>
+                <input
+                  id="reg-email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+              <div>
+                <label htmlFor="reg-password" className="block text-sm font-medium text-foreground">
+                  Пароль (не менше 8 символів)
+                </label>
+                <input
+                  id="reg-password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+              <div>
+                <label htmlFor="reg-password-confirm" className="block text-sm font-medium text-foreground">
+                  Підтвердження пароля
+                </label>
+                <input
+                  id="reg-password-confirm"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {loading ? 'Реєстрація…' : 'Зареєструватися'}
-          </button>
+              <div>
+                <label htmlFor="reg-name" className="block text-sm font-medium text-foreground">
+                  Ім'я
+                </label>
+                <input
+                  id="reg-name"
+                  type="text"
+                  autoComplete="name"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+              <div>
+                <label htmlFor="reg-company" className="block text-sm font-medium text-foreground">
+                  Назва компанії
+                </label>
+                <input
+                  id="reg-company"
+                  type="text"
+                  autoComplete="organization"
+                  required
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {loading ? 'Реєстрація…' : 'Зареєструватися'}
+              </button>
+            </>
+          ) : (
+            <>
+              <div>
+                <label htmlFor="reg-name" className="block text-sm font-medium text-foreground">
+                  Ім'я
+                </label>
+                <input
+                  id="reg-name"
+                  type="text"
+                  autoComplete="name"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={otpStep === 'code' && !fromLoginOtpHint}
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+                />
+              </div>
+              <div>
+                <label htmlFor="reg-company" className="block text-sm font-medium text-foreground">
+                  Назва компанії
+                </label>
+                <input
+                  id="reg-company"
+                  type="text"
+                  autoComplete="organization"
+                  required
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  disabled={otpStep === 'code' && !fromLoginOtpHint}
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+                />
+              </div>
+
+              <PhoneNumberInput
+                value={phone}
+                onChange={setPhone}
+                disabled={phoneLocked || otpStep === 'code'}
+                error={null}
+              />
+
+              {otpStep === 'phone' ? (
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => { void requestOtp(); }}
+                  className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {loading ? 'Обробка…' : 'Надіслати код'}
+                </button>
+              ) : (
+                <>
+                  <OtpCodeInput value={otpCode} onChange={setOtpCode} disabled={loading} error={null} />
+                  <button
+                    type="button"
+                    disabled={loading}
+                    onClick={() => { void verifyOtp(); }}
+                    className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {loading ? 'Обробка…' : 'Підтвердити та зареєструватися'}
+                  </button>
+                  {!fromLoginOtpHint && (
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={() => { void requestOtp(); }}
+                      className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:opacity-50"
+                    >
+                      Відправити код заново
+                    </button>
+                  )}
+                </>
+              )}
+            </>
+          )}
         </form>
 
         <div className="relative">

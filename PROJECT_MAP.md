@@ -504,6 +504,8 @@ Forms use uncontrolled or controlled `useState` inputs with manual validation be
 |---|---|---|---|
 | `POST` | `/auth/register` | — | Register (buyer or vendor, optionally with inviteToken) |
 | `POST` | `/auth/login` | — | Login → `{ accessToken, user }` |
+| `POST` | `/auth/otp/request` | — | Request OTP by phone (TurboSMS) |
+| `POST` | `/auth/otp/verify` | — | Verify OTP → issue JWT |
 | `GET` | `/auth/google` | — | Start Google OAuth |
 | `GET` | `/auth/google/callback` | — | Google OAuth callback → redirect with `?token=` |
 

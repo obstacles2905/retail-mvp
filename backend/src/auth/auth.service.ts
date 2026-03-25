@@ -5,6 +5,9 @@ import { UsersService, UserSafe } from '../users/users.service';
 import { InvitesService } from '../invites/invites.service';
 import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
+import { VerifyOtpDto } from './dto/otp-verify.dto';
+import { OtpService } from './otp.service';
+import { UserRole } from '@prisma/client';
 
 export interface AuthPayload {
   sub: string;
@@ -23,6 +26,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly invitesService: InvitesService,
+    private readonly otpService: OtpService,
   ) {}
 
   async register(dto: CreateUserDto): Promise<AuthResult> {
@@ -60,6 +64,42 @@ export class AuthService {
     const accessToken = await this.jwtService.signAsync(payload);
 
     return { accessToken, user: safeUser };
+  }
+
+  async requestOtp(phone: string): Promise<{ ok: true; expiresAt: Date }> {
+    const { expiresAt } = await this.otpService.requestOtp(phone);
+    return { ok: true, expiresAt };
+  }
+
+  async verifyOtp(dto: VerifyOtpDto): Promise<AuthResult> {
+    const { id: otpId } = await this.otpService.validateOtp(dto.phone, dto.code);
+
+    const existingUser = await this.usersService.findByPhone(dto.phone);
+
+    if (!existingUser) {
+      if (!dto.name || !dto.companyName) {
+        throw new BadRequestException('Для реєстрації введіть ім\'я та назву компанії');
+      }
+
+      const newUser = await this.usersService.createUserByPhone({
+        phone: dto.phone,
+        name: dto.name,
+        companyName: dto.companyName,
+        role: dto.role ?? UserRole.VENDOR,
+      });
+
+      await this.otpService.consumeOtp(otpId);
+
+      const payload = this.buildPayload(newUser);
+      const accessToken = await this.jwtService.signAsync(payload);
+      return { accessToken, user: newUser };
+    }
+
+    await this.otpService.consumeOtp(otpId);
+
+    const payload = this.buildPayload(existingUser);
+    const accessToken = await this.jwtService.signAsync(payload);
+    return { accessToken, user: existingUser };
   }
 
   async validateGoogleUser(profile: {

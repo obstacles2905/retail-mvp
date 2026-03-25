@@ -4,6 +4,8 @@ import { Request, Response } from 'express';
 import { AuthService, AuthResult } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
+import { RequestOtpDto } from './dto/otp-request.dto';
+import { VerifyOtpDto } from './dto/otp-verify.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -17,6 +19,16 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto): Promise<AuthResult> {
     return this.authService.login(dto);
+  }
+
+  @Post('otp/request')
+  requestOtp(@Body() dto: RequestOtpDto): Promise<{ ok: true; expiresAt: Date }> {
+    return this.authService.requestOtp(dto.phone);
+  }
+
+  @Post('otp/verify')
+  verifyOtp(@Body() dto: VerifyOtpDto): Promise<AuthResult> {
+    return this.authService.verifyOtp(dto);
   }
 
   @Get('google')

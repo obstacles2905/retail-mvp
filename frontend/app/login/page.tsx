@@ -6,15 +6,45 @@ import { useState } from 'react';
 import { createApiClient } from '@/lib/api-client';
 import { setAuth } from '@/lib/auth';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import PhoneNumberInput from '@/components/auth/PhoneNumberInput';
+import OtpCodeInput from '@/components/auth/OtpCodeInput';
 
 export default function LoginPage(): JSX.Element {
   const router = useRouter();
+  const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
+  const [otpStep, setOtpStep] = useState<'phone' | 'code'>('phone');
+  const [phone, setPhone] = useState('');
+  const [otpCode, setOtpCode] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const api = createApiClient();
+
+  /** Backend: BadRequest when OTP valid but user missing and no name/company (login flow). */
+  const isOtpNeedRegistrationProfileError = (err: unknown): boolean => {
+    const ax = err && typeof err === 'object' && 'response' in err
+      ? (err as { response?: { data?: { message?: string | string[] }; status?: number } })
+      : undefined;
+    if (ax?.response?.status !== 400) return false;
+    const msg = ax.response.data?.message;
+    const text = typeof msg === 'string' ? msg : Array.isArray(msg) ? msg.join(' ') : '';
+    return text.includes("ім'я") && text.includes('компан');
+  };
+
+  const getApiErrorMessage = (err: unknown, fallback: string): string => {
+    const ax = err && typeof err === 'object' && 'response' in err
+      ? (err as { response?: { data?: { message?: string | string[] }; status?: number } })
+      : undefined;
+
+    const data = ax?.response?.data;
+    const msg = data?.message;
+    if (typeof msg === 'string') return msg;
+    if (Array.isArray(msg)) return msg.join(', ');
+    if (ax?.response?.status === 400) return 'Перевірте номер телефону та код.';
+    return fallback;
+  };
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -37,6 +67,54 @@ export default function LoginPage(): JSX.Element {
           ? (err.response as { data: { message: string } }).data.message
           : 'Помилка входу. Перевірте email та пароль.';
       setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const requestOtp = async (): Promise<void> => {
+    setError(null);
+    setLoading(true);
+    try {
+      await api.post('/auth/otp/request', { phone });
+      setOtpStep('code');
+      setOtpCode('');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Не вдалося надіслати код підтвердження'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyOtp = async (): Promise<void> => {
+    setError(null);
+    setLoading(true);
+    try {
+      const { data } = await api.post<{ accessToken: string; user: unknown }>('/auth/otp/verify', {
+        phone,
+        code: otpCode,
+      });
+
+      setAuth({
+        accessToken: data.accessToken,
+        user: data.user as Parameters<typeof setAuth>[0]['user'],
+      });
+      router.push('/dashboard');
+      router.refresh();
+    } catch (err: unknown) {
+      if (isOtpNeedRegistrationProfileError(err)) {
+        try {
+          sessionStorage.setItem(
+            'otpContinueRegistration',
+            JSON.stringify({ phone, code: otpCode }),
+          );
+        } catch {
+          // ignore
+        }
+        router.push('/register');
+        return;
+      }
+      setError(getApiErrorMessage(err, 'Не вдалося підтвердити код підтвердження'));
     } finally {
       setLoading(false);
     }
@@ -67,47 +145,128 @@ export default function LoginPage(): JSX.Element {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form
+          onSubmit={(e) => {
+            if (authMethod === 'email') void handleSubmit(e);
+            else e.preventDefault();
+          }}
+          className="flex flex-col gap-4"
+        >
+          <div className="flex rounded-md bg-muted p-1">
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMethod('email');
+                setOtpStep('phone');
+                setPhone('');
+                setOtpCode('');
+                setError(null);
+              }}
+              className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${authMethod === 'email' ? 'bg-card text-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              Email
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMethod('phone');
+                setOtpStep('phone');
+                setPhone('');
+                setOtpCode('');
+                setError(null);
+              }}
+              className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${authMethod === 'phone' ? 'bg-card text-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              Телефон (OTP)
+            </button>
+          </div>
+
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive" role="alert">
               {error}
             </div>
           )}
-          <div>
-            <label htmlFor="login-email" className="block text-sm font-medium text-foreground">
-              Email
-            </label>
-            <input
-              id="login-email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <div>
-            <label htmlFor="login-password" className="block text-sm font-medium text-foreground">
-              Пароль
-            </label>
-            <input
-              id="login-password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {loading ? 'Вхід…' : 'Увійти'}
-          </button>
+
+          {authMethod === 'email' ? (
+            <>
+              <div>
+                <label htmlFor="login-email" className="block text-sm font-medium text-foreground">
+                  Email
+                </label>
+                <input
+                  id="login-email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+              <div>
+                <label htmlFor="login-password" className="block text-sm font-medium text-foreground">
+                  Пароль
+                </label>
+                <input
+                  id="login-password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {loading ? 'Вхід…' : 'Увійти'}
+              </button>
+            </>
+          ) : (
+            <>
+              <PhoneNumberInput
+                value={phone}
+                onChange={setPhone}
+                disabled={otpStep === 'code'}
+                error={null}
+              />
+
+              {otpStep === 'phone' ? (
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => { void requestOtp(); }}
+                  className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {loading ? 'Обробка…' : 'Надіслати код'}
+                </button>
+              ) : (
+                <>
+                  <OtpCodeInput value={otpCode} onChange={setOtpCode} disabled={loading} error={null} />
+
+                  <button
+                    type="button"
+                    disabled={loading}
+                    onClick={() => { void verifyOtp(); }}
+                    className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {loading ? 'Обробка…' : 'Підтвердити і увійти'}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={loading}
+                    onClick={() => { void requestOtp(); }}
+                    className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:opacity-50"
+                  >
+                    Відправити код заново
+                  </button>
+                </>
+              )}
+            </>
+          )}
         </form>
 
         <div className="relative">

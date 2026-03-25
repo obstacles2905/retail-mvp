@@ -52,7 +52,7 @@ model User {
   inviteToken  String?        @unique
   name         String
   companyName  String
-  phone        String?
+  phone        String?        @unique
   avatarPath   String?
   role         UserRole
 
@@ -234,6 +234,20 @@ model Notification {
   createdAt DateTime         @default(now())
 
   @@index([userId])
+}
+
+model OtpVerification {
+  id String @id @default(uuid())
+
+  phone String
+  code String
+
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("otp_verifications")
+  @@index([phone])
+  @@index([expiresAt])
 }
 
 

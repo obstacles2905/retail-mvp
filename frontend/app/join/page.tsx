@@ -6,8 +6,9 @@ import { useEffect, useState } from 'react';
 import { createApiClient } from '@/lib/api-client';
 import { setAuth, getStoredUser, getStoredToken } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
-import GlobalHeader from '@/components/layout/GlobalHeader';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import PhoneNumberInput from '@/components/auth/PhoneNumberInput';
+import OtpCodeInput from '@/components/auth/OtpCodeInput';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
 
@@ -17,12 +18,16 @@ export default function JoinByInvitePage(): JSX.Element {
 
   const [status, setStatus] = useState<'loading' | 'valid' | 'invalid'>('loading');
   const [mode, setMode] = useState<'register' | 'login'>('register');
+  const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
+  const [otpStep, setOtpStep] = useState<'phone' | 'code'>('phone');
   const [buyerCompanyName, setBuyerCompanyName] = useState<string>('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [otpCode, setOtpCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
@@ -55,6 +60,23 @@ export default function JoinByInvitePage(): JSX.Element {
   }, [token, status]);
 
   const api = createApiClient();
+
+  const getApiErrorMessage = (err: unknown, fallback: string): string => {
+    const ax = err && typeof err === 'object' && 'response' in err
+      ? (err as { response?: { data?: { message?: string | string[] }; status?: number } })
+      : undefined;
+
+    const data = ax?.response?.data;
+    const msg = data?.message;
+    if (typeof msg === 'string') return msg;
+    if (Array.isArray(msg)) return msg.join(', ');
+
+    if (ax?.response?.status === 402) return 'Недостатньо коштів для відправки SMS.';
+    if (ax?.response?.status === 401) return 'Невірний або прострочений код підтвердження.';
+    if (ax?.response?.status === 400) return 'Перевірте номер телефону та код.';
+
+    return fallback;
+  };
 
   const handleRegister = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -122,6 +144,53 @@ export default function JoinByInvitePage(): JSX.Element {
     } finally {
       setLoading(false);
     }
+  };
+
+  const requestOtp = async (): Promise<void> => {
+    if (!token) return;
+    setError(null);
+    setLoading(true);
+    try {
+      await api.post('/auth/otp/request', { phone });
+      setOtpStep('code');
+      setOtpCode('');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Не вдалося надіслати код підтвердження'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyOtp = async (): Promise<void> => {
+    if (!token) return;
+    setError(null);
+    setLoading(true);
+    try {
+      const body: { phone: string; code: string; name?: string; companyName?: string; role: 'BUYER' | 'VENDOR' } = { phone, code: otpCode, role: 'VENDOR' };
+      if (mode === 'register') {
+        body.name = name;
+        body.companyName = companyName;
+      }
+
+      const { data } = await api.post<{ accessToken: string; user: AuthUser }>('/auth/otp/verify', body);
+      setAuth({ accessToken: data.accessToken, user: data.user });
+
+      const authApi = createApiClient({ getToken: () => data.accessToken });
+      await authApi.post('/invites/accept', { token });
+
+      router.push('/dashboard');
+      router.refresh();
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Не вдалося підтвердити код підтвердження'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePhoneSubmit = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
+    if (otpStep === 'phone') return requestOtp();
+    return verifyOtp();
   };
 
   const handleAcceptExisting = async (): Promise<void> => {
@@ -207,113 +276,227 @@ export default function JoinByInvitePage(): JSX.Element {
             <div className="flex rounded-md bg-muted p-1">
               <button
                 type="button"
-                onClick={() => { setMode('register'); setError(null); }}
+                onClick={() => {
+                  setMode('register');
+                  setError(null);
+                  setOtpStep('phone');
+                  setOtpCode('');
+                }}
                 className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${mode === 'register' ? 'bg-card text-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 Новий акаунт
               </button>
               <button
                 type="button"
-                onClick={() => { setMode('login'); setError(null); }}
+                onClick={() => {
+                  setMode('login');
+                  setError(null);
+                  setOtpStep('phone');
+                  setOtpCode('');
+                }}
                 className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${mode === 'login' ? 'bg-card text-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 Вже є акаунт
               </button>
             </div>
 
-            <form onSubmit={mode === 'register' ? handleRegister : handleLogin} className="flex flex-col gap-4">
-              {error && (
-                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive" role="alert">
-                  {error}
-                </div>
-              )}
-
-              <div>
-                <label htmlFor="join-email" className="block text-sm font-medium text-foreground">
-                  Email
-                </label>
-                <input
-                  id="join-email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-                />
-              </div>
-              <div>
-                <label htmlFor="join-password" className="block text-sm font-medium text-foreground">
-                  Пароль {mode === 'register' && '(не менше 8 символів)'}
-                </label>
-                <input
-                  id="join-password"
-                  type="password"
-                  autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-                  required
-                  minLength={mode === 'register' ? 8 : 1}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-                />
-              </div>
-
-              {mode === 'register' && (
-                <>
-                  <div>
-                    <label htmlFor="join-confirm" className="block text-sm font-medium text-foreground">
-                      Підтвердження пароля
-                    </label>
-                    <input
-                      id="join-confirm"
-                      type="password"
-                      autoComplete="new-password"
-                      required
-                      minLength={8}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="join-name" className="block text-sm font-medium text-foreground">
-                      Ім'я
-                    </label>
-                    <input
-                      id="join-name"
-                      type="text"
-                      autoComplete="name"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="join-company" className="block text-sm font-medium text-foreground">
-                      Назва компанії
-                    </label>
-                    <input
-                      id="join-company"
-                      type="text"
-                      autoComplete="organization"
-                      required
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
-                  </div>
-                </>
-              )}
-
+            <div className="flex rounded-md bg-muted p-1">
               <button
-                type="submit"
-                disabled={loading}
-                className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                type="button"
+                onClick={() => {
+                  setAuthMethod('email');
+                  setOtpStep('phone');
+                  setOtpCode('');
+                  setError(null);
+                }}
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${authMethod === 'email' ? 'bg-card text-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}
               >
-                {loading ? 'Обробка…' : mode === 'register' ? 'Зареєструватися' : 'Увійти та прийняти'}
+                Email
               </button>
-            </form>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthMethod('phone');
+                  setOtpStep('phone');
+                  setOtpCode('');
+                  setPhone('');
+                  setError(null);
+                }}
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${authMethod === 'phone' ? 'bg-card text-foreground shadow' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                Телефон (OTP)
+              </button>
+            </div>
+
+            {authMethod === 'email' ? (
+              <form onSubmit={mode === 'register' ? handleRegister : handleLogin} className="flex flex-col gap-4">
+                {error && (
+                  <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive" role="alert">
+                    {error}
+                  </div>
+                )}
+
+                <div>
+                  <label htmlFor="join-email" className="block text-sm font-medium text-foreground">
+                    Email
+                  </label>
+                  <input
+                    id="join-email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="join-password" className="block text-sm font-medium text-foreground">
+                    Пароль {mode === 'register' && '(не менше 8 символів)'}
+                  </label>
+                  <input
+                    id="join-password"
+                    type="password"
+                    autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                    required
+                    minLength={mode === 'register' ? 8 : 1}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+
+                {mode === 'register' && (
+                  <>
+                    <div>
+                      <label htmlFor="join-confirm" className="block text-sm font-medium text-foreground">
+                        Підтвердження пароля
+                      </label>
+                      <input
+                        id="join-confirm"
+                        type="password"
+                        autoComplete="new-password"
+                        required
+                        minLength={8}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="join-name" className="block text-sm font-medium text-foreground">
+                        Ім'я
+                      </label>
+                      <input
+                        id="join-name"
+                        type="text"
+                        autoComplete="name"
+                        required
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="join-company" className="block text-sm font-medium text-foreground">
+                        Назва компанії
+                      </label>
+                      <input
+                        id="join-company"
+                        type="text"
+                        autoComplete="organization"
+                        required
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {loading ? 'Обробка…' : mode === 'register' ? 'Зареєструватися' : 'Увійти та прийняти'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handlePhoneSubmit} className="flex flex-col gap-4">
+                {error && (
+                  <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive" role="alert">
+                    {error}
+                  </div>
+                )}
+
+                {mode === 'register' && (
+                  <>
+                    <div>
+                      <label htmlFor="join-name" className="block text-sm font-medium text-foreground">
+                        Ім'я
+                      </label>
+                      <input
+                        id="join-name"
+                        type="text"
+                        autoComplete="name"
+                        required
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="join-company" className="block text-sm font-medium text-foreground">
+                        Назва компанії
+                      </label>
+                      <input
+                        id="join-company"
+                        type="text"
+                        autoComplete="organization"
+                        required
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <PhoneNumberInput value={phone} onChange={setPhone} disabled={otpStep === 'code'} error={null} />
+
+                {otpStep === 'phone' ? (
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {loading ? 'Обробка…' : 'Надіслати код'}
+                  </button>
+                ) : (
+                  <>
+                    <OtpCodeInput value={otpCode} onChange={setOtpCode} disabled={loading} error={null} />
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      {loading ? 'Обробка…' : 'Підтвердити та прийняти'}
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={() => { void requestOtp(); }}
+                      className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 disabled:opacity-50"
+                    >
+                      Відправити код заново
+                    </button>
+                  </>
+                )}
+              </form>
+            )}
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">

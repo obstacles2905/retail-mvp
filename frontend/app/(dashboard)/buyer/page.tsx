@@ -73,6 +73,10 @@ export default function BuyerDashboardPage(): JSX.Element {
     setOrderError(null);
     const hasVendors = orderVendorIds.length > 0;
     const allItemsValid = orderItems.every(i => i.product && i.price.trim() && i.volume.trim());
+
+    console.log('hasVendors', hasVendors);
+    console.log('allItemsValid', allItemsValid);
+    console.log('orderDeliveryDate', orderDeliveryDate);
     if (!hasVendors || !allItemsValid || !orderDeliveryDate) return;
 
     setOrderLoading(true);
