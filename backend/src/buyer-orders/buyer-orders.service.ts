@@ -27,9 +27,16 @@ export class BuyerOrdersService {
     private readonly realtime: OffersRealtimeService,
   ) {}
 
-  async createAndBroadcast(buyerId: string, dto: CreateBuyerOrderDto): Promise<OfferDto[]> {
+  async createAndBroadcast(
+    buyerId: string,
+    workspaceId: string | null,
+    dto: CreateBuyerOrderDto,
+  ): Promise<OfferDto[]> {
     if (dto.items.length === 0) {
       throw new BadRequestException('At least one item is required');
+    }
+    if (!workspaceId) {
+      throw new BadRequestException('Buyer workspace is required to create order');
     }
 
     const linkedVendorIds = await this.invitesService.getLinkedVendorIds(buyerId);
@@ -56,6 +63,7 @@ export class BuyerOrdersService {
           const offer = await tx.offer.create({
             data: {
               buyerId,
+              workspaceId,
               vendorId,
               initiatorRole: 'BUYER',
               deliveryTerms: dto.deliveryTerms ?? null,

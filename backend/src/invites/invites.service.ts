@@ -30,11 +30,20 @@ export class InvitesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(buyerId: string): Promise<InviteDto> {
+    const buyer = await this.prisma.user.findUnique({
+      where: { id: buyerId },
+      select: { workspaceId: true },
+    });
+    if (!buyer) {
+      throw new NotFoundException('User not found');
+    }
+
     const token = randomUUID();
     const invite = await this.prisma.invite.create({
       data: {
         token,
         buyerId,
+        workspaceId: buyer.workspaceId ?? null,
       },
     });
     return this.toDto(invite);
@@ -112,6 +121,7 @@ export class InvitesService {
             token: randomUUID(), // dummy unique token for DB constraint
             buyerId: buyer.id,
             usedByVendorId: vendorId,
+            workspaceId: buyer.workspaceId,
           },
         });
       }
@@ -171,17 +181,25 @@ export class InvitesService {
   }
 
   /** Для закупщика: список поставщиков, которые подключились по его приглашениям. */
-  async findConnectionsForBuyer(buyerId: string): Promise<LinkedVendorDto[]> {
+  async findConnectionsForBuyer(workspaceId: string | null): Promise<LinkedVendorDto[]> {
+    if (!workspaceId) {
+      return [];
+    }
+
     const invites = await this.prisma.invite.findMany({
-      where: { buyerId, usedByVendorId: { not: null } },
+      where: { workspaceId, usedByVendorId: { not: null } },
       include: { usedByVendor: { select: { id: true, name: true, companyName: true } } },
       orderBy: { createdAt: 'desc' },
     });
 
-    return invites
+    const linkedVendors = invites
       .map((i) => i.usedByVendor)
       .filter((v): v is { id: string; name: string; companyName: string } => v != null)
       .map((v) => ({ vendorId: v.id, vendorName: v.name, vendorCompanyName: v.companyName }));
+
+    return linkedVendors.filter(
+      (vendor, index, array) => array.findIndex((item) => item.vendorId === vendor.vendorId) === index,
+    );
   }
 
   private toDto(invite: {

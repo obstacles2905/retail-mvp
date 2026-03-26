@@ -14,8 +14,8 @@ export class SkuController {
 
   @Get()
   @Roles('BUYER', 'VENDOR')
-  getAll(@CurrentUser() user: { sub: string; role: 'BUYER' | 'VENDOR' }): Promise<SkuDto[]> {
-    return this.skuService.findAll(user.sub, user.role);
+  getAll(@CurrentUser() user: { sub: string; role: 'BUYER' | 'VENDOR'; workspaceId: string | null }): Promise<SkuDto[]> {
+    return this.skuService.findAll(user.sub, user.role, user.workspaceId);
   }
 
   @Get('search')
@@ -30,8 +30,8 @@ export class SkuController {
 
   @Post()
   @Roles('BUYER')
-  create(@Body() dto: CreateSkuDto, @CurrentUser() user: { sub: string }): Promise<SkuDto> {
-    return this.skuService.create(dto, user.sub);
+  create(@Body() dto: CreateSkuDto, @CurrentUser() user: { sub: string; workspaceId: string | null }): Promise<SkuDto> {
+    return this.skuService.create(dto, user.sub, user.workspaceId);
   }
 
   @Put(':id')

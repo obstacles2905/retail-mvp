@@ -10,6 +10,7 @@ import {
   Calendar,
   MessageCircle,
   User,
+  Users,
   Moon,
   Sun,
   LogOut,
@@ -44,6 +45,12 @@ function getNavItems(role: AuthUser['role']): NavItem[] {
       icon: Package,
       label: 'Каталог SKU',
       matchPrefix: '/buyer/catalog',
+    });
+    items.push({
+      href: '/team',
+      icon: Users,
+      label: 'Команда',
+      matchPrefix: '/team',
     });
   }
 

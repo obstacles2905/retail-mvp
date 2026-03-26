@@ -4,6 +4,7 @@ export interface CurrentUser {
   sub: string;
   email: string;
   role: string;
+  workspaceId: string | null;
 }
 
 export const CurrentUser = createParamDecorator(

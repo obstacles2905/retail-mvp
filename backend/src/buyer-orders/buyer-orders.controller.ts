@@ -14,8 +14,11 @@ export class BuyerOrdersController {
 
   @Post()
   @Roles('BUYER')
-  create(@CurrentUser() user: { sub: string }, @Body() dto: CreateBuyerOrderDto): Promise<OfferDto[]> {
-    return this.buyerOrdersService.createAndBroadcast(user.sub, dto);
+  create(
+    @CurrentUser() user: { sub: string; workspaceId: string | null },
+    @Body() dto: CreateBuyerOrderDto,
+  ): Promise<OfferDto[]> {
+    return this.buyerOrdersService.createAndBroadcast(user.sub, user.workspaceId, dto);
   }
 
   @Get()

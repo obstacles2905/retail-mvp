@@ -85,6 +85,7 @@ export class OffersService {
     const linkedBuyerIds = await this.invitesService.getLinkedBuyerIds(vendorId);
 
     let buyerId: string | null = null;
+    let workspaceId: string | null = null;
 
     for (const item of dto.items) {
       if (item.skuId) {
@@ -96,7 +97,11 @@ export class OffersService {
         if (buyerId && buyerId !== sku.createdById) {
           throw new BadRequestException('All SKU items must belong to the same buyer');
         }
+        if (workspaceId && workspaceId !== sku.workspaceId) {
+          throw new BadRequestException('All SKU items must belong to the same workspace');
+        }
         buyerId = sku.createdById;
+        workspaceId = sku.workspaceId;
       } else if (item.productName?.trim()) {
         if (dto.buyerId && !linkedBuyerIds.includes(dto.buyerId)) {
           throw new ForbiddenException('You can only send offers to buyers who have invited you');
@@ -108,11 +113,22 @@ export class OffersService {
 
     if (!buyerId) buyerId = dto.buyerId ?? null;
     if (!buyerId) throw new BadRequestException('Cannot determine buyer — provide buyerId or use SKU items');
+    if (!workspaceId) {
+      const buyer = await this.prisma.user.findUnique({
+        where: { id: buyerId },
+        select: { workspaceId: true },
+      });
+      workspaceId = buyer?.workspaceId ?? null;
+    }
+    if (!workspaceId) {
+      throw new BadRequestException('Buyer workspace is required to create offer');
+    }
 
     const offer = await this.prisma.$transaction(async (tx) => {
       const created = await tx.offer.create({
         data: {
           buyerId,
+          workspaceId,
           vendorId,
           initiatorRole: 'VENDOR',
           deliveryTerms: dto.deliveryTerms ?? null,
@@ -156,6 +172,7 @@ export class OffersService {
   async findAllForUser(
     userId: string,
     role: 'BUYER' | 'VENDOR',
+    workspaceId: string | null,
     options?: {
       status?: OfferStatus | OfferStatus[];
       showArchived?: boolean;
@@ -170,9 +187,13 @@ export class OffersService {
       vendor: { select: { id: true, name: true, companyName: true } },
     };
 
+    if (role === 'BUYER' && !workspaceId) {
+      return [];
+    }
+
     const whereClause: any = role === 'VENDOR'
       ? { vendorId: userId }
-      : { buyerId: userId };
+      : { workspaceId };
 
     if (!options?.showArchived) {
       whereClause.isArchived = false;

@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
 import { createApiClient } from '@/lib/api-client';
 import { setAuth } from '@/lib/auth';
 import type { AuthUser } from '@/lib/auth';
@@ -11,8 +11,11 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 
 type Role = 'BUYER' | 'VENDOR';
 
-export default function RegisterPage(): JSX.Element {
+function RegisterContent(): JSX.Element {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const teamToken = searchParams.get('teamToken');
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -21,8 +24,27 @@ export default function RegisterPage(): JSX.Element {
   const [role, setRole] = useState<Role>('BUYER');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fetchingTeam, setFetchingTeam] = useState(false);
 
   const api = createApiClient();
+
+  useEffect(() => {
+    if (teamToken) {
+      setRole('BUYER');
+      setFetchingTeam(true);
+      createApiClient()
+        .get<{ workspaceName: string }>(`/workspaces/invite-info/${teamToken}`)
+        .then((res) => {
+          setCompanyName(res.data.workspaceName);
+        })
+        .catch(() => {
+          setError('Недійсне або прострочене посилання на приєднання до команди.');
+        })
+        .finally(() => {
+          setFetchingTeam(false);
+        });
+    }
+  }, [teamToken]);
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -33,14 +55,19 @@ export default function RegisterPage(): JSX.Element {
     setError(null);
     setLoading(true);
     try {
-      const { data } = await api.post<{ accessToken: string; user: AuthUser }>('/auth/register', {
+      const payload: Record<string, any> = {
         email,
         password,
         confirmPassword,
         name,
         companyName,
         role,
-      });
+      };
+      if (teamToken) {
+        payload.teamToken = teamToken;
+      }
+
+      const { data } = await api.post<{ accessToken: string; user: AuthUser }>('/auth/register', payload);
       setAuth({ accessToken: data.accessToken, user: data.user });
       router.push('/dashboard');
       router.refresh();
@@ -98,20 +125,22 @@ export default function RegisterPage(): JSX.Element {
             </div>
           )}
 
-          <div>
-            <label htmlFor="reg-role" className="block text-sm font-medium text-foreground">
-              Я реєструюся як
-            </label>
-            <select
-              id="reg-role"
-              value={role}
-              onChange={(e) => setRole(e.target.value as Role)}
-              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-            >
-              <option value="BUYER">Закупник</option>
-              <option value="VENDOR">Постачальник</option>
-            </select>
-          </div>
+          {!teamToken && (
+            <div>
+              <label htmlFor="reg-role" className="block text-sm font-medium text-foreground">
+                Я реєструюся як
+              </label>
+              <select
+                id="reg-role"
+                value={role}
+                onChange={(e) => setRole(e.target.value as Role)}
+                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="BUYER">Закупник</option>
+                <option value="VENDOR">Постачальник</option>
+              </select>
+            </div>
+          )}
 
           <div>
             <label htmlFor="reg-email" className="block text-sm font-medium text-foreground">
@@ -171,20 +200,36 @@ export default function RegisterPage(): JSX.Element {
               className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
-          <div>
-            <label htmlFor="reg-company" className="block text-sm font-medium text-foreground">
-              Назва компанії
-            </label>
-            <input
-              id="reg-company"
-              type="text"
-              autoComplete="organization"
-              required
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-          </div>
+          {!teamToken && (
+            <div>
+              <label htmlFor="reg-company" className="block text-sm font-medium text-foreground">
+                Назва компанії
+              </label>
+              <input
+                id="reg-company"
+                type="text"
+                autoComplete="organization"
+                required
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+            </div>
+          )}
+          {teamToken && (
+            <div>
+              <label className="block text-sm font-medium text-foreground">
+                Компанія
+              </label>
+              <input
+                type="text"
+                readOnly
+                disabled
+                value={fetchingTeam ? 'Завантаження...' : companyName}
+                className="mt-1 block w-full rounded-md border border-input bg-muted px-3 py-2 text-muted-foreground shadow-sm"
+              />
+            </div>
+          )}
 
           <button
             type="submit"
@@ -205,7 +250,7 @@ export default function RegisterPage(): JSX.Element {
         </div>
 
         <a
-          href={`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'}/auth/google?state=${typeof window !== 'undefined' ? btoa(JSON.stringify({ role: role })) : ''}`}
+          href={`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'}/auth/google?state=${typeof window !== 'undefined' ? btoa(JSON.stringify(teamToken ? { role: 'BUYER', teamToken } : { role: role })) : ''}`}
           className="flex w-full items-center justify-center gap-3 rounded-md border border-input bg-card px-4 py-2 text-sm font-medium text-foreground shadow-sm hover:bg-muted/50"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -224,5 +269,13 @@ export default function RegisterPage(): JSX.Element {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>}>
+      <RegisterContent />
+    </Suspense>
   );
 }

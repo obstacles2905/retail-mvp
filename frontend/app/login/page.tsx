@@ -1,14 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, Suspense } from 'react';
 import { createApiClient } from '@/lib/api-client';
 import { setAuth } from '@/lib/auth';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
-export default function LoginPage(): JSX.Element {
+function LoginContent(): JSX.Element {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const teamToken = searchParams.get('teamToken');
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -120,7 +123,7 @@ export default function LoginPage(): JSX.Element {
         </div>
 
         <a
-          href={`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'}/auth/google`}
+          href={`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'}/auth/google${teamToken ? `?state=${typeof window !== 'undefined' ? btoa(JSON.stringify({ teamToken })) : ''}` : ''}`}
           className="flex w-full items-center justify-center gap-3 rounded-md border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-foreground/90"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -151,5 +154,13 @@ export default function LoginPage(): JSX.Element {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
