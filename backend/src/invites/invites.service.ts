@@ -21,6 +21,8 @@ export interface LinkedVendorDto {
   vendorId: string;
   vendorName: string;
   vendorCompanyName: string;
+  email: string;
+  phone: string | null;
 }
 
 const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:3000';
@@ -188,14 +190,14 @@ export class InvitesService {
 
     const invites = await this.prisma.invite.findMany({
       where: { workspaceId, usedByVendorId: { not: null } },
-      include: { usedByVendor: { select: { id: true, name: true, companyName: true } } },
+      include: { usedByVendor: { select: { id: true, name: true, companyName: true, email: true, phone: true } } },
       orderBy: { createdAt: 'desc' },
     });
 
     const linkedVendors = invites
       .map((i) => i.usedByVendor)
-      .filter((v): v is { id: string; name: string; companyName: string } => v != null)
-      .map((v) => ({ vendorId: v.id, vendorName: v.name, vendorCompanyName: v.companyName }));
+      .filter((v): v is { id: string; name: string; companyName: string; email: string; phone: string | null } => v != null)
+      .map((v) => ({ vendorId: v.id, vendorName: v.name, vendorCompanyName: v.companyName, email: v.email, phone: v.phone }));
 
     return linkedVendors.filter(
       (vendor, index, array) => array.findIndex((item) => item.vendorId === vendor.vendorId) === index,

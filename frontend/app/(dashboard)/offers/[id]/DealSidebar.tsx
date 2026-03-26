@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { getAuthApiClient } from '@/lib/api-client';
 import { dispatchOffersListRefresh } from '@/lib/offers-list-refresh';
 import type { AuthUser } from '@/lib/auth';
@@ -27,6 +28,8 @@ export function DealSidebar({
   const [actionError, setActionError] = useState<string | null>(null);
   const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
   const [newDeliveryDate, setNewDeliveryDate] = useState('');
+  const [isAcceptModalOpen, setIsAcceptModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
   const fetchOffer = (): void => {
     setLoading(true);
@@ -75,6 +78,8 @@ export function DealSidebar({
       .post<OfferDetail>(`/offers/${offerId}/accept`)
       .then((res) => {
         mergeOfferUpdate(res.data);
+        setIsAcceptModalOpen(false);
+        setIsSuccessModalOpen(true);
         onOfferUpdated?.();
       })
       .catch((err) => {
@@ -278,29 +283,27 @@ export function DealSidebar({
               </p>
             ) : (
               <>
-                <button
-                  type="button"
-                  onClick={handleAccept}
-                  disabled={actionLoading !== null}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-success py-3 font-semibold text-success-foreground shadow-sm hover:bg-success/90 disabled:opacity-50"
-                >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  {actionLoading === 'accept' ? 'Приймаємо…' : 'Прийняти умови'}
-                </button>
-                {hasProposedPrices && (
-                  <>
-                    <p className="text-center text-xs text-muted-foreground">або</p>
-                    <button
-                      type="button"
-                      onClick={handlePropose}
-                      disabled={actionLoading !== null}
-                      className="w-full rounded-lg bg-muted px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted/80 disabled:opacity-50"
-                    >
-                      {actionLoading === 'propose' ? 'Відправляємо…' : 'Запропонувати свої ціни'}
-                    </button>
-                  </>
+                {!hasProposedPrices ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsAcceptModalOpen(true)}
+                    disabled={actionLoading !== null}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-success py-3 font-semibold text-success-foreground shadow-sm hover:bg-success/90 disabled:opacity-50"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {actionLoading === 'accept' ? 'Приймаємо…' : 'Прийняти угоду'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handlePropose}
+                    disabled={actionLoading !== null}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {actionLoading === 'propose' ? 'Відправляємо…' : 'Запропонувати свою ціну'}
+                  </button>
                 )}
                 <button
                   type="button"
@@ -421,6 +424,98 @@ export function DealSidebar({
           </div>
         )}
       </div>
+
+      {/* Accept Confirmation Modal */}
+      {isAcceptModalOpen && offer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg">
+            <h3 className="text-lg font-semibold text-foreground">Чи дійсно ви хочете підтвердити офер?</h3>
+            <div className="mt-4 space-y-3 text-sm text-muted-foreground">
+              <div className="flex justify-between border-b border-border pb-2">
+                <span>Товар(и):</span>
+                <span className="font-medium text-foreground text-right max-w-[200px] truncate">
+                  {offer.items?.map(i => i.sku?.name ?? i.productName).join(', ')}
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-border pb-2">
+                <span>Кількість:</span>
+                <span className="font-medium text-foreground">
+                  {offer.items?.map(i => `${i.volume} ${i.unit}`).join(', ')}
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-border pb-2">
+                <span>Сума:</span>
+                <span className="font-medium text-foreground">
+                  {offer.items?.reduce((sum, i) => sum + (i.volume * i.currentPrice), 0).toLocaleString('uk-UA')} грн
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-border pb-2">
+                <span>Дата доставки:</span>
+                <span className="font-medium text-foreground">
+                  {offer.deliveryDate ? new Date(offer.deliveryDate).toLocaleDateString('uk-UA') : 'Не вказано'}
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-border pb-2">
+                <span>Місце доставки / Логістика:</span>
+                <span className="font-medium text-foreground text-right max-w-[200px]">
+                  {offer.deliveryTerms ?? 'за домовленістю'}
+                </span>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsAcceptModalOpen(false)}
+                className="rounded-md border border-input bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50"
+              >
+                Скасувати
+              </button>
+              <button
+                type="button"
+                onClick={handleAccept}
+                disabled={actionLoading === 'accept'}
+                className="rounded-md bg-success px-4 py-2 text-sm font-medium text-success-foreground hover:bg-success/90 disabled:opacity-50"
+              >
+                {actionLoading === 'accept' ? 'Підтвердження...' : 'Підтвердити'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {isSuccessModalOpen && offer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success/20 text-success mb-4">
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-foreground">Угоду успішно укладено!</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Вам потрібно буде доставити товар <strong>{offer.items?.[0]?.sku?.name ?? offer.items?.[0]?.productName}</strong>{' '}
+              {offer.deliveryDate ? `до ${new Date(offer.deliveryDate).toLocaleDateString('uk-UA')}` : 'у визначений термін'}{' '}
+              за умовами: <strong>{offer.deliveryTerms ?? 'за домовленістю'}</strong>.
+            </p>
+            <div className="mt-6 flex flex-col gap-3">
+              <Link
+                href="/calendar"
+                className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                Перейти до календаря поставок
+              </Link>
+              <button
+                type="button"
+                onClick={() => setIsSuccessModalOpen(false)}
+                className="w-full rounded-md border border-input bg-card px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted/50"
+              >
+                Закрити
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }
@@ -466,6 +561,16 @@ function ItemRow({
         <p className="mt-1 text-[10px] text-muted-foreground">
           Цільова ціна: {targetPrice} грн
         </p>
+      )}
+      {targetPrice && item.currentPrice < targetPrice && (
+        <div className="mt-2 rounded bg-warning/10 p-2 text-[10px] text-warning border border-warning/20">
+          Увага: запропонована ціна нижча за вашу цільову ціну.
+        </div>
+      )}
+      {targetPrice && item.currentPrice > targetPrice && (
+        <div className="mt-2 rounded bg-destructive/10 p-2 text-[10px] text-destructive border border-destructive/20">
+          Увага: запропонована ціна вища за вашу цільову ціну.
+        </div>
       )}
       {showPriceInput && (
         <div className="mt-2 flex items-center gap-2">

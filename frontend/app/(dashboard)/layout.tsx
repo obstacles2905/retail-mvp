@@ -1,5 +1,5 @@
 import { GlobalNav } from '@/components/layout/GlobalNav';
-import { DealSidebar } from '@/components/layout/DealSidebar';
+import { RightSidebarWrapper } from '@/components/layout/RightSidebarWrapper';
 import GlobalHeader from '@/components/layout/GlobalHeader';
 
 export default function DashboardLayout({
@@ -14,16 +14,16 @@ export default function DashboardLayout({
         <GlobalNav />
       </aside>
 
-      {/* Column 2 — Context Sidebar */}
-      <aside className="hidden w-[260px] shrink-0 flex-col border-r border-border bg-card lg:flex">
-        <DealSidebar />
-      </aside>
-
-      {/* Column 3 — Main Content */}
-      <main className="flex-1 overflow-y-auto bg-background">
+      {/* Column 2 — Main Content */}
+      <main className="flex flex-1 flex-col overflow-hidden bg-background">
         <GlobalHeader />
-        {children}
+        <div className="flex flex-col flex-1 overflow-y-auto">
+          {children}
+        </div>
       </main>
+
+      {/* Column 3 — Context Sidebar (Active Deals) */}
+      <RightSidebarWrapper />
     </div>
   );
 }

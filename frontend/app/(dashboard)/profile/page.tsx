@@ -47,10 +47,6 @@ export default function ProfilePage(): JSX.Element {
   const [changingPassword, setChangingPassword] = useState(false);
   const [changePasswordError, setChangePasswordError] = useState<string | null>(null);
 
-  const [myInvite, setMyInvite] = useState<{ token: string; inviteUrl: string } | null>(null);
-  const [creatingInvite, setCreatingInvite] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
   useEffect(() => {
     const stored = getStoredUser();
     if (!stored) {
@@ -66,12 +62,6 @@ export default function ProfilePage(): JSX.Element {
         setName(res.data.name);
         setCompanyName(res.data.companyName);
         setPhone((res.data.phone ?? '').toString());
-        if (res.data.role === 'BUYER') {
-          api
-            .get<{ token: string; inviteUrl: string }>('/invites/mine')
-            .then((inv) => setMyInvite(inv.data))
-            .catch(() => undefined);
-        }
       })
       .catch(() => setError('Не вдалося завантажити профіль'))
       .finally(() => setLoading(false));
@@ -200,22 +190,6 @@ export default function ProfilePage(): JSX.Element {
       .finally(() => setChangingPassword(false));
   };
 
-  const createInvite = (): void => {
-    setCreatingInvite(true);
-    api
-      .get<{ token: string; inviteUrl: string }>('/invites/mine')
-      .then((res) => setMyInvite(res.data))
-      .catch(() => toast.error('Не вдалося отримати запрошення'))
-      .finally(() => setCreatingInvite(false));
-  };
-
-  const copyLink = (url: string, id: string): void => {
-    navigator.clipboard.writeText(url).then(() => {
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    });
-  };
-
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center">
@@ -239,8 +213,8 @@ export default function ProfilePage(): JSX.Element {
   const avatarUrl = user.avatarPath ? `${baseUrl}${user.avatarPath}` : null;
 
   return (
-    <main className="flex min-h-screen flex-col bg-background">
-      <div className="mx-auto w-full max-w-4xl px-4 py-8">
+    <main className="flex flex-1 flex-col bg-background">
+      <div className="mx-auto w-full max-w-6xl px-6 py-8">
         <h1 className="text-2xl mb-4 font-semibold text-foreground">Профіль</h1>
           <div className="space-y-6">
           <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
@@ -371,38 +345,6 @@ export default function ProfilePage(): JSX.Element {
             </form>
             </div>
 
-            {user.role === 'BUYER' && (
-              <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
-                <h2 className="text-sm font-semibold text-foreground">Запросити постачальника</h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Надішліть це посилання постачальнику (наприклад, по пошті або в месенджері). За посиланням він зареєструється та отримає доступ до ваших SKU для створення пропозицій.
-                </p>
-
-                {myInvite ? (
-                  <div className="mt-4 flex items-center justify-between gap-2 rounded border border-border bg-muted px-3 py-2 text-sm">
-                    <code className="truncate flex-1 text-foreground" title={myInvite.inviteUrl}>
-                      {myInvite.inviteUrl}
-                    </code>
-                    <button
-                      type="button"
-                      onClick={() => copyLink(myInvite.inviteUrl, myInvite.token)}
-                      className="shrink-0 rounded px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10"
-                    >
-                      {copiedId === myInvite.token ? 'Скопійовано' : 'Копіювати'}
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={createInvite}
-                    disabled={creatingInvite}
-                    className="mt-3 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                  >
-                    {creatingInvite ? 'Отримання…' : 'Отримати посилання-запрошення'}
-                  </button>
-                )}
-              </div>
-            )}
 
             <div className="rounded-lg border border-border bg-card p-4 shadow-sm">
               <h2 className="text-sm font-semibold text-foreground">Зміна пароля</h2>

@@ -163,10 +163,10 @@ export default function OffersPage(): JSX.Element {
 
   return (
     <>
-    <main className="flex min-h-screen flex-col">
-      <div className="mx-auto w-full max-w-5xl px-4 py-8">
-        <h1 className="text-2xl font-semibold text-foreground">Угоди</h1>
-        <p className="mt-1 text-muted-foreground">
+    <main className="flex flex-1 flex-col">
+      <div className="mx-auto w-full max-w-6xl px-6 py-8 flex flex-col flex-1 min-h-0">
+        <h1 className="text-2xl font-semibold text-foreground shrink-0">Угоди</h1>
+        <p className="mt-1 text-muted-foreground shrink-0">
           {isBuyer
             ? 'Усі вхідні пропозиції та створені вами замовлення.'
             : 'Усі ваші пропозиції та переговорні.'}
