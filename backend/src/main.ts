@@ -1,12 +1,16 @@
+import {
+  existsSync,
+  mkdirSync,
+} from 'fs';
+import { join } from 'path';
+
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import {
   DocumentBuilder,
   SwaggerModule,
 } from '@nestjs/swagger';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'path';
-import { existsSync, mkdirSync } from 'fs';
 
 import { AppModule } from './app.module';
 
@@ -27,7 +31,8 @@ async function bootstrap(): Promise<void> {
   app.setGlobalPrefix('api');
 
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
 
