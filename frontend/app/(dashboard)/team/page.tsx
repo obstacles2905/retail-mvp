@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { getStoredUser, type AuthUser } from '@/lib/auth';
 import { getAuthApiClient } from '@/lib/api-client';
 import { toast } from 'react-hot-toast';
+import { MessageCircle } from 'lucide-react';
 
 interface TeamMember {
   id: string;
@@ -26,6 +27,7 @@ export default function TeamPage(): JSX.Element {
   const [teamData, setTeamData] = useState<TeamResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [startingChat, setStartingChat] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = getStoredUser();
@@ -61,6 +63,18 @@ export default function TeamPage(): JSX.Element {
     navigator.clipboard.writeText(teamData.inviteUrl)
       .then(() => toast.success('Посилання скопійовано!'))
       .catch(() => toast.error('Не вдалося скопіювати посилання'));
+  };
+
+  const handleStartChat = async (userId: string) => {
+    setStartingChat(userId);
+    try {
+      const api = getAuthApiClient();
+      const res = await api.post<{ id: string }>('/chats', { participantId: userId });
+      router.push(`/chats/${res.data.id}`);
+    } catch (err) {
+      toast.error('Не вдалося створити чат');
+      setStartingChat(null);
+    }
   };
 
   if (!user) return <div />;
@@ -129,10 +143,21 @@ export default function TeamPage(): JSX.Element {
                         <p className="text-xs text-muted-foreground">{member.email}</p>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex items-center gap-3">
                       <span className="inline-flex rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
                         {member.role === 'BUYER' ? 'Закупник' : member.role}
                       </span>
+                      {member.id !== user.id && (
+                        <button
+                          type="button"
+                          onClick={() => handleStartChat(member.id)}
+                          disabled={startingChat === member.id}
+                          className="flex items-center justify-center rounded-full p-2 text-muted-foreground hover:bg-primary/10 hover:text-primary disabled:opacity-50"
+                          title="Написати повідомлення"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                   </li>
                 ))}

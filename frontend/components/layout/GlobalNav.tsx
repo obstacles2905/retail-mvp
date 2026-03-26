@@ -11,7 +11,7 @@ import {
   MessageCircle,
   User,
   Users,
-  Settings,
+  Tags,
   Moon,
   Sun,
   LogOut,
@@ -33,20 +33,42 @@ interface NavItem {
 }
 
 function getNavItems(role: AuthUser['role']): NavItem[] {
-  const home: NavItem =
-    role === 'BUYER'
-      ? { href: '/buyer', icon: LayoutDashboard, label: 'Головна', matchPrefix: '/buyer' }
-      : { href: '/vendor', icon: LayoutDashboard, label: 'Головна', matchPrefix: '/vendor' };
+  const items: NavItem[] = [];
 
-  const items: NavItem[] = [home];
+  // 1. Угоди
+  items.push({ href: '/offers', icon: ScrollText, label: 'Угоди', matchPrefix: '/offers' });
 
+  // 2. Кабінет / Головна
+  if (role === 'BUYER') {
+    items.push({ href: '/buyer', icon: LayoutDashboard, label: 'Кабінет закупника', matchPrefix: '/buyer' });
+  } else {
+    items.push({ href: '/vendor', icon: LayoutDashboard, label: 'Головна', matchPrefix: '/vendor' });
+  }
+
+  // 3. Каталог товарів та 4. Каталог категорій (тільки BUYER)
   if (role === 'BUYER') {
     items.push({
       href: '/buyer/catalog',
       icon: Package,
-      label: 'Каталог SKU',
+      label: 'Каталог товарів',
       matchPrefix: '/buyer/catalog',
     });
+    items.push({
+      href: '/settings/categories',
+      icon: Tags,
+      label: 'Каталог категорій',
+      matchPrefix: '/settings',
+    });
+  }
+
+  // 5. Повідомлення
+  items.push({ href: '/chats', icon: MessageCircle, label: 'Повідомлення', matchPrefix: '/chats' });
+
+  // 6. Календар
+  items.push({ href: '/calendar', icon: Calendar, label: 'Календар', matchPrefix: '/calendar' });
+
+  // 7. Команда (тільки BUYER)
+  if (role === 'BUYER') {
     items.push({
       href: '/team',
       icon: Users,
@@ -55,21 +77,7 @@ function getNavItems(role: AuthUser['role']): NavItem[] {
     });
   }
 
-  items.push(
-    { href: '/offers', icon: ScrollText, label: 'Угоди', matchPrefix: '/offers' },
-    { href: '/calendar', icon: Calendar, label: 'Календар', matchPrefix: '/calendar' },
-    { href: '/chats', icon: MessageCircle, label: 'Повідомлення', matchPrefix: '/chats' },
-  );
-
-  if (role === 'BUYER') {
-    items.push({
-      href: '/settings/categories',
-      icon: Settings,
-      label: 'Налаштування',
-      matchPrefix: '/settings',
-    });
-  }
-
+  // 8. Профіль
   items.push({ href: '/profile', icon: User, label: 'Профіль', matchPrefix: '/profile' });
 
   return items;

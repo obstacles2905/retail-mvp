@@ -265,28 +265,24 @@ export default function OffersPage(): JSX.Element {
               </div>
             </div>
 
-            {/* Empty state */}
-            {offers.length === 0 && buyerOrders.length === 0 && (
+            {/* Empty state for Vendor */}
+            {!isBuyer && offers.length === 0 && (
               <div className="mt-8 rounded-lg border border-border bg-muted p-8 text-center">
                 <p className="text-muted-foreground">Поки немає пропозицій.</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {isBuyer
-                    ? 'Постачальники зможуть надсилати пропозиції після того, як ви створите SKU та запросите постачальників.'
-                    : 'Створіть пропозицію — потім відкрийте переговорну для переговорів із закупником.'}
+                  Створіть пропозицію — потім відкрийте переговорну для переговорів із закупником.
                 </p>
               </div>
             )}
 
             {isBuyer ? (
-              (offers.length > 0 || buyerOrders.length > 0) && (
-                <KanbanBoard
-                  offers={[...offers, ...buyerOrders]}
-                  unread={unread}
-                  actionInProgress={actionInProgress}
-                  onMarkDelivered={handleMarkDelivered}
-                  onArchive={handleArchive}
-                />
-              )
+              <KanbanBoard
+                offers={[...offers, ...buyerOrders]}
+                unread={unread}
+                actionInProgress={actionInProgress}
+                onMarkDelivered={handleMarkDelivered}
+                onArchive={handleArchive}
+              />
             ) : (
               <>
                 {offers.length > 0 && (
