@@ -7,7 +7,8 @@ import { SUPERMARKET_CATEGORIES } from '@/lib/constants';
 export interface SkuOption {
   id: string;
   name: string;
-  category: string;
+  categoryId: string | null;
+  category?: { id: string; name: string };
   uom: string;
   targetPrice: string | null;
 }
@@ -15,8 +16,8 @@ export interface SkuOption {
 export interface ProductSelectProps {
   buyerId: string;
   role: 'BUYER' | 'VENDOR';
-  value: { skuId?: string; productName?: string; category?: string; uom?: string; targetPrice?: string | null } | null;
-  onChange: (val: { skuId?: string; productName?: string; category?: string; uom?: string; targetPrice?: string | null } | null) => void;
+  value: { skuId?: string; productName?: string; categoryId?: string; category?: string; uom?: string; targetPrice?: string | null } | null;
+  onChange: (val: { skuId?: string; productName?: string; categoryId?: string; category?: string; uom?: string; targetPrice?: string | null } | null) => void;
   error?: boolean;
 }
 
@@ -78,7 +79,7 @@ export function ProductSelect({ buyerId, role, value, onChange, error }: Product
     if (!noveltyName.trim() || !noveltyCategory.trim()) return;
     onChange({
       productName: noveltyName.trim(),
-      category: noveltyCategory.trim(),
+      category: noveltyCategory.trim(), // Keep string for novelty as it's just a suggestion
       uom: noveltyUom,
     });
     setQuery(noveltyName);
@@ -158,7 +159,7 @@ export function ProductSelect({ buyerId, role, value, onChange, error }: Product
                   className="w-full px-4 py-2 text-left hover:bg-accent focus:bg-accent focus:outline-none"
                 >
                   <div className="font-medium text-foreground">{sku.name}</div>
-                  <div className="text-xs text-muted-foreground">{sku.category} • {sku.uom}</div>
+                  <div className="text-xs text-muted-foreground">{sku.category?.name ?? '—'} • {sku.uom}</div>
                 </button>
               ))}
               {role === 'VENDOR' && query.trim() && (

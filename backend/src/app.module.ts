@@ -7,9 +7,10 @@ import { BuyerOrdersModule } from './buyer-orders/buyer-orders.module';
 import { ChatsModule } from './chats/chats.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
-  imports: [AuthModule, InvitesModule, SkuModule, OffersModule, BuyerOrdersModule, ChatsModule, NotificationsModule, WorkspacesModule],
+  imports: [AuthModule, InvitesModule, SkuModule, OffersModule, BuyerOrdersModule, ChatsModule, NotificationsModule, WorkspacesModule, CategoriesModule],
 })
 export class AppModule {}
 
