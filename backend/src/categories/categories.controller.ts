@@ -1,8 +1,23 @@
-import { Body, Controller, Get, Post, Patch, Delete, Param, UseGuards } from '@nestjs/common';
-import { IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+} from 'class-validator';
+
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/roles.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CategoriesService } from './categories.service';
 
@@ -30,6 +45,17 @@ export class CategoriesController {
     @CurrentUser() user: { workspaceId: string | null },
   ) {
     return this.categoriesService.createOrGet(dto.name, user.workspaceId);
+  }
+
+  @Get(':id/skus')
+  @Roles('BUYER')
+  async getCategorySkus(
+    @Param('id') id: string,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+    @CurrentUser() user: { workspaceId: string | null },
+  ) {
+    return this.categoriesService.getSkus(id, user.workspaceId, parseInt(page, 10), parseInt(limit, 10));
   }
 
   @Patch(':id')

@@ -78,6 +78,33 @@ export class CategoriesService {
     }
   }
 
+  async getSkus(categoryId: string, workspaceId: string | null, page: number, limit: number) {
+    if (!workspaceId) {
+      throw new BadRequestException('User workspace is required');
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      this.prisma.sku.findMany({
+        where: { categoryId, workspaceId, isArchived: false },
+        skip,
+        take: limit,
+        orderBy: { name: 'asc' },
+      }),
+      this.prisma.sku.count({
+        where: { categoryId, workspaceId, isArchived: false },
+      }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
   async update(id: string, name: string, workspaceId: string | null) {
     if (!workspaceId) {
       throw new BadRequestException('User workspace is required');
