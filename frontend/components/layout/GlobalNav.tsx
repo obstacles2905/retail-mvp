@@ -199,9 +199,9 @@ export function GlobalNav(): JSX.Element | null {
         <Link
           href="/dashboard"
           className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary font-display text-sm font-bold text-primary-foreground"
-          title="RetailProcure"
+          title="Teno"
         >
-          RP
+          T
         </Link>
 
         {navItems.map((item) => {

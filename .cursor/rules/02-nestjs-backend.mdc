@@ -18,7 +18,7 @@ You are an expert Backend Engineer specializing in NestJS, REST APIs, and Prisma
 3. **Data Transfer Objects (DTOs)**: Use `class-validator` and `class-transformer` for all incoming request payloads. Never trust client data.
 4. **REST Standards**: Use correct HTTP methods (`GET`, `POST`, `PATCH`, `DELETE`) and standard HTTP status codes.
 
-## Security & Business Logic (RetailProcure)
+## Security & Business Logic (Teno)
 1. **Authentication**: Use JWT-based authentication for all protected endpoints.
 2. **Role-Based Access Control (RBAC)**: 
    - Strongly enforce the `Role` enum (`BUYER`, `VENDOR`) using NestJS Guards.

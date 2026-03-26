@@ -1,4 +1,4 @@
-# PROJECT_MAP.md — RetailProcure
+# PROJECT_MAP.md — Teno
 
 > **Primary context document for AI-assisted development.**
 > Keep this file updated whenever the architecture, schema, or business logic changes.
@@ -7,7 +7,7 @@
 
 ## 1. Executive Summary
 
-**RetailProcure** is a B2B procurement and negotiation platform that digitizes the relationship between **Buyers** (закупники — retail/procurement teams) and **Vendors** (постачальники — suppliers). The platform enables buyers to maintain a product catalog (SKU), send purchase requests to multiple vendors simultaneously, receive and negotiate offers, track deliveries, and communicate via real-time chat — all within a single integrated web application.
+**Teno** is a B2B procurement and negotiation platform that digitizes the relationship between **Buyers** (закупники — retail/procurement teams) and **Vendors** (постачальники — suppliers). The platform enables buyers to maintain a product catalog (SKU), send purchase requests to multiple vendors simultaneously, receive and negotiate offers, track deliveries, and communicate via real-time chat — all within a single integrated web application.
 
 The current phase covers the full offer negotiation lifecycle (from creation through acceptance and delivery scheduling) along with direct messaging, in-app notifications, and a delivery calendar view. Active development is expanding **Order Management** to include `DELIVERED` and `ARCHIVED` statuses.
 
@@ -475,7 +475,7 @@ Two gateways exist: `OffersGateway` and `ChatsGateway`. They share the same Sock
 ### Frontend Patterns
 
 **Authentication**
-Tokens and the user object are stored in `localStorage` using keys `retailprocure_token` and `retailprocure_user`. The `lib/auth.ts` module provides `getStoredToken()`, `getStoredUser()`, `setAuth()`, and `clearAuth()` helpers.
+Tokens and the user object are stored in `localStorage` using keys `teno_token` and `teno_user`. The `lib/auth.ts` module provides `getStoredToken()`, `getStoredUser()`, `setAuth()`, and `clearAuth()` helpers.
 
 **API Client**
 `lib/api-client.ts` exports `createApiClient()` and `getAuthApiClient()`. The latter creates an Axios instance pre-configured with `baseURL` and a `Bearer` token from `localStorage`. All authenticated API calls go through this factory.

@@ -1,5 +1,5 @@
-export const AUTH_TOKEN_KEY = 'retailprocure_token';
-export const AUTH_USER_KEY = 'retailprocure_user';
+export const AUTH_TOKEN_KEY = 'teno_token';
+export const AUTH_USER_KEY = 'teno_user';
 
 export interface AuthUser {
   id: string;

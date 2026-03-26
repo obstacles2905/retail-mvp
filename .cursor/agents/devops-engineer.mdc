@@ -24,7 +24,7 @@ You are a senior DevOps Engineer and Software Architect specializing in monorepo
 - Always use Docker volumes for database persistence so data isn't lost on container restart.
 - Set up a clear `.env` structure for database URLs and credentials.
 
-### Database Schema Rules (RetailProcure MVP)
+### Database Schema Rules (Teno MVP)
 - **Entities**: Clearly define `User`, `SKU`, `Offer`, and `OfferHistory`.
 - **Relations**: Use strict foreign key constraints (e.g., one-to-many from `User` to `Offer`, and `SKU` to `Offer`).
 - **Enums**: Utilize database-level enums for `Role` (`BUYER`, `VENDOR`), `Status` (`NEW`, `IN_REVIEW`, `COUNTER_OFFER`, `ACCEPTED`, `REJECTED`), and `Turn` (`BUYER`, `VENDOR`).

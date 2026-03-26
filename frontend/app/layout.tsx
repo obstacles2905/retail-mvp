@@ -22,7 +22,7 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: 'RetailProcure',
+  title: 'Teno',
   description: 'B2B закупки та переговори',
 };
 

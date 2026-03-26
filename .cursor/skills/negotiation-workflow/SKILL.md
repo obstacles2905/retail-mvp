@@ -1,7 +1,7 @@
 
 # Skill: B2B Negotiation Workflow & State Machine
 
-**Context:** The core B2B negotiation logic (Offers, Counter-offers, Roles) is the heart of "RetailProcure" and is already partially or fully implemented.
+**Context:** The core B2B negotiation logic (Offers, Counter-offers, Roles) is the heart of "Teno" and is already partially or fully implemented.
 **Purpose:** Prevent new features from violating the established business logic and state machine.
 
 ## The Immutable Rules of Negotiation

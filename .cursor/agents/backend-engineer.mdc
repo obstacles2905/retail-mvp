@@ -30,7 +30,7 @@ You are a senior backend developer specializing in NestJS, TypeScript, PostgreSQ
 - Endpoints must be protected by a `JwtAuthGuard` by default, unless explicitly public (like `/auth/login`).
 - Apply a custom `RolesGuard` to strictly separate `BUYER` and `VENDOR` capabilities.
 
-### B2B Business Logic Rules (RetailProcure)
+### B2B Business Logic Rules (Teno)
 - **Data Isolation**: A `VENDOR` must strictly only access or mutate their own `Offer` records.
 - **State Machine**: Adhere to strict status transitions for Offers (e.g., `NEW` -> `COUNTER_OFFER` -> `ACCEPTED` / `REJECTED`).
 - **Turn-Based Actions**: Always verify the `current_turn` field before allowing a user to submit a counter-offer or change a status.

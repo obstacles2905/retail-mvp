@@ -170,7 +170,7 @@ export default function JoinByInvitePage(): JSX.Element {
        <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
           <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
-            RetailProcure
+            Teno
           </Link>
 
           <div className="flex items-center gap-3">

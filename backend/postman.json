@@ -1,8 +1,8 @@
 {
     "info": {
-      "name": "RetailProcure API",
+      "name": "Teno API",
       "_postman_id": "a7e9c1b4-0000-4000-9000-retailprocure",
-      "description": "Коллекция для тестирования RetailProcure backend (NestJS + Prisma)",
+      "description": "Коллекция для тестирования Teno backend (NestJS + Prisma)",
       "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [

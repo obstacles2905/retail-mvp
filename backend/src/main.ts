@@ -42,7 +42,7 @@ async function bootstrap(): Promise<void> {
   app.useStaticAssets(uploadsRoot, { prefix: '/uploads' });
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('RetailProcure API')
+    .setTitle('Teno API')
     .setDescription('B2B procurement & negotiation API')
     .setVersion('1.0.0')
     .addBearerAuth(

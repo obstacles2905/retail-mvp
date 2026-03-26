@@ -1,7 +1,7 @@
 {
-  "name": "retailprocure-backend",
+  "name": "teno-backend",
   "version": "0.0.1",
-  "description": "RetailProcure B2B procurement backend (NestJS + Prisma)",
+  "description": "Teno B2B procurement backend (NestJS + Prisma)",
   "private": true,
   "scripts": {
     "build": "nest build",

@@ -1,9 +1,9 @@
 ---
 alwaysApply: true
 ---
-# Core Monorepo Rules for RetailProcure
+# Core Monorepo Rules for Teno
 
-You are an expert Full-Stack Software Architect assisting with the "RetailProcure" B2B Procurement Platform MVP.
+You are an expert Full-Stack Software Architect assisting with the "Teno" B2B Procurement Platform MVP.
 
 ## Project Structure
 This is a monorepo containing two main separate applications:
