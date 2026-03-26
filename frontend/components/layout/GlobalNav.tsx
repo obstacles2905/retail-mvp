@@ -11,6 +11,7 @@ import {
   MessageCircle,
   User,
   Users,
+  Settings,
   Moon,
   Sun,
   LogOut,
@@ -58,8 +59,18 @@ function getNavItems(role: AuthUser['role']): NavItem[] {
     { href: '/offers', icon: ScrollText, label: 'Угоди', matchPrefix: '/offers' },
     { href: '/calendar', icon: Calendar, label: 'Календар', matchPrefix: '/calendar' },
     { href: '/chats', icon: MessageCircle, label: 'Повідомлення', matchPrefix: '/chats' },
-    { href: '/profile', icon: User, label: 'Профіль', matchPrefix: '/profile' },
   );
+
+  if (role === 'BUYER') {
+    items.push({
+      href: '/settings/categories',
+      icon: Settings,
+      label: 'Налаштування',
+      matchPrefix: '/settings',
+    });
+  }
+
+  items.push({ href: '/profile', icon: User, label: 'Профіль', matchPrefix: '/profile' });
 
   return items;
 }

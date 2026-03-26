@@ -51,10 +51,25 @@ model Workspace {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  users   User[]
-  skus    Sku[]
-  offers  Offer[]
-  invites Invite[]
+  users      User[]
+  skus       Sku[]
+  offers     Offer[]
+  invites    Invite[]
+  categories Category[]
+}
+
+model Category {
+  id             String    @id @default(uuid())
+  name           String
+  normalizedName String
+  workspaceId    String
+  workspace      Workspace @relation(fields: [workspaceId], references: [id])
+  skus           Sku[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, normalizedName])
 }
 
 model User {
@@ -107,14 +122,15 @@ model Invite {
 }
 
 model Sku {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   name        String
-  category    String
-  uom         String   @default("item")
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  uom         String    @default("item")
   articleCode String?
   barcode     String?
   targetPrice Decimal?
-  isArchived  Boolean  @default(false)
+  isArchived  Boolean   @default(false)
 
   createdById String
   createdBy   User   @relation("BuyerSkus", fields: [createdById], references: [id])

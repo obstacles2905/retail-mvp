@@ -5,9 +5,10 @@ export class CreateSkuDto {
   @IsNotEmpty()
   name!: string;
 
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  category!: string;
+  categoryId?: string;
 
   @IsString()
   @IsNotEmpty()

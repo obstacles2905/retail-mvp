@@ -3,13 +3,14 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { getAuthApiClient } from '@/lib/api-client';
-import { SUPERMARKET_CATEGORIES } from '@/lib/constants';
 import { toast } from 'react-hot-toast';
+import { CreatableCategorySelect } from '@/components/CreatableCategorySelect';
 
 interface SkuDto {
   id: string;
   name: string;
-  category: string;
+  categoryId: string | null;
+  category?: { id: string; name: string };
   uom: string;
   articleCode: string | null;
   barcode: string | null;
@@ -26,7 +27,7 @@ export default function BuyerCatalogPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [name, setName] = useState('');
-  const [category, setCategory] = useState(SUPERMARKET_CATEGORIES[0]);
+  const [categoryId, setCategoryId] = useState('');
   const [uom, setUom] = useState('item');
   const [articleCode, setArticleCode] = useState('');
   const [barcode, setBarcode] = useState('');
@@ -50,7 +51,7 @@ export default function BuyerCatalogPage() {
 
   const resetForm = () => {
     setName('');
-    setCategory(SUPERMARKET_CATEGORIES[0]);
+    setCategoryId('');
     setUom('item');
     setArticleCode('');
     setBarcode('');
@@ -61,7 +62,7 @@ export default function BuyerCatalogPage() {
 
   const handleEdit = (sku: SkuDto) => {
     setName(sku.name);
-    setCategory(sku.category);
+    setCategoryId(sku.categoryId ?? '');
     setUom(sku.uom);
     setArticleCode(sku.articleCode ?? '');
     setBarcode(sku.barcode ?? '');
@@ -82,9 +83,13 @@ export default function BuyerCatalogPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!categoryId) {
+      alert('Будь ласка, оберіть або створіть категорію');
+      return;
+    }
     const payload = {
       name: name.trim(),
-      category: category.trim(),
+      categoryId,
       uom,
       articleCode: articleCode.trim() || undefined,
       barcode: barcode.trim() || undefined,
@@ -211,12 +216,11 @@ export default function BuyerCatalogPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-foreground">Категорія *</label>
-                <select required value={category} onChange={e => setCategory(e.target.value)} className={inputClass}>
-                  {SUPERMARKET_CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
+                <label className="block text-sm font-medium text-foreground mb-1">Категорія *</label>
+                <CreatableCategorySelect
+                  value={categoryId}
+                  onChange={setCategoryId}
+                />
               </div>
 
               <div>
@@ -280,7 +284,7 @@ export default function BuyerCatalogPage() {
                 {skus.map((sku) => (
                   <tr key={sku.id} className="hover:bg-muted/50">
                     <td className="px-4 py-3 text-sm font-medium text-foreground">{sku.name}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{sku.category}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{sku.category?.name ?? '—'}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">{sku.uom}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">
                       {sku.articleCode && <div className="text-xs">Арт: {sku.articleCode}</div>}
