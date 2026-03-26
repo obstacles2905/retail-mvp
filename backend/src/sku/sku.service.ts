@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { InvitesService } from '../invites/invites.service';
 import { CreateSkuDto } from './dto/create-sku.dto';
+import * as xlsx from 'xlsx';
 
 export interface SkuDto {
   id: string;
@@ -45,6 +46,65 @@ export class SkuService {
     });
 
     return this.toDto(sku);
+  }
+
+  async importSkus(buffer: Buffer, buyerId: string, workspaceId: string | null) {
+    if (!workspaceId) {
+      throw new BadRequestException('Buyer workspace is required to import SKUs');
+    }
+
+    const workbook = xlsx.read(buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows = xlsx.utils.sheet_to_json<Record<string, any>>(sheet);
+
+    let importedCount = 0;
+    let failedCount = 0;
+
+    const skusToCreate = [];
+
+    for (const row of rows) {
+      const name = row['Назва'] || row['Name'];
+      const category = row['Категорія'] || row['Category'];
+      
+      if (!name || !category) {
+        failedCount++;
+        continue;
+      }
+
+      const uom = row['Одиниця виміру'] || row['UOM'] || 'item';
+      const articleCode = row['Артикул'] || row['ArticleCode'] ? String(row['Артикул'] || row['ArticleCode']) : null;
+      const barcode = row['Штрихкод'] || row['Barcode'] ? String(row['Штрихкод'] || row['Barcode']) : null;
+      
+      const targetPriceRaw = row['Цільова ціна'] || row['TargetPrice'];
+      let targetPrice: number | null = null;
+      if (targetPriceRaw) {
+        const parsed = parseFloat(String(targetPriceRaw).replace(',', '.'));
+        if (!isNaN(parsed)) {
+          targetPrice = parsed;
+        }
+      }
+
+      skusToCreate.push({
+        name: String(name),
+        category: String(category),
+        uom: String(uom),
+        articleCode,
+        barcode,
+        targetPrice,
+        createdById: buyerId,
+        workspaceId,
+      });
+    }
+
+    if (skusToCreate.length > 0) {
+      await this.prisma.sku.createMany({
+        data: skusToCreate,
+      });
+      importedCount = skusToCreate.length;
+    }
+
+    return { importedCount, failedCount };
   }
 
   /** Для BUYER — тільки свої неархівовані SKU. Для VENDOR — тільки неархівовані SKU закупників, які запросили цього постачальника. */

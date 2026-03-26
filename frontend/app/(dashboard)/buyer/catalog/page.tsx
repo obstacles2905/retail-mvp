@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { getAuthApiClient } from '@/lib/api-client';
 import { SUPERMARKET_CATEGORIES } from '@/lib/constants';
+import { toast } from 'react-hot-toast';
 
 interface SkuDto {
   id: string;
@@ -30,6 +31,8 @@ export default function BuyerCatalogPage() {
   const [articleCode, setArticleCode] = useState('');
   const [barcode, setBarcode] = useState('');
   const [targetPrice, setTargetPrice] = useState('');
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const api = getAuthApiClient();
 
@@ -101,6 +104,57 @@ export default function BuyerCatalogPage() {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setImporting(true);
+    const loadingToast = toast.loading('Імпорт товарів...');
+
+    try {
+      const res = await api.post('/skus/import', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const { importedCount, failedCount } = res.data;
+      
+      toast.success(`Успішно імпортовано ${importedCount} товарів. ${failedCount > 0 ? `Помилок: ${failedCount}` : ''}`, { id: loadingToast });
+      fetchSkus();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Помилка при імпорті файлу', { id: loadingToast });
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const downloadTemplate = () => {
+    const headers = ['Назва', 'Категорія', 'Одиниця виміру', 'Артикул', 'Штрихкод', 'Цільова ціна'];
+    const examples = [
+      ['Цукор білий 1кг', 'Бакалія', 'кг', 'SUG-001', '4820000000001', '35.50'],
+      ['Молоко 2.5% ПЕТ', 'Молочні продукти', 'L', 'MILK-002', '4820000000002', '42.00'],
+      ['Яблука Голден', 'Фрукти та овочі', 'кг', 'FRU-003', '', '28.90'],
+      ['Вода мінеральна негазована 1.5л', 'Напої', 'item', 'WAT-004', '4820000000004', '18.50'],
+      ['Папір туалетний 2-шаровий (4 шт)', 'Господарські товари', 'item', 'PAP-005', '4820000000005', '65.00']
+    ];
+    
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+      + headers.join(',') + '\n' 
+      + examples.map(row => row.join(',')).join('\n');
+      
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'sku_import_template.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const inputClass =
     'mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring';
 
@@ -112,13 +166,39 @@ export default function BuyerCatalogPage() {
             <h1 className="text-2xl font-semibold text-foreground">Каталог товарів (SKU)</h1>
             <p className="mt-1 text-sm text-muted-foreground">Управління вашою матрицею товарів. Ці товари будуть доступні для замовлень та пропозицій.</p>
           </div>
-          <button
-            type="button"
-            onClick={() => { resetForm(); setShowForm(true); }}
-            className="rounded-md bg-success px-4 py-2 text-sm font-medium text-success-foreground hover:bg-success/90"
-          >
-            + Додати товар
-          </button>
+          <div className="flex gap-3">
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept=".xlsx,.xls,.csv"
+              onChange={handleFileUpload}
+            />
+            <div className="flex flex-col items-end gap-1">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importing}
+                className="rounded-md border border-primary bg-card px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
+              >
+                {importing ? 'Імпорт...' : 'Імпорт з Excel'}
+              </button>
+              <button
+                type="button"
+                onClick={downloadTemplate}
+                className="text-xs text-muted-foreground hover:text-primary hover:underline"
+              >
+                Завантажити шаблон
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => { resetForm(); setShowForm(true); }}
+              className="h-fit rounded-md bg-success px-4 py-2 text-sm font-medium text-success-foreground hover:bg-success/90"
+            >
+              + Додати товар
+            </button>
+          </div>
         </div>
 
         {showForm && (
