@@ -10,6 +10,8 @@ import { offerStatusBadgeClassName } from '@/lib/offer-status-badge';
 import type { OfferListItem, OfferStatus } from '@/lib/types/offer';
 import GlobalHeader from '@/components/layout/GlobalHeader';
 
+import KanbanBoard from './KanbanBoard';
+
 const STATUS_LABELS: Record<string, string> = {
   NEW: 'Нова',
   IN_REVIEW: 'На розгляді',
@@ -275,30 +277,29 @@ export default function OffersPage(): JSX.Element {
               </div>
             )}
 
-            {/* Incoming offers (buyer) / All offers (vendor) */}
-            {offers.length > 0 && (
-              <OffersTable
-                title={isBuyer ? 'Вхідні пропозиції' : 'Ваші пропозиції'}
-                offers={offers}
-                unread={unread}
-                userRole={user.role}
-                actionInProgress={actionInProgress}
-                onMarkDelivered={isBuyer ? handleMarkDelivered : undefined}
-                onArchive={handleArchive}
-              />
-            )}
-
-            {/* Buyer-specific: My orders */}
-            {isBuyer && buyerOrders.length > 0 && (
-              <OffersTable
-                title="Створені мною замовлення"
-                offers={buyerOrders}
-                unread={unread}
-                userRole={user.role}
-                actionInProgress={actionInProgress}
-                onMarkDelivered={handleMarkDelivered}
-                onArchive={handleArchive}
-              />
+            {isBuyer ? (
+              (offers.length > 0 || buyerOrders.length > 0) && (
+                <KanbanBoard
+                  offers={[...offers, ...buyerOrders]}
+                  unread={unread}
+                  actionInProgress={actionInProgress}
+                  onMarkDelivered={handleMarkDelivered}
+                  onArchive={handleArchive}
+                />
+              )
+            ) : (
+              <>
+                {offers.length > 0 && (
+                  <OffersTable
+                    title="Ваші пропозиції"
+                    offers={offers}
+                    unread={unread}
+                    userRole={user.role}
+                    actionInProgress={actionInProgress}
+                    onArchive={handleArchive}
+                  />
+                )}
+              </>
             )}
           </>
         )}

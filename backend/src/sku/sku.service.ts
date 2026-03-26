@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { InvitesService } from '../invites/invites.service';
 import { CreateSkuDto } from './dto/create-sku.dto';
@@ -26,7 +26,11 @@ export class SkuService {
     private readonly invitesService: InvitesService,
   ) {}
 
-  async create(createSkuDto: CreateSkuDto, buyerId: string): Promise<SkuDto> {
+  async create(createSkuDto: CreateSkuDto, buyerId: string, workspaceId: string | null): Promise<SkuDto> {
+    if (!workspaceId) {
+      throw new BadRequestException('Buyer workspace is required to create SKU');
+    }
+
     const sku = await this.prisma.sku.create({
       data: {
         name: createSkuDto.name,
@@ -36,6 +40,7 @@ export class SkuService {
         barcode: createSkuDto.barcode ?? null,
         targetPrice: createSkuDto.targetPrice ? createSkuDto.targetPrice : null,
         createdById: buyerId,
+        workspaceId,
       },
     });
 
@@ -43,10 +48,14 @@ export class SkuService {
   }
 
   /** Для BUYER — тільки свої неархівовані SKU. Для VENDOR — тільки неархівовані SKU закупників, які запросили цього постачальника. */
-  async findAll(userId: string, role: 'BUYER' | 'VENDOR'): Promise<SkuDto[]> {
+  async findAll(userId: string, role: 'BUYER' | 'VENDOR', workspaceId: string | null): Promise<SkuDto[]> {
     if (role === 'BUYER') {
+      if (!workspaceId) {
+        return [];
+      }
+
       const skus = await this.prisma.sku.findMany({
-        where: { createdById: userId, isArchived: false },
+        where: { workspaceId, isArchived: false },
         orderBy: { createdAt: 'desc' },
       });
       return skus.map((sku) => this.toDto(sku));

@@ -46,7 +46,7 @@ export class InvitesController {
   /** Для закупщика: поставщики, которые подключились по его приглашениям. */
   @Get('vendor-connections')
   @Roles('BUYER')
-  vendorConnections(@CurrentUser() user: { sub: string }): Promise<LinkedVendorDto[]> {
-    return this.invitesService.findConnectionsForBuyer(user.sub);
+  vendorConnections(@CurrentUser() user: { workspaceId: string | null }): Promise<LinkedVendorDto[]> {
+    return this.invitesService.findConnectionsForBuyer(user.workspaceId);
   }
 }

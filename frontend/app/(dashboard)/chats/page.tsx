@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAuthApiClient } from '@/lib/api-client';
+import { getStoredUser } from '@/lib/auth';
 import type { ChatListDto } from '@/lib/types/chat';
 
 interface ConnectionDto {
@@ -35,10 +36,13 @@ export default function ChatsPage() {
   const openNewChatModal = () => {
     setShowNewChat(true);
     setLoadingConnections(true);
+    const currentUser = getStoredUser();
+    
     Promise.all([
       api.get<any[]>('/invites/connections').catch(() => ({ data: [] })),
       api.get<any[]>('/invites/vendor-connections').catch(() => ({ data: [] })),
-    ]).then(([res1, res2]) => {
+      api.get<any>('/workspaces/my/team').catch(() => ({ data: { users: [] } })),
+    ]).then(([res1, res2, res3]) => {
       const list: ConnectionDto[] = [];
       res1.data.forEach((c: any) => {
         list.push({ id: c.buyerId, name: c.buyerName, companyName: c.buyerCompanyName });
@@ -46,7 +50,17 @@ export default function ChatsPage() {
       res2.data.forEach((c: any) => {
         list.push({ id: c.vendorId, name: c.vendorName, companyName: c.vendorCompanyName });
       });
-      setConnections(list);
+      if (res3.data && res3.data.users) {
+        res3.data.users.forEach((u: any) => {
+          if (currentUser && u.id !== currentUser.id) {
+            list.push({ id: u.id, name: u.name, companyName: 'Колега по команді' });
+          }
+        });
+      }
+      
+      // Deduplicate by ID just in case
+      const uniqueList = list.filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i);
+      setConnections(uniqueList);
     }).finally(() => setLoadingConnections(false));
   };
 

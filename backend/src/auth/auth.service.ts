@@ -5,11 +5,13 @@ import { UsersService, UserSafe } from '../users/users.service';
 import { InvitesService } from '../invites/invites.service';
 import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
+import { UserRole } from '@prisma/client';
 
 export interface AuthPayload {
   sub: string;
   role: string;
   email: string;
+  workspaceId: string | null;
 }
 
 export interface AuthResult {
@@ -69,6 +71,7 @@ export class AuthService {
     role?: string;
     companyName?: string;
     inviteToken?: string;
+    teamToken?: string;
   }): Promise<UserSafe> {
     let user = await this.usersService.findByEmail(profile.email);
 
@@ -85,7 +88,7 @@ export class AuthService {
       return safeUser;
     }
 
-    const role: any = profile.role === 'VENDOR' ? 'VENDOR' : 'BUYER';
+    const role: UserRole = profile.role === 'VENDOR' ? UserRole.VENDOR : UserRole.BUYER;
     const companyName = profile.companyName || profile.name;
 
     const newUser = await this.usersService.createGoogleUser({
@@ -94,6 +97,7 @@ export class AuthService {
       name: profile.name,
       companyName,
       role,
+      teamToken: profile.teamToken,
     });
 
     if (profile.inviteToken && role === 'VENDOR') {
@@ -116,6 +120,7 @@ export class AuthService {
       sub: user.id,
       role: user.role,
       email: user.email,
+      workspaceId: user.workspaceId,
     };
   }
 }

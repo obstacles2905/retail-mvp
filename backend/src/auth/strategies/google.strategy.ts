@@ -23,14 +23,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     const lastName = name?.familyName || '';
     const fullName = `${firstName} ${lastName}`.trim();
 
-    let stateObj: any = {};
-    if (req.query.state && typeof req.query.state === 'string') {
-      try {
-        stateObj = JSON.parse(Buffer.from(req.query.state, 'base64').toString('utf-8'));
-      } catch (e) {
-        // ignore
-      }
-    }
+    const stateObj = this.extractState(req.query.state);
 
     try {
       const user = await this.authService.validateGoogleUser({
@@ -40,10 +33,50 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         role: stateObj.role,
         companyName: stateObj.companyName,
         inviteToken: stateObj.inviteToken,
+        teamToken: stateObj.teamToken,
       });
       done(null, user);
     } catch (err) {
       done(err, false);
+    }
+  }
+
+  private extractState(rawState: unknown): Record<string, string> {
+    if (typeof rawState !== 'string' || rawState.length === 0) {
+      return {};
+    }
+
+    const fromBase64 = this.parseStateValue(Buffer.from(rawState, 'base64').toString('utf-8'));
+    if (fromBase64) {
+      return fromBase64;
+    }
+
+    const fromPlain = this.parseStateValue(rawState);
+    if (fromPlain) {
+      return fromPlain;
+    }
+
+    return {};
+  }
+
+  private parseStateValue(value: string): Record<string, string> | null {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      if (!parsed || typeof parsed !== 'object') {
+        return null;
+      }
+
+      const source = parsed as Record<string, unknown>;
+      const result: Record<string, string> = {};
+
+      if (typeof source.role === 'string') result.role = source.role;
+      if (typeof source.companyName === 'string') result.companyName = source.companyName;
+      if (typeof source.inviteToken === 'string') result.inviteToken = source.inviteToken;
+      if (typeof source.teamToken === 'string') result.teamToken = source.teamToken;
+
+      return result;
+    } catch {
+      return null;
     }
   }
 }

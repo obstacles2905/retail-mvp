@@ -24,7 +24,7 @@ export class OffersController {
   @Get()
   @Roles('BUYER', 'VENDOR')
   getAll(
-    @CurrentUser() user: { sub: string; role: 'BUYER' | 'VENDOR' },
+    @CurrentUser() user: { sub: string; role: 'BUYER' | 'VENDOR'; workspaceId: string | null },
     @Query('status') status?: string,
     @Query('showArchived') showArchived?: string,
     @Query('counterpartyName') counterpartyName?: string,
@@ -36,7 +36,7 @@ export class OffersController {
       const parts = status.split(',').map((s) => s.trim()).filter(Boolean) as OfferStatus[];
       parsedStatus = parts.length === 1 ? parts[0] : parts;
     }
-    return this.offersService.findAllForUser(user.sub, user.role, {
+    return this.offersService.findAllForUser(user.sub, user.role, user.workspaceId, {
       status: parsedStatus,
       showArchived: showArchived === 'true',
       counterpartyName,

@@ -33,5 +33,10 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   inviteToken?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  teamToken?: string;
 }
 
