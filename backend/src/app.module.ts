@@ -8,9 +8,10 @@ import { ChatsModule } from './chats/chats.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { WorkspacesModule } from './workspaces/workspaces.module';
 import { CategoriesModule } from './categories/categories.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
-  imports: [AuthModule, InvitesModule, SkuModule, OffersModule, BuyerOrdersModule, ChatsModule, NotificationsModule, WorkspacesModule, CategoriesModule],
+  imports: [AuthModule, InvitesModule, SkuModule, OffersModule, BuyerOrdersModule, ChatsModule, NotificationsModule, WorkspacesModule, CategoriesModule, AnalyticsModule],
 })
 export class AppModule {}
 

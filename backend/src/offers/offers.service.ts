@@ -15,6 +15,9 @@ export interface OfferItemDto {
   category: string | null;
   isNovelty: boolean;
   currentPrice: string;
+  initialPrice?: string;
+  finalPrice?: string | null;
+  savedAmount?: string | null;
   volume: number;
   unit: string;
   sku: { id: string; name: string; uom: string; category: string; targetPrice: string | null; createdBy: { id: string; name: string; companyName: string } } | null;
@@ -142,6 +145,7 @@ export class OffersService {
               category: item.skuId ? null : item.category?.trim() ?? null,
               isNovelty: !item.skuId,
               currentPrice: item.currentPrice,
+              initialPrice: item.currentPrice,
               volume: parseInt(item.volume, 10),
               unit: item.unit ?? 'item',
             })),
@@ -507,7 +511,28 @@ export class OffersService {
       throw new ForbiddenException('It is not vendor turn');
     }
 
+    const fullOffer = await this.prisma.offer.findUnique({
+      where: { id: offer.id },
+      include: { items: true },
+    });
+
     const { updatedOffer, message } = await this.prisma.$transaction(async (tx) => {
+      // Calculate savings for each item
+      if (fullOffer?.items) {
+        for (const item of fullOffer.items) {
+          const initial = Number(item.initialPrice);
+          const final = Number(item.currentPrice);
+          const saved = (initial - final) * item.volume;
+          await tx.offerItem.update({
+            where: { id: item.id },
+            data: {
+              finalPrice: item.currentPrice,
+              savedAmount: saved,
+            },
+          });
+        }
+      }
+
       const createdMessage = await tx.offerMessage.create({
         data: {
           offerId: offer.id,
@@ -755,6 +780,9 @@ export class OffersService {
     category: string | null;
     isNovelty: boolean;
     currentPrice: unknown;
+    initialPrice?: unknown;
+    finalPrice?: unknown | null;
+    savedAmount?: unknown | null;
     volume: number;
     unit: string;
     sku: { id: string; name: string; uom: string; category: string; targetPrice: unknown | null; createdBy: { id: string; name: string; companyName: string } } | null;
@@ -766,6 +794,9 @@ export class OffersService {
       category: item.category,
       isNovelty: item.isNovelty,
       currentPrice: String(item.currentPrice),
+      initialPrice: item.initialPrice != null ? String(item.initialPrice) : undefined,
+      finalPrice: item.finalPrice != null ? String(item.finalPrice) : null,
+      savedAmount: item.savedAmount != null ? String(item.savedAmount) : null,
       volume: item.volume,
       unit: item.unit,
       sku: item.sku

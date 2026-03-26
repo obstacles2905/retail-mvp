@@ -13,6 +13,7 @@ import {
   Users,
   Tags,
   Store,
+  LineChart,
   Moon,
   Sun,
   LogOut,
@@ -73,6 +74,11 @@ function getNavItems(role: AuthUser['role']): NavItem[] {
 
   // 6. Календар
   items.push({ href: '/calendar', icon: Calendar, label: 'Календар', matchPrefix: '/calendar' });
+
+  // 7. Аналітика (тільки BUYER)
+  if (role === 'BUYER') {
+    items.push({ href: '/analytics', icon: LineChart, label: 'Аналітика', matchPrefix: '/analytics' });
+  }
 
   // 7. Команда (тільки BUYER)
   if (role === 'BUYER') {
