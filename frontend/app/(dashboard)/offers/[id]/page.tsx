@@ -116,7 +116,7 @@ export default function OfferNegotiationPage(): JSX.Element {
     : 'Завантаження…';
 
   return (
-    <main className="flex min-h-screen flex-col bg-background">
+    <main className="flex h-full flex-col bg-background">
       {/* Основний контент: ліва колонка (умови) + права (історія переговорів) */}
       <section className="flex min-h-0 flex-1">
         <div className="flex flex-row-reverse min-h-0 w-full flex-1 gap-0">

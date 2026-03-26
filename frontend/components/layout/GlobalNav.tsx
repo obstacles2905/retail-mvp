@@ -12,6 +12,7 @@ import {
   User,
   Users,
   Tags,
+  Store,
   Moon,
   Sun,
   LogOut,
@@ -57,7 +58,13 @@ function getNavItems(role: AuthUser['role']): NavItem[] {
       href: '/settings/categories',
       icon: Tags,
       label: 'Каталог категорій',
-      matchPrefix: '/settings',
+      matchPrefix: '/settings/categories',
+    });
+    items.push({
+      href: '/buyer/vendors',
+      icon: Store,
+      label: 'Каталог постачальників',
+      matchPrefix: '/buyer/vendors',
     });
   }
 
@@ -176,7 +183,7 @@ export function GlobalNav(): JSX.Element | null {
 
   const isActive = (item: NavItem): boolean => {
     if (item.matchPrefix === '/buyer' && pathname === '/buyer') return true;
-    if (item.matchPrefix === '/buyer' && pathname.startsWith('/buyer/catalog')) return false;
+    if (item.matchPrefix === '/buyer' && (pathname.startsWith('/buyer/catalog') || pathname.startsWith('/buyer/vendors'))) return false;
     return pathname.startsWith(item.matchPrefix);
   };
 

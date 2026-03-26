@@ -14,6 +14,9 @@ import {
 import { OFFERS_LIST_REFRESH_EVENT } from '@/lib/offers-list-refresh';
 import type { OfferListItem, OfferStatus } from '@/lib/types/offer';
 
+import { formatDistanceToNow, isPast } from 'date-fns';
+import { uk } from 'date-fns/locale';
+
 const HIDDEN_STATUSES: OfferStatus[] = ['ARCHIVED'];
 
 const STATUS_LABELS: Record<OfferStatus, string> = {
@@ -28,14 +31,14 @@ const STATUS_LABELS: Record<OfferStatus, string> = {
 };
 
 const STATUS_COLORS: Record<OfferStatus, string> = {
-  NEW: 'text-info',
-  IN_REVIEW: 'text-warning',
-  COUNTER_OFFER: 'text-warning',
-  ACCEPTED: 'text-success',
-  REJECTED: 'text-destructive',
-  AWAITING_DELIVERY: 'text-primary',
-  DELIVERED: 'text-success',
-  ARCHIVED: 'text-muted-foreground',
+  NEW: 'text-info bg-info/10 px-1.5 py-0.5 rounded',
+  IN_REVIEW: 'text-warning bg-warning/10 px-1.5 py-0.5 rounded',
+  COUNTER_OFFER: 'text-warning bg-warning/10 px-1.5 py-0.5 rounded',
+  ACCEPTED: 'text-success bg-success/10 px-1.5 py-0.5 rounded',
+  REJECTED: 'text-destructive bg-destructive/10 px-1.5 py-0.5 rounded',
+  AWAITING_DELIVERY: 'text-primary bg-primary/10 px-1.5 py-0.5 rounded',
+  DELIVERED: 'text-success bg-success/10 px-1.5 py-0.5 rounded',
+  ARCHIVED: 'text-muted-foreground bg-muted px-1.5 py-0.5 rounded',
 };
 
 function getCounterpartyName(offer: OfferListItem, role: AuthUser['role']): string {
@@ -74,6 +77,16 @@ function DealCard({
   unreadCount: number;
   userRole: AuthUser['role'];
 }): JSX.Element {
+  let deliveryText = '';
+  if (offer.status === 'AWAITING_DELIVERY' && offer.deliveryDate) {
+    const date = new Date(offer.deliveryDate);
+    if (isPast(date)) {
+      deliveryText = 'Протерміновано';
+    } else {
+      deliveryText = formatDistanceToNow(date, { locale: uk, addSuffix: true });
+    }
+  }
+
   return (
     <Link
       href={`/offers/${offer.id}`}
@@ -102,12 +115,19 @@ function DealCard({
             {getProductName(offer)}
           </span>
         </div>
-        <p className="truncate text-xs text-muted-foreground">
+        <p className="truncate text-xs text-muted-foreground mb-1">
           {getCounterpartyName(offer, userRole)}
         </p>
-        <span className={cn('text-xs font-medium', STATUS_COLORS[offer.status])}>
-          {STATUS_LABELS[offer.status]}
-        </span>
+        <div className="flex flex-col gap-1 items-start">
+          <span className={cn('text-[10px] font-medium', STATUS_COLORS[offer.status])}>
+            {STATUS_LABELS[offer.status]}
+          </span>
+          {deliveryText && (
+            <span className="text-[10px] text-primary font-medium">
+              Доставка: {deliveryText}
+            </span>
+          )}
+        </div>
       </div>
     </Link>
   );
@@ -227,7 +247,7 @@ export function DealSidebar(): JSX.Element | null {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-border px-4 py-3 h-14">
+      <div className="flex items-center justify-center border-b border-border px-4 py-3 h-14">
         <div className="flex items-center gap-2">
           <h2 className="font-display text-sm font-semibold tracking-tight">
             Активні угоди
@@ -238,14 +258,6 @@ export function DealSidebar(): JSX.Element | null {
             </span>
           )}
         </div>
-        <Link
-          href={createHref}
-          prefetch={false}
-          title="Створити нову угоду"
-          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <Plus className="h-4 w-4" />
-        </Link>
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 py-2">

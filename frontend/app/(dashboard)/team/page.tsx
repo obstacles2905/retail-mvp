@@ -80,8 +80,8 @@ export default function TeamPage(): JSX.Element {
   if (!user) return <div />;
 
   return (
-    <main className="flex min-h-screen flex-col">
-      <div className="mx-auto w-full max-w-4xl px-4 py-8">
+    <main className="flex flex-1 flex-col">
+      <div className="mx-auto w-full max-w-6xl px-6 py-8">
         <h1 className="text-2xl font-semibold text-foreground">Команда</h1>
         <p className="mt-1 text-muted-foreground">
           Керуйте учасниками вашого робочого простору.

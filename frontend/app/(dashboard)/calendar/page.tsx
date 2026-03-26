@@ -118,58 +118,56 @@ export default function CalendarPage() {
   }, []);
 
   return (
-    <>
-    <div className="flex max-w-4xl mx-auto h-full flex-col overflow-hidden p-6">
-      
-      <div className="mb-4 shrink-0">
-        <h1 className="text-2xl font-semibold text-foreground">
-          Календар поставок
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Тут відображаються всі узгоджені замовлення, які очікують доставки та
-          доставлені.
-        </p>
-        <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded bg-success" />
-            Очікує доставки
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3 rounded bg-info" />
-            Доставлено
-          </span>
+    <main className="flex flex-1 flex-col bg-background">
+      <div className="mx-auto w-full max-w-6xl px-6 py-8 flex-1 flex flex-col min-h-0">
+        <div className="mb-4 shrink-0">
+          <h1 className="text-2xl font-semibold text-foreground">
+            Календар поставок
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Тут відображаються всі узгоджені замовлення, які очікують доставки та
+            доставлені.
+          </p>
+          <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-3 w-3 rounded bg-success" />
+              Очікує доставки
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-3 w-3 rounded bg-info" />
+              Доставлено
+            </span>
+          </div>
+        </div>
+
+        <div className="min-h-0 flex-1 rounded-xl border border-border bg-card p-4">
+          {loading ? (
+            <div className="flex h-full items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : error ? (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+              {error}
+            </div>
+          ) : (
+            <Calendar
+              localizer={localizer}
+              events={events}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: '100%' }}
+              culture="uk"
+              date={currentDate}
+              view={currentView}
+              onNavigate={setCurrentDate}
+              onView={setCurrentView}
+              onSelectEvent={handleSelectEvent}
+              messages={MESSAGES}
+              eventPropGetter={eventPropGetter}
+            />
+          )}
         </div>
       </div>
-
-      <div className="min-h-0 flex-1 rounded-xl border border-border bg-card p-4">
-        {loading ? (
-          <div className="flex h-full items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          </div>
-        ) : error ? (
-          <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-            {error}
-          </div>
-        ) : (
-          <Calendar
-            localizer={localizer}
-            events={events}
-            startAccessor="start"
-            endAccessor="end"
-            style={{ height: '100%' }}
-            culture="uk"
-            date={currentDate}
-            view={currentView}
-            onNavigate={setCurrentDate}
-            onView={setCurrentView}
-            onSelectEvent={handleSelectEvent}
-            messages={MESSAGES}
-            eventPropGetter={eventPropGetter}
-          />
-        )}
-      </div>
-    </div>
-    </>
-    
+    </main>
   );
 }

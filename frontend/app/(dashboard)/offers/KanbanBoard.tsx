@@ -82,17 +82,17 @@ export default function KanbanBoard({
   });
 
   return (
-    <div className="mt-6 flex gap-4 overflow-x-auto pb-4">
+    <div className="mt-6 flex flex-1 gap-4 overflow-x-auto pb-4 min-h-0">
       {COLUMNS.map((col) => (
-        <div key={col.id} className="flex w-[300px] shrink-0 flex-col rounded-lg bg-muted/50 p-3">
-          <div className="mb-3 flex items-center justify-between px-1">
+        <div key={col.id} className="flex w-[300px] shrink-0 flex-col rounded-lg bg-muted/50 p-3 h-full">
+          <div className="mb-3 flex items-center justify-between px-1 shrink-0">
             <h3 className="text-sm font-semibold text-foreground">{col.title}</h3>
             <span className="rounded-full bg-background px-2 py-0.5 text-xs font-medium text-muted-foreground shadow-sm">
               {columnsData[col.id].length}
             </span>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 flex-1 overflow-y-auto min-h-0 pr-1">
             {columnsData[col.id].map((offer) => (
               <Link
                 key={offer.id}

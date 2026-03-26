@@ -113,8 +113,8 @@ export default function VendorDashboardPage(): JSX.Element {
   };
 
   return (
-    <main className="flex min-h-screen flex-col">
-      <div className="mx-auto w-full max-w-4xl px-4 py-8">
+    <main className="flex flex-1 flex-col">
+      <div className="mx-auto w-full max-w-6xl px-6 py-8">
         <h1 className="text-2xl font-semibold text-foreground">Кабінет постачальника</h1>
         <p className="mt-1 text-muted-foreground">
           Створіть пропозицію за товарами закупників, до яких ви підключені.

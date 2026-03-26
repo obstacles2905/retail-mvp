@@ -166,8 +166,8 @@ export default function CategoriesSettingsPage() {
   if (!user) return null;
 
   return (
-    <main className="flex min-h-screen flex-col bg-background">
-      <div className="mx-auto w-full max-w-5xl px-4 py-8">
+    <main className="flex flex-1 flex-col bg-background">
+      <div className="mx-auto w-full max-w-6xl px-6 py-8">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-foreground">Каталог категорій</h1>
