@@ -13,7 +13,9 @@ RUN npx prisma generate
 
 RUN npm run build
 
-EXPOSE 3001
+# Use the PORT environment variable provided by Railway
+ENV PORT=3001
+EXPOSE ${PORT}
 
 CMD ["npm", "run", "start:prod"]
 
