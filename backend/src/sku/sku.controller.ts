@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Post, Put, Patch, Param, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, Patch, Param, Query, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -32,6 +33,19 @@ export class SkuController {
   @Roles('BUYER')
   create(@Body() dto: CreateSkuDto, @CurrentUser() user: { sub: string; workspaceId: string | null }): Promise<SkuDto> {
     return this.skuService.create(dto, user.sub, user.workspaceId);
+  }
+
+  @Post('import')
+  @Roles('BUYER')
+  @UseInterceptors(FileInterceptor('file'))
+  async importSkus(
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: { sub: string; workspaceId: string | null }
+  ) {
+    if (!file) {
+      throw new BadRequestException('Файл не знайдено');
+    }
+    return this.skuService.importSkus(file.buffer, user.sub, user.workspaceId);
   }
 
   @Put(':id')

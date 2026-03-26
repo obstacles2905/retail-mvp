@@ -35,7 +35,8 @@
     "rimraf": "^6.0.0",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.3",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
