@@ -446,7 +446,7 @@ export function DealSidebar({
               <div className="flex justify-between border-b border-border pb-2">
                 <span>Сума:</span>
                 <span className="font-medium text-foreground">
-                  {offer.items?.reduce((sum, i) => sum + (i.volume * i.currentPrice), 0).toLocaleString('uk-UA')} грн
+                  {offer.items?.reduce((sum, i) => sum + (i.volume * Number(i.currentPrice)), 0).toLocaleString('uk-UA')} грн
                 </span>
               </div>
               <div className="flex justify-between border-b border-border pb-2">
