@@ -31,67 +31,36 @@ interface NavItem {
   icon: React.ElementType;
   label: string;
   matchPrefix: string;
+  iconColor: string;
   badge?: number;
 }
 
 function getNavItems(role: AuthUser['role']): NavItem[] {
   const items: NavItem[] = [];
 
-  // 1. Угоди
-  items.push({ href: '/offers', icon: ScrollText, label: 'Угоди', matchPrefix: '/offers' });
+  items.push({ href: '/offers', icon: ScrollText, label: 'Угоди', matchPrefix: '/offers', iconColor: 'text-blue-500' });
 
-  // 2. Кабінет / Головна
   if (role === 'BUYER') {
-    items.push({ href: '/buyer', icon: LayoutDashboard, label: 'Кабінет закупника', matchPrefix: '/buyer' });
+    items.push({ href: '/buyer', icon: LayoutDashboard, label: 'Кабінет закупника', matchPrefix: '/buyer', iconColor: 'text-emerald-500' });
   } else {
-    items.push({ href: '/vendor', icon: LayoutDashboard, label: 'Головна', matchPrefix: '/vendor' });
+    items.push({ href: '/vendor', icon: LayoutDashboard, label: 'Головна', matchPrefix: '/vendor', iconColor: 'text-emerald-500' });
   }
 
-  // 3. Каталог товарів та 4. Каталог категорій (тільки BUYER)
   if (role === 'BUYER') {
-    items.push({
-      href: '/buyer/catalog',
-      icon: Package,
-      label: 'Каталог товарів',
-      matchPrefix: '/buyer/catalog',
-    });
-    items.push({
-      href: '/settings/categories',
-      icon: Tags,
-      label: 'Каталог категорій',
-      matchPrefix: '/settings/categories',
-    });
-    items.push({
-      href: '/buyer/vendors',
-      icon: Store,
-      label: 'Каталог постачальників',
-      matchPrefix: '/buyer/vendors',
-    });
+    items.push({ href: '/buyer/catalog', icon: Package, label: 'Каталог товарів', matchPrefix: '/buyer/catalog', iconColor: 'text-cyan-500' });
+    items.push({ href: '/settings/categories', icon: Tags, label: 'Каталог категорій', matchPrefix: '/settings/categories', iconColor: 'text-pink-500' });
+    items.push({ href: '/buyer/vendors', icon: Store, label: 'Каталог постачальників', matchPrefix: '/buyer/vendors', iconColor: 'text-orange-500' });
   }
 
-  // 5. Повідомлення
-  items.push({ href: '/chats', icon: MessageCircle, label: 'Повідомлення', matchPrefix: '/chats' });
+  items.push({ href: '/chats', icon: MessageCircle, label: 'Повідомлення', matchPrefix: '/chats', iconColor: 'text-violet-500' });
+  items.push({ href: '/calendar', icon: Calendar, label: 'Календар', matchPrefix: '/calendar', iconColor: 'text-amber-500' });
 
-  // 6. Календар
-  items.push({ href: '/calendar', icon: Calendar, label: 'Календар', matchPrefix: '/calendar' });
-
-  // 7. Аналітика (тільки BUYER)
   if (role === 'BUYER') {
-    items.push({ href: '/analytics', icon: LineChart, label: 'Аналітика', matchPrefix: '/analytics' });
+    items.push({ href: '/analytics', icon: LineChart, label: 'Аналітика', matchPrefix: '/analytics', iconColor: 'text-indigo-500' });
+    items.push({ href: '/team', icon: Users, label: 'Команда', matchPrefix: '/team', iconColor: 'text-teal-500' });
   }
 
-  // 7. Команда (тільки BUYER)
-  if (role === 'BUYER') {
-    items.push({
-      href: '/team',
-      icon: Users,
-      label: 'Команда',
-      matchPrefix: '/team',
-    });
-  }
-
-  // 8. Профіль
-  items.push({ href: '/profile', icon: User, label: 'Профіль', matchPrefix: '/profile' });
+  items.push({ href: '/profile', icon: User, label: 'Профіль', matchPrefix: '/profile', iconColor: 'text-slate-400' });
 
   return items;
 }
@@ -194,14 +163,17 @@ export function GlobalNav(): JSX.Element | null {
   };
 
   return (
-    <nav className="flex h-full flex-col items-center justify-between py-4">
-      <div className="flex flex-col items-center gap-1">
+    <nav className="flex h-full flex-col justify-between px-2 py-4">
+      <div className="flex min-h-0 flex-col gap-1">
         <Link
           href="/dashboard"
-          className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-[#2563eb] text-white"
+          className="mb-3 flex h-10 w-full shrink-0 items-center gap-2 rounded-lg px-3 text-white"
           title="Teno"
         >
-          <span className="font-bold text-xl leading-none">T</span>
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center  bg-[#2563eb] rounded-md font-bold text-lg leading-none">
+            T
+          </span>
+          <span className="truncate text-sm font-semibold">Teno</span>
         </Link>
 
         {navItems.map((item) => {
@@ -215,18 +187,16 @@ export function GlobalNav(): JSX.Element | null {
               prefetch={false}
               title={item.label}
               className={cn(
-                'relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors',
+                'flex h-10 w-full min-w-0 items-center gap-3 rounded-lg border-l-4 pl-2 pr-2 text-sm transition-colors',
                 active
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
+                  ? 'border-primary bg-accent text-accent-foreground'
+                  : 'border-transparent text-muted-foreground hover:bg-accent/50 hover:text-foreground',
               )}
             >
-              {active && (
-                <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-x-[7px] -translate-y-1/2 rounded-r-full bg-primary" />
-              )}
-              <Icon className="h-5 w-5" />
+              <Icon className={cn('h-5 w-5 shrink-0', item.iconColor)} />
+              <span className="min-w-0 flex-1 truncate">{item.label}</span>
               {badge > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground">
+                <span className="flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground">
                   {badge > 99 ? '99+' : badge}
                 </span>
               )}
@@ -235,15 +205,16 @@ export function GlobalNav(): JSX.Element | null {
         })}
       </div>
 
-      <div className="flex flex-col items-center gap-1">
+      <div className="flex shrink-0 flex-col gap-1">
         <button
           type="button"
           onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+          className="flex h-10 w-full min-w-0 items-center gap-3 rounded-lg border-l-4 border-transparent pl-2 pr-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
           title={resolvedTheme === 'dark' ? 'Світла тема' : 'Темна тема'}
           aria-label={resolvedTheme === 'dark' ? 'Увімкнути світлу тему' : 'Увімкнути темну тему'}
         >
-          {resolvedTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          {resolvedTheme === 'dark' ? <Sun className="h-5 w-5 shrink-0" /> : <Moon className="h-5 w-5 shrink-0" />}
+          <span className="min-w-0 truncate">{resolvedTheme === 'dark' ? 'Світла тема' : 'Темна тема'}</span>
         </button>
 
         <button
@@ -260,11 +231,12 @@ export function GlobalNav(): JSX.Element | null {
             clearAuth();
             window.location.href = '/';
           }}
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+          className="flex h-10 w-full min-w-0 items-center gap-3 rounded-lg border-l-4 border-transparent pl-2 pr-2 text-left text-sm text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
           title="Вийти"
           aria-label="Вийти з акаунту"
         >
-          <LogOut className="h-5 w-5" />
+          <LogOut className="h-5 w-5 shrink-0" />
+          <span className="min-w-0 truncate">Вийти</span>
         </button>
       </div>
     </nav>

@@ -41,6 +41,17 @@ const STATUS_COLORS: Record<OfferStatus, string> = {
   ARCHIVED: 'text-muted-foreground bg-muted px-1.5 py-0.5 rounded',
 };
 
+const STATUS_ICON_COLORS: Record<OfferStatus, string> = {
+  NEW: 'text-info bg-info/10',
+  IN_REVIEW: 'text-warning bg-warning/10',
+  COUNTER_OFFER: 'text-warning bg-warning/10',
+  ACCEPTED: 'text-success bg-success/10',
+  REJECTED: 'text-destructive bg-destructive/10',
+  AWAITING_DELIVERY: 'text-primary bg-primary/10',
+  DELIVERED: 'text-success bg-success/10',
+  ARCHIVED: 'text-muted-foreground bg-muted',
+};
+
 function getCounterpartyName(offer: OfferListItem, role: AuthUser['role']): string {
   if (role === 'BUYER') return offer.vendor.companyName;
   return offer.buyer?.companyName ?? '—';
@@ -98,8 +109,8 @@ function DealCard({
           : 'hover:bg-muted/50',
       )}
     >
-      <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted">
-        <Package className="h-4 w-4 text-muted-foreground" aria-hidden />
+      <div className={cn('relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md', STATUS_ICON_COLORS[offer.status])}>
+        <Package className="h-4 w-4" aria-hidden />
         {unreadCount > 0 && (
           <span
             className="absolute -right-1 -top-1 z-10 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground shadow-sm ring-2 ring-card"

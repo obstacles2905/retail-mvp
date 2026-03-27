@@ -305,6 +305,7 @@ export default function CategoriesSettingsPage() {
                   type="text"
                   required
                   autoFocus
+                  maxLength={60}
                   value={categoryName}
                   onChange={(e) => setCategoryName(e.target.value)}
                   className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"

@@ -585,6 +585,7 @@ function ItemRow({
           <input
             type="text"
             inputMode="decimal"
+            maxLength={20}
             placeholder="Нова ціна..."
             value={proposePrice}
             onChange={(e) => onProposePriceChange(e.target.value)}

@@ -196,6 +196,7 @@ export default function OffersPage(): JSX.Element {
                   </label>
                   <input
                     type="text"
+                    maxLength={100}
                     placeholder="Пошук за назвою..."
                     value={counterpartySearch}
                     onChange={(e) => setCounterpartySearch(e.target.value)}

@@ -195,6 +195,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                       <input
                         type="text"
                         inputMode="decimal"
+                        maxLength={20}
                         value={item.price}
                         onChange={(e) => updateOrderItem(item.id, { price: e.target.value })}
                         placeholder="0.00"
@@ -209,6 +210,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                       <input
                         type="text"
                         inputMode="numeric"
+                        maxLength={20}
                         value={item.volume}
                         onChange={(e) => updateOrderItem(item.id, { volume: e.target.value })}
                         placeholder="100"
@@ -247,7 +249,7 @@ export default function BuyerDashboardPage(): JSX.Element {
                 value={orderDeliveryTerms}
                 onChange={(e) => setOrderDeliveryTerms(e.target.value)}
                 placeholder="Наприклад: доставка на РЦ, DDP, 3–5 робочих днів"
-                maxLength={2000}
+                maxLength={1000}
                 className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>

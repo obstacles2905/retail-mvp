@@ -102,7 +102,7 @@ export function ProductSelect({ buyerId, role, value, onChange, error }: Product
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <label className="block text-xs font-medium text-foreground">Назва</label>
-            <input type="text" value={noveltyName} onChange={e => setNoveltyName(e.target.value)} className="mt-1 block w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground" />
+            <input type="text" maxLength={200} value={noveltyName} onChange={e => setNoveltyName(e.target.value)} className="mt-1 block w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground" />
           </div>
           <div>
             <label className="block text-xs font-medium text-foreground">Категорія</label>
@@ -133,10 +133,11 @@ export function ProductSelect({ buyerId, role, value, onChange, error }: Product
       <input
         type="text"
         value={query}
+        maxLength={200}
         onChange={(e) => {
           setQuery(e.target.value);
           setIsOpen(true);
-          if (value) onChange(null); // clear selection if typing
+          if (value) onChange(null);
         }}
         onFocus={() => setIsOpen(true)}
         placeholder="Почніть вводити назву товару..."

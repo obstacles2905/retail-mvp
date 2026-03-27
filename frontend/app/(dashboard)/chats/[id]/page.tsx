@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
+import { FileMessageAttachment } from '@/components/FileMessageAttachment';
+import { FileUploader } from '@/components/FileUploader';
+import { AvatarImage } from '@/components/AvatarImage';
 import { getAuthApiClient } from '@/lib/api-client';
 import { getStoredUser } from '@/lib/auth';
+import { parseChatFileMessage, serializeChatFileMessage } from '@/lib/chat-file-message';
 import type { ChatDetailsDto, ChatMessageDto } from '@/lib/types/chat';
 import { createChatsSocket, type ChatsSocket } from '@/lib/realtime/chats-socket';
 
@@ -64,35 +67,51 @@ export default function ChatDialogPage() {
     };
   }, [api, chatId]);
 
+  const sendChatContent = useCallback(
+    (content: string) => {
+      setSending(true);
+      if (socketRef.current?.connected) {
+        socketRef.current.emit('chat:message:send', { chatId, content }, (res) => {
+          setSending(false);
+          if (res?.ok && res.message) {
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === res.message!.id)) return prev;
+              return [...prev, res.message!];
+            });
+            setTimeout(scrollToBottom, 100);
+          }
+        });
+      } else {
+        api
+          .post<ChatMessageDto>(`/chats/${chatId}/messages`, { content })
+          .then((res) => {
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === res.data.id)) return prev;
+              return [...prev, res.data];
+            });
+            setTimeout(scrollToBottom, 100);
+          })
+          .finally(() => setSending(false));
+      }
+    },
+    [api, chatId],
+  );
+
+  const handleFileUploaded = useCallback(
+    (fileKey: string, fileName: string) => {
+      const content = serializeChatFileMessage({ kind: 'file', fileKey, fileName });
+      sendChatContent(content);
+    },
+    [sendChatContent],
+  );
+
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || sending) return;
 
-    setSending(true);
-    if (socketRef.current?.connected) {
-      socketRef.current.emit('chat:message:send', { chatId, content: newMessage.trim() }, (res) => {
-        setSending(false);
-        if (res.ok && res.message) {
-          setNewMessage('');
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === res.message!.id)) return prev;
-            return [...prev, res.message!];
-          });
-          setTimeout(scrollToBottom, 100);
-        }
-      });
-    } else {
-      api.post<ChatMessageDto>(`/chats/${chatId}/messages`, { content: newMessage.trim() })
-        .then((res) => {
-          setNewMessage('');
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === res.data.id)) return prev;
-            return [...prev, res.data];
-          });
-          setTimeout(scrollToBottom, 100);
-        })
-        .finally(() => setSending(false));
-    }
+    const content = newMessage.trim();
+    setNewMessage('');
+    sendChatContent(content);
   };
 
   if (loading) {
@@ -113,23 +132,22 @@ export default function ChatDialogPage() {
     );
   }
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
-  const baseUrl = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase;
-  const avatarUrl = chat.participant.avatarPath ? `${baseUrl}${chat.participant.avatarPath}` : null;
-
   return (
     <main className="flex h-screen flex-col bg-background">
       <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col overflow-hidden bg-card shadow-sm sm:my-4 sm:rounded-lg sm:border sm:border-border">
         <div className="flex items-center justify-between border-b border-border p-4">
           <div className="flex items-center gap-3">
-          {avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={avatarUrl} alt={chat.participant.name} className="h-12 w-12 rounded-full border border-border object-cover" />
-                    ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/15 text-success">
-                        <span className="text-lg font-semibold">{chat.participant.name.charAt(0).toUpperCase()}</span>
-                      </div>
-                    )}
+          <AvatarImage
+            avatarPath={chat.participant.avatarPath}
+            alt={chat.participant.name}
+            className="h-12 w-12 rounded-full border border-border object-cover"
+            placeholderClassName="!bg-success/15 !text-success"
+            placeholder={
+              <span className="text-lg font-semibold">
+                {chat.participant.name.charAt(0).toUpperCase()}
+              </span>
+            }
+          />
             <p className="text-sm font-medium text-foreground"><strong>{chat.participant.name}</strong> ({chat.participant.companyName})</p>
           </div>
         </div>
@@ -137,6 +155,7 @@ export default function ChatDialogPage() {
         <div className="flex-1 space-y-4 overflow-y-auto bg-muted/30 p-4">
           {messages.map((msg) => {
             const isMe = msg.senderId === currentUser.id;
+            const filePayload = parseChatFileMessage(msg.content);
             return (
               <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                 <div
@@ -146,7 +165,15 @@ export default function ChatDialogPage() {
                       : 'rounded-bl-sm border border-border bg-card text-foreground shadow-sm'
                   }`}
                 >
-                  <p className="whitespace-pre-wrap break-words text-sm">{msg.content}</p>
+                  {filePayload ? (
+                    <FileMessageAttachment
+                      fileKey={filePayload.fileKey}
+                      fileName={filePayload.fileName}
+                      variant={isMe ? 'bubbleOwn' : 'default'}
+                    />
+                  ) : (
+                    <p className="whitespace-pre-wrap break-words text-sm">{msg.content}</p>
+                  )}
                   <div className={`mt-1 text-right text-[10px] ${isMe ? 'text-success-foreground/80' : 'text-muted-foreground'}`}>
                     {new Date(msg.createdAt).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}
                   </div>
@@ -158,13 +185,15 @@ export default function ChatDialogPage() {
         </div>
 
         <div className="flex-shrink-0 border-t border-border bg-card p-4">
-          <form onSubmit={handleSend} className="flex gap-2">
+          <form onSubmit={handleSend} className="flex items-center gap-2">
+            <FileUploader onSuccess={handleFileUploaded} disabled={sending} />
             <input
               type="text"
+              maxLength={2000}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Напишіть повідомлення..."
-              className="flex-1 rounded-full border border-input bg-muted px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:bg-card focus:outline-none focus:ring-1 focus:ring-ring"
+              className="min-w-0 flex-1 rounded-full border border-input bg-muted px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:bg-card focus:outline-none focus:ring-1 focus:ring-ring"
               disabled={sending}
             />
             <button

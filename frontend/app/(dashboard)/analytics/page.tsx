@@ -13,12 +13,14 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { Download, TrendingDown, TrendingUp, DollarSign, Handshake } from 'lucide-react';
+import { Download, TrendingDown, TrendingUp, DollarSign, Handshake, Percent } from 'lucide-react';
 
 interface KpiData {
   totalSaved: number;
   totalSpend: number;
   dealsClosed: number;
+  totalOffers: number;
+  avgPriceReduction: number;
 }
 
 interface VendorStats {
@@ -130,7 +132,7 @@ export default function AnalyticsDashboard() {
         </div>
 
         {/* KPI Cards */}
-        <div className="grid gap-4 md:grid-cols-3 mb-8">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
           <div className="rounded-xl border border-success/20 bg-success/5 p-6 shadow-sm">
             <div className="flex items-center gap-3 text-success mb-2">
               <div className="rounded-full bg-success/20 p-2">
@@ -141,6 +143,19 @@ export default function AnalyticsDashboard() {
             <p className="text-3xl font-bold text-success">
               {kpis.totalSaved.toLocaleString('uk-UA')} <span className="text-lg font-medium">грн</span>
             </p>
+          </div>
+
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-6 shadow-sm">
+            <div className="flex items-center gap-3 text-primary mb-2">
+              <div className="rounded-full bg-primary/20 p-2">
+                <Percent className="h-5 w-5" />
+              </div>
+              <h3 className="font-medium">Зниження ціни</h3>
+            </div>
+            <p className="text-3xl font-bold text-primary">
+              {kpis.avgPriceReduction.toFixed(1)}<span className="text-lg font-medium">%</span>
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">середнє по угодах</p>
           </div>
 
           <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
@@ -164,6 +179,9 @@ export default function AnalyticsDashboard() {
             </div>
             <p className="text-3xl font-bold text-foreground">
               {kpis.dealsClosed}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              з {kpis.totalOffers} загальних
             </p>
           </div>
         </div>

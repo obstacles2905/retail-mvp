@@ -160,6 +160,7 @@ function RegisterContent(): JSX.Element {
               type="email"
               autoComplete="email"
               required
+              maxLength={100}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
@@ -175,6 +176,7 @@ function RegisterContent(): JSX.Element {
               autoComplete="new-password"
               required
               minLength={8}
+              maxLength={64}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
@@ -190,6 +192,7 @@ function RegisterContent(): JSX.Element {
               autoComplete="new-password"
               required
               minLength={8}
+              maxLength={64}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
@@ -204,6 +207,7 @@ function RegisterContent(): JSX.Element {
               type="text"
               autoComplete="name"
               required
+              maxLength={50}
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
@@ -219,6 +223,7 @@ function RegisterContent(): JSX.Element {
                 type="text"
                 autoComplete="organization"
                 required
+                maxLength={100}
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
