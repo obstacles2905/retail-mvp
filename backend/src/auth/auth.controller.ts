@@ -1,9 +1,12 @@
-import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Delete, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
 import { AuthService, AuthResult } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from '../users/dto/create-user.dto';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { AuthPayload } from './auth.service';
 
 @Controller('auth')
 export class AuthController {
@@ -34,6 +37,18 @@ export class AuthController {
     // Redirect to frontend with token
     const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
     res.redirect(`${frontendUrl}/auth/callback?token=${result.accessToken}`);
+  }
+
+  @Post('demo')
+  async createDemoAccount(): Promise<AuthResult> {
+    return this.authService.createDemoAccount();
+  }
+
+  @Delete('demo')
+  @UseGuards(JwtAuthGuard)
+  async deleteDemoAccount(@CurrentUser() user: AuthPayload): Promise<{ success: boolean }> {
+    await this.authService.deleteDemoAccount(user.sub);
+    return { success: true };
   }
 }
 

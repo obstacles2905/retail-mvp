@@ -9,6 +9,7 @@ export interface AuthUser {
   phone?: string | null;
   avatarPath?: string | null;
   role: 'BUYER' | 'VENDOR';
+  isDemo?: boolean;
   createdAt: string;
   updatedAt: string;
 }

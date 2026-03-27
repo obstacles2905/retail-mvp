@@ -13,6 +13,7 @@ export interface UserSafe {
   phone: string | null;
   avatarPath: string | null;
   role: string;
+  isDemo?: boolean;
   googleId?: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -202,6 +203,7 @@ export class UsersService {
     avatarPath?: string | null;
     googleId?: string | null;
     role: string;
+    isDemo?: boolean;
     createdAt: Date;
     updatedAt: Date;
   }): UserSafe {
@@ -215,6 +217,7 @@ export class UsersService {
       avatarPath: user.avatarPath ?? null,
       googleId: user.googleId ?? null,
       role: user.role,
+      isDemo: user.isDemo ?? false,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
