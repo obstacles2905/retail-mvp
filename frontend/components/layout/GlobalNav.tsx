@@ -248,7 +248,15 @@ export function GlobalNav(): JSX.Element | null {
 
         <button
           type="button"
-          onClick={() => {
+          onClick={async () => {
+            const currentUser = getStoredUser();
+            if (currentUser?.isDemo) {
+              try {
+                await getAuthApiClient().delete('/auth/demo');
+              } catch (e) {
+                console.error('Failed to cleanup demo account', e);
+              }
+            }
             clearAuth();
             window.location.href = '/';
           }}

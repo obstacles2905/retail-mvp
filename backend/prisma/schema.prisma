@@ -83,6 +83,7 @@ model User {
   phone        String?
   avatarPath   String?
   role         UserRole
+  isDemo       Boolean  @default(false)
 
   workspaceId String?
   workspace   Workspace? @relation(fields: [workspaceId], references: [id])
