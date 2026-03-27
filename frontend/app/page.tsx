@@ -21,6 +21,23 @@ export default function HomePage(): JSX.Element {
   const handleCreateDemo = async () => {
     try {
       setIsCreatingDemo(true);
+      
+      // If already logged in as demo, clean it up first
+      const currentUser = getStoredUser();
+      if (currentUser?.isDemo) {
+        try {
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/auth/demo`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('teno_token')}`
+            }
+          });
+        } catch (e) {
+          console.error('Failed to cleanup previous demo account', e);
+        }
+        clearAuth();
+      }
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/auth/demo`, {
         method: 'POST',
       });
