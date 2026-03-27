@@ -1,6 +1,8 @@
 import { GlobalNav } from '@/components/layout/GlobalNav';
+import { RightSidebarProvider } from '@/components/layout/RightSidebarContext';
 import { RightSidebarWrapper } from '@/components/layout/RightSidebarWrapper';
 import GlobalHeader from '@/components/layout/GlobalHeader';
+import { GLOBAL_NAV_WIDTH_PX } from '@/lib/dashboard-layout';
 
 export default function DashboardLayout({
   children,
@@ -8,9 +10,13 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
+    <RightSidebarProvider>
     <div className="flex h-screen overflow-hidden">
-      {/* Column 1 — Global Nav */}
-      <aside className="hidden w-[80px] shrink-0 flex-col items-center border-r border-border bg-card md:flex">
+      {/* Column 1 — Global Nav (fixed width — see GLOBAL_NAV_WIDTH_PX) */}
+      <aside
+        className="hidden shrink-0 flex-col border-r border-border bg-card md:flex"
+        style={{ width: GLOBAL_NAV_WIDTH_PX, minWidth: GLOBAL_NAV_WIDTH_PX }}
+      >
         <GlobalNav />
       </aside>
 
@@ -25,5 +31,6 @@ export default function DashboardLayout({
       {/* Column 3 — Context Sidebar (Active Deals) */}
       <RightSidebarWrapper />
     </div>
+    </RightSidebarProvider>
   );
 }

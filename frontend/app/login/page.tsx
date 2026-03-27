@@ -88,6 +88,7 @@ function LoginContent(): JSX.Element {
               type="email"
               autoComplete="email"
               required
+              maxLength={100}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
@@ -102,6 +103,7 @@ function LoginContent(): JSX.Element {
               type="password"
               autoComplete="current-password"
               required
+              maxLength={64}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"

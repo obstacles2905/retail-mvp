@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
 import { DealSidebar } from './DealSidebar';
 import { PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useRightSidebar } from './RightSidebarContext';
 
 export function RightSidebarWrapper() {
-  const [isOpen, setIsOpen] = useState(true);
+  const { isOpen, toggle } = useRightSidebar();
 
   return (
     <>
@@ -20,7 +20,7 @@ export function RightSidebarWrapper() {
         
         {/* Toggle Button */}
         <button
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={toggle}
           className="absolute -left-4 top-3 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm hover:text-foreground z-50"
           title={isOpen ? "Сховати панель" : "Показати панель"}
         >

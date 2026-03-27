@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAuthApiClient } from '@/lib/api-client';
 import { getStoredUser } from '@/lib/auth';
+import { AvatarImage } from '@/components/AvatarImage';
+import { chatFilePreviewLabel } from '@/lib/chat-file-message';
 import type { ChatListDto } from '@/lib/types/chat';
 
 interface ConnectionDto {
@@ -76,11 +78,6 @@ export default function ChatsPage() {
       });
   };
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
-  const baseUrl = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase;
-
-  const getAvatarUrl = (path: string | null) => (path ? `${baseUrl}${path}` : null);
-
   return (
     <main className="flex flex-1 flex-col bg-background">
 
@@ -110,7 +107,6 @@ export default function ChatsPage() {
         ) : (
           <div className="flex flex-col gap-3">
             {chats.map((chat) => {
-              const avatarUrl = getAvatarUrl(chat.participant.avatarPath);
               return (
                 <a
                   key={chat.id}
@@ -118,14 +114,17 @@ export default function ChatsPage() {
                   className="flex items-center gap-4 rounded-lg border border-border bg-card p-4 shadow-sm transition-colors hover:border-success/40 hover:shadow"
                 >
                   <div className="flex-shrink-0">
-                    {avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={avatarUrl} alt={chat.participant.name} className="h-12 w-12 rounded-full border border-border object-cover" />
-                    ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/15 text-success">
-                        <span className="text-lg font-semibold">{chat.participant.name.charAt(0).toUpperCase()}</span>
-                      </div>
-                    )}
+                    <AvatarImage
+                      avatarPath={chat.participant.avatarPath}
+                      alt={chat.participant.name}
+                      className="h-12 w-12 rounded-full border border-border object-cover"
+                      placeholderClassName="!bg-success/15 !text-success"
+                      placeholder={
+                        <span className="text-lg font-semibold">
+                          {chat.participant.name.charAt(0).toUpperCase()}
+                        </span>
+                      }
+                    />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between">
@@ -140,7 +139,11 @@ export default function ChatsPage() {
                     </div>
                     <div className="mt-1 flex items-center justify-between">
                       <p className="truncate text-sm text-muted-foreground">
-                        {chat.lastMessage ? chat.lastMessage.content : <span className="italic text-muted-foreground/80">Немає повідомлень</span>}
+                        {chat.lastMessage ? (
+                          chatFilePreviewLabel(chat.lastMessage.content) ?? chat.lastMessage.content
+                        ) : (
+                          <span className="italic text-muted-foreground/80">Немає повідомлень</span>
+                        )}
                       </p>
                       {chat.unreadCount > 0 && (
                         <span className="ml-2 flex h-5 w-5 items-center justify-center rounded-full bg-success text-[10px] font-bold text-success-foreground">

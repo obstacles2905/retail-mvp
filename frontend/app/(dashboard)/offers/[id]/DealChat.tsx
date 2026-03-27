@@ -1,10 +1,20 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { FileMessageAttachment } from '@/components/FileMessageAttachment';
+import { FileUploader } from '@/components/FileUploader';
 import { getAuthApiClient } from '@/lib/api-client';
+import { serializeChatFileMessage, parseChatFileMessage } from '@/lib/chat-file-message';
 import { createOffersSocket } from '@/lib/realtime/offers-socket';
 import type { OfferDetail, OfferMessage } from '@/lib/types/offer';
-import GlobalHeader from '@/components/layout/GlobalHeader';
+import { useRightSidebar } from '@/components/layout/RightSidebarContext';
+import {
+  DEAL_OFFER_SIDEBAR_WIDTH_PX,
+  GLOBAL_NAV_WIDTH_PX,
+  RIGHT_CONTEXT_SIDEBAR_WIDTH_PX,
+} from '@/lib/dashboard-layout';
+import { cn } from '@/lib/utils';
 
 interface DealChatProps {
   offerId: string;
@@ -15,6 +25,7 @@ interface DealChatProps {
 }
 
 export function DealChat({ offerId, offer, shortDealId, currentUserId, onSystemEvent }: DealChatProps): JSX.Element {
+  const { isOpen: rightSidebarOpen } = useRightSidebar();
   const [messages, setMessages] = useState<OfferMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +51,12 @@ export function DealChat({ offerId, offer, shortDealId, currentUserId, onSystemE
   useEffect(() => {
     const socket = createOffersSocket();
     socketRef.current = socket;
-    socket.emit('offers:join', { offerId });
+
+    const joinRoom = () => {
+      socket.emit('offers:join', { offerId });
+    };
+
+    socket.on('connect', joinRoom);
     socket.on('offers:message:new', (msg) => {
       setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
       if (msg.isSystemEvent) {
@@ -48,7 +64,10 @@ export function DealChat({ offerId, offer, shortDealId, currentUserId, onSystemE
       }
     });
 
+    if (socket.connected) joinRoom();
+
     return () => {
+      socket.off('connect', joinRoom);
       socket.off('offers:message:new');
       socket.disconnect();
       socketRef.current = null;
@@ -113,21 +132,53 @@ export function DealChat({ offerId, offer, shortDealId, currentUserId, onSystemE
     return 'Системна подія';
   };
 
+  const sendOfferContent = useCallback(
+    (content: string) => {
+      setError(null);
+      setSending(true);
+      const socket = socketRef.current;
+      if (socket?.connected) {
+        socket.emit(
+          'offers:message:send',
+          { offerId, content },
+          (res: { ok?: boolean; message?: OfferMessage }) => {
+            if (res?.ok && res.message) {
+              setMessages((prev) =>
+                prev.some((m) => m.id === res.message!.id) ? prev : [...prev, res.message!],
+              );
+              setText('');
+            } else {
+              setError('Не вдалося надіслати повідомлення');
+            }
+            setSending(false);
+          },
+        );
+      } else {
+        api
+          .post<OfferMessage>(`/offers/${offerId}/messages`, { content })
+          .then((res) => {
+            setMessages((prev) => (prev.some((m) => m.id === res.data.id) ? prev : [...prev, res.data]));
+            setText('');
+          })
+          .catch(() => setError('Не вдалося надіслати повідомлення'))
+          .finally(() => setSending(false));
+      }
+    },
+    [api, offerId],
+  );
+
   const handleSend = (): void => {
     if (!text.trim() || sending) return;
-    const socket = socketRef.current;
-    if (!socket) return;
-    setSending(true);
-    socket.emit('offers:message:send', { offerId, content: text.trim() }, (res: { ok?: boolean; message?: OfferMessage }) => {
-      if (res?.ok && res.message) {
-        setMessages((prev) => (prev.some((m) => m.id === res.message!.id) ? prev : [...prev, res.message!]));
-        setText('');
-      } else {
-        setError('Не вдалося надіслати повідомлення');
-      }
-      setSending(false);
-    });
+    sendOfferContent(text.trim());
   };
+
+  const handleFileUploaded = useCallback(
+    (fileKey: string, fileName: string) => {
+      const content = serializeChatFileMessage({ kind: 'file', fileKey, fileName });
+      sendOfferContent(content);
+    },
+    [sendOfferContent],
+  );
 
   return (
     <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-card">
@@ -150,14 +201,18 @@ export function DealChat({ offerId, offer, shortDealId, currentUserId, onSystemE
               <p className="text-xs text-muted-foreground">Поки немає повідомлень.</p>
             </div>
           )}
-          {messages.map((m) =>
-            m.isSystemEvent ? (
-              <div key={m.id} className="flex justify-center">
-                <div className="rounded-xl bg-muted px-4 py-2.5 text-center text-sm text-muted-foreground">
-                  {formatSystemEvent(m)}
+          {messages.map((m) => {
+            if (m.isSystemEvent) {
+              return (
+                <div key={m.id} className="flex justify-center">
+                  <div className="rounded-xl bg-muted px-4 py-2.5 text-center text-sm text-muted-foreground">
+                    {formatSystemEvent(m)}
+                  </div>
                 </div>
-              </div>
-            ) : (
+              );
+            }
+            const filePayload = m.content ? parseChatFileMessage(m.content) : null;
+            return (
               <div key={m.id} className="rounded-xl border border-border bg-card p-3 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
                   <p className="truncate text-sm font-semibold text-foreground">
@@ -167,28 +222,38 @@ export function DealChat({ offerId, offer, shortDealId, currentUserId, onSystemE
                     {new Date(m.createdAt).toLocaleString('uk-UA')}
                   </p>
                 </div>
-                <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">{m.content}</p>
+                <div className="mt-2 text-sm text-foreground">
+                  {filePayload ? (
+                    <FileMessageAttachment fileKey={filePayload.fileKey} fileName={filePayload.fileName} />
+                  ) : (
+                    <p className="whitespace-pre-wrap">{m.content}</p>
+                  )}
+                </div>
               </div>
-            ),
-          )}
+            );
+          })}
           <div ref={bottomRef} />
         </div>
       </div>
 
-      <footer className="shrink-0 border-t border-border bg-card p-4 w-[calc(100%-80px-360px-260px)] fixed bottom-0 left-[calc(260px+80px)]">
+      <footer
+        className={cn(
+          'fixed bottom-0 shrink-0 border-t border-border bg-card p-4',
+          'transition-[width] duration-300 ease-in-out will-change-[width]',
+        )}
+        style={{
+          left: GLOBAL_NAV_WIDTH_PX,
+          width: rightSidebarOpen
+            ? `calc(100% - ${GLOBAL_NAV_WIDTH_PX}px - ${DEAL_OFFER_SIDEBAR_WIDTH_PX}px - ${RIGHT_CONTEXT_SIDEBAR_WIDTH_PX}px)`
+            : `calc(100% - ${GLOBAL_NAV_WIDTH_PX}px - ${DEAL_OFFER_SIDEBAR_WIDTH_PX + 1}px)`,
+        }}
+      >
         <div className="mx-auto flex max-w-4xl items-center gap-2 rounded-xl border border-border bg-muted px-3 py-2 focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
-          <button
-            type="button"
-            className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-            aria-label="Додати файл"
-          >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-            </svg>
-          </button>
+          <FileUploader onSuccess={handleFileUploaded} disabled={sending} className="shrink-0" />
           <input
             type="text"
             placeholder="Напишіть відповідь (можна обговорити логістику, упаковку, терміни)..."
+            maxLength={2000}
             className="min-w-0 flex-1 bg-transparent py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
             value={text}
             onChange={(e) => setText(e.target.value)}

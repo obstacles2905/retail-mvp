@@ -7,10 +7,11 @@ import {
 } from 'react';
 
 import Link from 'next/link';
-import type { AxiosError } from 'axios';
+import axios, { type AxiosError } from 'axios';
 import { toast } from 'react-hot-toast';
 
 import { getAuthApiClient } from '@/lib/api-client';
+import { AvatarImage } from '@/components/AvatarImage';
 import {
   type AuthUser,
   getStoredToken,
@@ -107,21 +108,41 @@ export default function ProfilePage(): JSX.Element {
     setIsEditMode(false);
   };
 
-  const uploadAvatar = (file: File): void => {
+  const uploadAvatar = async (file: File): Promise<void> => {
     if (!user) return;
+    const maxBytes = 5 * 1024 * 1024;
+    const allowedMime = ['image/png', 'image/jpeg', 'image/webp'];
+    if (file.size > maxBytes) {
+      toast.error('Файл завеликий. Максимум 5 МБ.');
+      return;
+    }
+    const mime = file.type.split(';')[0].trim().toLowerCase();
+    if (!allowedMime.includes(mime)) {
+      toast.error('Дозволено лише PNG, JPG або WebP.');
+      return;
+    }
+
     setUploadError(null);
     setUploading(true);
-    const form = new FormData();
-    form.append('file', file);
-    api
-      .post<UserMe>('/users/me/avatar', form, { headers: { 'Content-Type': 'multipart/form-data' } })
-      .then((res) => {
-        setUser(res.data);
-        persistUser(res.data);
-        toast.success('Аватар успішно оновлено');
-      })
-      .catch(() => toast.error('Не вдалося завантажити аватар'))
-      .finally(() => setUploading(false));
+    try {
+      const { data } = await api.get<{ uploadUrl: string; fileKey: string }>('/files/avatar-upload-url', {
+        params: { fileName: file.name, fileType: mime },
+      });
+      await axios.put(data.uploadUrl, file, { headers: { 'Content-Type': mime } });
+      const res = await api.patch<UserMe>('/users/me/avatar', { fileKey: data.fileKey });
+      setUser(res.data);
+      persistUser(res.data);
+      toast.success('Аватар успішно оновлено');
+    } catch (err: unknown) {
+      const msg =
+        axios.isAxiosError(err) && err.response?.status === 503
+          ? 'Завантаження тимчасово недоступне (S3 не налаштовано).'
+          : 'Не вдалося завантажити аватар';
+      setUploadError(msg);
+      toast.error(msg);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const changePassword = (e: React.FormEvent): void => {
@@ -208,10 +229,6 @@ export default function ProfilePage(): JSX.Element {
     );
   }
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
-  const baseUrl = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase;
-  const avatarUrl = user.avatarPath ? `${baseUrl}${user.avatarPath}` : null;
-
   return (
     <main className="flex flex-1 flex-col bg-background">
       <div className="mx-auto w-full max-w-6xl px-6 py-8">
@@ -221,14 +238,11 @@ export default function ProfilePage(): JSX.Element {
             <h2 className="text-sm font-semibold text-foreground">Аватар</h2>
             <div className="flex gap-4 items-center">
             <div className="mt-3 flex items-center justify-start">
-              {avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarUrl} alt="Avatar" className="h-28 w-28 rounded-full border border-border object-cover" />
-              ) : (
-                <div className="flex h-28 w-28 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                  <span className="text-sm font-semibold">—</span>
-                </div>
-              )}
+              <AvatarImage
+                avatarPath={user.avatarPath}
+                alt="Avatar"
+                className="h-28 w-28 rounded-full border border-border object-cover"
+              />
             </div>
             <div>
             {uploadError && (
@@ -247,7 +261,7 @@ export default function ProfilePage(): JSX.Element {
                 className="block w-full text-sm text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-success file:px-3 file:py-2 file:text-sm file:font-medium file:text-success-foreground hover:file:bg-success/90 disabled:opacity-50"
               />
             </label>
-            <p className="mt-2 text-xs text-muted-foreground">PNG/JPG/WebP, до 5 МБ.</p>
+            <p className="mt-2 text-xs text-muted-foreground">PNG/JPG/WebP, до 5 МБ. Зберігання в S3.</p>
             </div>
             </div>
           </div>
@@ -302,6 +316,7 @@ export default function ProfilePage(): JSX.Element {
                 <input
                   id="profile-name"
                   type="text"
+                  maxLength={50}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={!isEditMode}
@@ -313,6 +328,7 @@ export default function ProfilePage(): JSX.Element {
                 <input
                   id="profile-company"
                   type="text"
+                  maxLength={100}
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
                   disabled={!isEditMode}
@@ -325,6 +341,7 @@ export default function ProfilePage(): JSX.Element {
                 <input
                   id="profile-phone"
                   type="tel"
+                  maxLength={20}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   disabled={!isEditMode}
@@ -359,6 +376,7 @@ export default function ProfilePage(): JSX.Element {
                   <input
                     id="current-password"
                     type="password"
+                    maxLength={64}
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     disabled={changingPassword}
@@ -372,6 +390,7 @@ export default function ProfilePage(): JSX.Element {
                   <input
                     id="new-password"
                     type="password"
+                    maxLength={64}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     disabled={changingPassword}
@@ -385,6 +404,7 @@ export default function ProfilePage(): JSX.Element {
                   <input
                     id="confirm-new-password"
                     type="password"
+                    maxLength={64}
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
                     disabled={changingPassword}

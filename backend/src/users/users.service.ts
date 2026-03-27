@@ -111,6 +111,15 @@ export class UsersService {
     return this.toUserSafe(user);
   }
 
+  /** Після успішного PUT на presigned URL — зберегти S3 object key у профілі. */
+  async setAvatarFromS3Key(userId: string, fileKey: string): Promise<UserSafe> {
+    const prefix = `avatars/${userId}/`;
+    if (!fileKey.startsWith(prefix) || fileKey.includes('..')) {
+      throw new BadRequestException('Invalid avatar file key');
+    }
+    return this.setAvatarPath(userId, fileKey);
+  }
+
   async updateGoogleId(userId: string, googleId: string): Promise<UserSafe> {
     const user = await this.prisma.user.update({
       where: { id: userId },

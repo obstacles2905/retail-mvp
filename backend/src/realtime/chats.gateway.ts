@@ -14,9 +14,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
 @WebSocketGateway({
-  cors: {
-    origin: '*',
-  },
+  cors: { origin: '*' },
+  pingInterval: 25000,
+  pingTimeout: 20000,
 })
 @UseGuards(WsJwtGuard)
 export class ChatsGateway implements OnGatewayInit {

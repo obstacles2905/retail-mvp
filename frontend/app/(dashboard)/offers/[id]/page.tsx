@@ -27,13 +27,6 @@ function getShortDealId(offerId: string): string {
   return `#OFF-${offerId.slice(-6).toUpperCase()}`;
 }
 
-function getAvatarUrl(avatarPath: string | null | undefined): string | null {
-  if (!avatarPath) return null;
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api';
-  const baseUrl = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase;
-  return `${baseUrl}${avatarPath}`;
-}
-
 export default function OfferNegotiationPage(): JSX.Element {
   const params = useParams<{ id: string }>();
   const router = useRouter();

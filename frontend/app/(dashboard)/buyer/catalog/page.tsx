@@ -212,7 +212,7 @@ export default function BuyerCatalogPage() {
             <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div className="sm:col-span-2 lg:col-span-3">
                 <label className="block text-sm font-medium text-foreground">Назва товару *</label>
-                <input required type="text" value={name} onChange={e => setName(e.target.value)} className={inputClass} />
+                <input required type="text" maxLength={200} value={name} onChange={e => setName(e.target.value)} className={inputClass} />
               </div>
 
               <div>
@@ -239,12 +239,12 @@ export default function BuyerCatalogPage() {
 
               <div>
                 <label className="block text-sm font-medium text-foreground">Артикул (внутрішній)</label>
-                <input type="text" value={articleCode} onChange={e => setArticleCode(e.target.value)} className={inputClass} />
+                <input type="text" maxLength={32} value={articleCode} onChange={e => setArticleCode(e.target.value)} className={inputClass} />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-foreground">Штрихкод (Barcode)</label>
-                <input type="text" value={barcode} onChange={e => setBarcode(e.target.value)} className={inputClass} />
+                <input type="text" maxLength={32} value={barcode} onChange={e => setBarcode(e.target.value)} className={inputClass} />
               </div>
 
               <div className="mt-2 flex justify-end gap-3 sm:col-span-2 lg:col-span-3">

@@ -23,5 +23,9 @@ export function createChatsSocket(): ChatsSocket {
   return io(url, {
     auth: { token },
     autoConnect: false,
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 10000,
   });
 }

@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import { ArrayMaxSize, ArrayMinSize, IsArray, IsISO8601, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength, ValidateNested } from 'class-validator';
 import { OfferItemInputDto } from '../../offers/dto/offer-item-input.dto';
+import { V } from '../../common/validation-limits';
 
 export class CreateBuyerOrderDto {
   @IsArray()
@@ -11,7 +12,7 @@ export class CreateBuyerOrderDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(2000)
+  @MaxLength(V.DELIVERY_TERMS_MAX)
   deliveryTerms?: string;
 
   @IsISO8601()

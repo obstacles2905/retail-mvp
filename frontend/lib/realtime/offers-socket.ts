@@ -28,6 +28,9 @@ export function createOffersSocket(): Socket<OffersSocketEvents, OffersSocketCli
   return io(getWsBaseUrl(), {
     transports: ['websocket'],
     auth: token ? { token } : undefined,
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 10000,
   });
 }
-

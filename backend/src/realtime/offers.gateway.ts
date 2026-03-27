@@ -14,6 +14,8 @@ class JoinOfferDto {
 
 @WebSocketGateway({
   cors: { origin: true, credentials: true },
+  pingInterval: 25000,
+  pingTimeout: 20000,
 })
 @UseGuards(WsJwtGuard)
 export class OffersGateway {

@@ -6,6 +6,8 @@ export class AnalyticsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getKpis(workspaceId: string) {
+    const totalOffers = await this.prisma.offer.count({ where: { workspaceId } });
+
     const offers = await this.prisma.offer.findMany({
       where: {
         workspaceId,
@@ -17,6 +19,8 @@ export class AnalyticsService {
     let totalSaved = 0;
     let totalSpend = 0;
     let dealsClosed = offers.length;
+    let reductionSum = 0;
+    let reductionCount = 0;
 
     for (const offer of offers) {
       for (const item of offer.items) {
@@ -26,13 +30,25 @@ export class AnalyticsService {
         if (item.finalPrice) {
           totalSpend += Number(item.finalPrice) * item.volume;
         }
+        const initial = Number(item.initialPrice);
+        const final = Number(item.finalPrice);
+        if (initial > 0 && final > 0) {
+          reductionSum += ((initial - final) / initial) * 100;
+          reductionCount += 1;
+        }
       }
     }
+
+    const avgPriceReduction = reductionCount > 0
+      ? Math.round((reductionSum / reductionCount) * 100) / 100
+      : 0;
 
     return {
       totalSaved,
       totalSpend,
       dealsClosed,
+      totalOffers,
+      avgPriceReduction,
     };
   }
 
