@@ -155,6 +155,8 @@ export class BuyerOrdersService {
     currentTurn: OfferTurn;
     acceptedAt?: Date | null;
     isArchived?: boolean;
+    buyerArchived?: boolean;
+    vendorArchived?: boolean;
     archivedAt?: Date | null;
     createdAt: Date;
     updatedAt: Date;
@@ -171,6 +173,8 @@ export class BuyerOrdersService {
       currentTurn: o.currentTurn,
       acceptedAt: o.acceptedAt ? o.acceptedAt.toISOString() : null,
       isArchived: o.isArchived ?? false,
+      buyerArchived: o.buyerArchived ?? false,
+      vendorArchived: o.vendorArchived ?? false,
       archivedAt: o.archivedAt ? o.archivedAt.toISOString() : null,
       createdAt: o.createdAt,
       updatedAt: o.updatedAt,

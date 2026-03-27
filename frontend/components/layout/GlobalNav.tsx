@@ -198,10 +198,10 @@ export function GlobalNav(): JSX.Element | null {
       <div className="flex flex-col items-center gap-1">
         <Link
           href="/dashboard"
-          className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary font-display text-sm font-bold text-primary-foreground"
+          className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-[#2563eb] text-white"
           title="Teno"
         >
-          T
+          <span className="font-bold text-xl leading-none">T</span>
         </Link>
 
         {navItems.map((item) => {

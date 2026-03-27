@@ -494,7 +494,15 @@ export function DealSidebar({
             </div>
             <h3 className="text-xl font-semibold text-foreground">Угоду успішно укладено!</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Вам потрібно буде доставити товар <strong>{offer.items?.[0]?.sku?.name ?? offer.items?.[0]?.productName}</strong>{' '}
+              {currentUser.role === 'VENDOR' ? (
+                <>
+                  Вам потрібно буде доставити товар <strong>{offer.items?.[0]?.sku?.name ?? offer.items?.[0]?.productName}</strong>{' '}
+                </>
+              ) : (
+                <>
+                  Очікуйте доставку товару <strong>{offer.items?.[0]?.sku?.name ?? offer.items?.[0]?.productName}</strong>{' '}
+                </>
+              )}
               {offer.deliveryDate ? `до ${new Date(offer.deliveryDate).toLocaleDateString('uk-UA')}` : 'у визначений термін'}{' '}
               за умовами: <strong>{offer.deliveryTerms ?? 'за домовленістю'}</strong>.
             </p>

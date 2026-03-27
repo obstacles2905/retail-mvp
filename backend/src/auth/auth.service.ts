@@ -75,6 +75,7 @@ export class AuthService {
     companyName?: string;
     inviteToken?: string;
     teamToken?: string;
+    isLoginOnly?: boolean;
   }): Promise<UserSafe> {
     let user = await this.usersService.findByEmail(profile.email);
 
@@ -89,6 +90,10 @@ export class AuthService {
       }
       const { passwordHash: _, ...safeUser } = user;
       return safeUser;
+    }
+
+    if (profile.isLoginOnly) {
+      throw new UnauthorizedException('Акаунт не знайдено. Будь ласка, зареєструйтесь.');
     }
 
     const role: UserRole = profile.role === 'VENDOR' ? UserRole.VENDOR : UserRole.BUYER;
@@ -273,18 +278,33 @@ export class AuthService {
       await this.prisma.category.deleteMany({ where: { workspaceId: user.workspaceId } });
       await this.prisma.invite.deleteMany({ where: { workspaceId: user.workspaceId } });
       
+      const workspaceUsers = await this.prisma.user.findMany({ where: { workspaceId: user.workspaceId }, select: { id: true } });
+      const userIds = workspaceUsers.map(u => u.id);
+
       const demoPrefix = user.email.split('@')[0].replace('demo-', '');
+      const demoVendors = await this.prisma.user.findMany({
+        where: { isDemo: true, role: 'VENDOR', email: { contains: demoPrefix } },
+        select: { id: true }
+      });
+      const vendorIds = demoVendors.map(v => v.id);
+      
+      const allUserIds = [...userIds, ...vendorIds];
+      
+      await this.prisma.chatMessage.deleteMany({ where: { OR: [{ chat: { participant1Id: { in: allUserIds } } }, { chat: { participant2Id: { in: allUserIds } } }] } });
+      await this.prisma.chat.deleteMany({ where: { OR: [{ participant1Id: { in: allUserIds } }, { participant2Id: { in: allUserIds } }] } });
+
       await this.prisma.user.deleteMany({
-        where: {
-          isDemo: true,
-          role: 'VENDOR',
-          email: { contains: demoPrefix }
-        }
+        where: { id: { in: vendorIds } }
       });
 
       await this.prisma.user.deleteMany({ where: { workspaceId: user.workspaceId } });
       await this.prisma.workspace.delete({ where: { id: user.workspaceId } });
     } else {
+      await this.prisma.chatMessage.deleteMany({ where: { chat: { participant1Id: userId } } });
+      await this.prisma.chatMessage.deleteMany({ where: { chat: { participant2Id: userId } } });
+      await this.prisma.chat.deleteMany({ where: { participant1Id: userId } });
+      await this.prisma.chat.deleteMany({ where: { participant2Id: userId } });
+
       await this.prisma.user.delete({ where: { id: userId } });
     }
   }

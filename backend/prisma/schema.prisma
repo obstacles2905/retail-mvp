@@ -157,6 +157,8 @@ model Offer {
   currentTurn   OfferTurn
   acceptedAt    DateTime?
   isArchived    Boolean     @default(false)
+  buyerArchived Boolean     @default(false)
+  vendorArchived Boolean    @default(false)
   archivedAt    DateTime?
 
   workspaceId String?

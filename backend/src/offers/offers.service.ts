@@ -46,6 +46,8 @@ export interface OfferDto {
   currentTurn: OfferTurn;
   acceptedAt: string | null;
   isArchived: boolean;
+  buyerArchived: boolean;
+  vendorArchived: boolean;
   archivedAt: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -170,7 +172,7 @@ export class OffersService {
       message: 'Пропозицію створено',
     });
 
-    return this.toDto(offer);
+    return this.toDto(offer, 'VENDOR');
   }
 
   async findAllForUser(
@@ -200,7 +202,11 @@ export class OffersService {
       : { workspaceId };
 
     if (!options?.showArchived) {
-      whereClause.isArchived = false;
+      if (role === 'BUYER') {
+        whereClause.buyerArchived = false;
+      } else {
+        whereClause.vendorArchived = false;
+      }
     }
 
     if (options?.status) {
@@ -240,7 +246,7 @@ export class OffersService {
     const unreadCounts = await this.getUnreadCounts(offers.map(o => o.id), userId, role);
 
     return offers.map((o) => ({
-      ...this.toDto(o),
+      ...this.toDto(o, role),
       vendor: o.vendor,
       buyer: o.buyer ?? null,
       hasUnread: (unreadCounts[o.id] || 0) > 0,
@@ -260,7 +266,7 @@ export class OffersService {
     if (!offer) throw new NotFoundException('Offer not found');
 
     return {
-      ...this.toDto(offer),
+      ...this.toDto(offer, role),
       buyer: offer.buyer ?? null,
       vendor: offer.vendor,
     };
@@ -494,7 +500,7 @@ export class OffersService {
       });
     }
 
-    return this.toDto(updatedOffer);
+    return this.toDto(updatedOffer, role);
   }
 
   async acceptDeal(offerId: string, userId: string, role: 'BUYER' | 'VENDOR'): Promise<OfferDto> {
@@ -574,7 +580,7 @@ export class OffersService {
       });
     }
 
-    return this.toDto(updatedOffer);
+    return this.toDto(updatedOffer, role);
   }
 
   async rejectDeal(
@@ -631,7 +637,7 @@ export class OffersService {
       });
     }
 
-    return this.toDto(updatedOffer);
+    return this.toDto(updatedOffer, role);
   }
 
   async deliverOffer(offerId: string, userId: string, role: 'BUYER' | 'VENDOR'): Promise<OfferDto> {
@@ -682,7 +688,7 @@ export class OffersService {
       message: 'Доставку підтверджено закупником',
     });
 
-    return this.toDto(updatedOffer);
+    return this.toDto(updatedOffer, role);
   }
 
   async archiveOffer(offerId: string, userId: string, role: 'BUYER' | 'VENDOR'): Promise<OfferDto> {
@@ -692,28 +698,33 @@ export class OffersService {
       throw new ForbiddenException('Can only archive orders with terminal status (DELIVERED or REJECTED)');
     }
 
-    const nowArchived = !(offer as any).isArchived;
+    const nowArchived = role === 'BUYER' ? !(offer as any).buyerArchived : !(offer as any).vendorArchived;
+    
+    const updateData: any = {};
+    if (role === 'BUYER') {
+      updateData.buyerArchived = nowArchived;
+    } else {
+      updateData.vendorArchived = nowArchived;
+    }
+
+    // If both archived, we can set the global isArchived and archivedAt
+    const willBeArchivedByBoth = 
+      (role === 'BUYER' ? nowArchived : (offer as any).buyerArchived) && 
+      (role === 'VENDOR' ? nowArchived : (offer as any).vendorArchived);
+      
+    updateData.isArchived = willBeArchivedByBoth;
+    updateData.archivedAt = willBeArchivedByBoth ? new Date() : null;
+
     const updatedOffer = await this.prisma.offer.update({
       where: { id: offerId },
-      data: {
-        isArchived: nowArchived,
-        archivedAt: nowArchived ? new Date() : null,
-      },
+      data: updateData,
       include: { items: { include: ITEMS_INCLUDE } },
     });
 
-    const otherUserId = role === 'VENDOR' ? offer.buyerId : offer.vendorId;
-    if (otherUserId) {
-      this.realtime.emitNotificationToUser(otherUserId, 'notification:offer_update', {
-        offerId: offer.id,
-        action: nowArchived ? 'ARCHIVED' : 'UNARCHIVED',
-        message: nowArchived ? 'Угоду архівовано' : 'Угоду повернуто з архіву',
-      });
-    }
     // Archiver does not get a socket notification (avoids duplicate DB notification + toast).
     // Layout DealSidebar refetches on pathname / visibility / client "offers:refresh" event.
 
-    return this.toDto(updatedOffer);
+    return this.toDto(updatedOffer, role);
   }
 
   async rescheduleDelivery(
@@ -770,7 +781,7 @@ export class OffersService {
       });
     }
 
-    return this.toDto(updatedOffer);
+    return this.toDto(updatedOffer, role);
   }
 
   private toItemDto(item: {
@@ -823,11 +834,19 @@ export class OffersService {
     currentTurn: OfferTurn;
     acceptedAt?: Date | null;
     isArchived?: boolean;
+    buyerArchived?: boolean;
+    vendorArchived?: boolean;
     archivedAt?: Date | null;
     createdAt: Date;
     updatedAt: Date;
     items: any[];
-  }): OfferDto {
+  }, role?: 'BUYER' | 'VENDOR'): OfferDto {
+    const isArchivedForRole = role === 'BUYER' 
+      ? (offer.buyerArchived ?? false) 
+      : role === 'VENDOR' 
+        ? (offer.vendorArchived ?? false) 
+        : (offer.isArchived ?? false);
+
     return {
       id: offer.id,
       buyerId: offer.buyerId,
@@ -838,7 +857,9 @@ export class OffersService {
       status: offer.status,
       currentTurn: offer.currentTurn,
       acceptedAt: offer.acceptedAt ? offer.acceptedAt.toISOString() : null,
-      isArchived: offer.isArchived ?? false,
+      isArchived: isArchivedForRole,
+      buyerArchived: offer.buyerArchived ?? false,
+      vendorArchived: offer.vendorArchived ?? false,
       archivedAt: offer.archivedAt ? offer.archivedAt.toISOString() : null,
       createdAt: offer.createdAt,
       updatedAt: offer.updatedAt,

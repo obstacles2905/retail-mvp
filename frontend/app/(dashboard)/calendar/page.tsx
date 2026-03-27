@@ -102,11 +102,11 @@ export default function CalendarPage() {
     return {
       style: {
         backgroundColor: isDelivered
-          ? 'hsl(var(--info))'
-          : 'hsl(var(--success))',
+          ? 'hsl(var(--success))'
+          : 'hsl(var(--info))',
         color: isDelivered
-          ? 'hsl(var(--info-foreground))'
-          : 'hsl(var(--success-foreground))',
+          ? 'hsl(var(--success-foreground))'
+          : 'hsl(var(--info-foreground))',
         border: 'none',
         borderRadius: 'calc(var(--radius) - 4px)',
         fontSize: '0.6875rem',
@@ -130,11 +130,11 @@ export default function CalendarPage() {
           </p>
           <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
-              <span className="inline-block h-3 w-3 rounded bg-success" />
+              <span className="inline-block h-3 w-3 rounded bg-info" />
               Очікує доставки
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block h-3 w-3 rounded bg-info" />
+              <span className="inline-block h-3 w-3 rounded bg-success" />
               Доставлено
             </span>
           </div>

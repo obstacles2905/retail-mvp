@@ -34,6 +34,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         companyName: stateObj.companyName,
         inviteToken: stateObj.inviteToken,
         teamToken: stateObj.teamToken,
+        isLoginOnly: stateObj.action === 'login',
       });
       done(null, user);
     } catch (err) {

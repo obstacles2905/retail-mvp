@@ -43,7 +43,7 @@ export class WorkspacesService {
     }
 
     const teamInviteToken = workspace.teamInviteToken || (await this.ensureTeamInviteToken(workspace.id));
-    const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+    const frontendUrl = (process.env.FRONTEND_URL ?? 'https://retail-mvp.vercel.app').replace(/\/$/, '');
 
     return {
       users: workspace.users,

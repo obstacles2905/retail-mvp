@@ -49,7 +49,10 @@ function LoginContent(): JSX.Element {
     <main className="flex min-h-screen flex-col">
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
-          <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
+          <Link href="/" className="flex items-center gap-2 font-display text-xl font-semibold tracking-tight text-foreground">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2563eb] text-white">
+              <span className="font-bold text-lg leading-none">T</span>
+            </div>
             Teno
           </Link>
 
@@ -123,7 +126,7 @@ function LoginContent(): JSX.Element {
         </div>
 
         <a
-          href={`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'}/auth/google${teamToken ? `?state=${typeof window !== 'undefined' ? btoa(JSON.stringify({ teamToken })) : ''}` : ''}`}
+          href={`${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api'}/auth/google?state=${typeof window !== 'undefined' ? btoa(JSON.stringify(teamToken ? { action: 'login', teamToken } : { action: 'login' })) : ''}`}
           className="flex w-full items-center justify-center gap-3 rounded-md border border-foreground bg-foreground px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-foreground/90"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">

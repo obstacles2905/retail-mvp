@@ -25,7 +25,7 @@ export interface LinkedVendorDto {
   phone: string | null;
 }
 
-const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+const FRONTEND_URL = (process.env.FRONTEND_URL ?? 'https://retail-mvp.vercel.app').replace(/\/$/, '');
 
 @Injectable()
 export class InvitesService {

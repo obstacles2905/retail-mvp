@@ -29,6 +29,12 @@ function RegisterContent(): JSX.Element {
   const api = createApiClient();
 
   useEffect(() => {
+    if (searchParams.get('error') === 'google_no_account') {
+      setError('Акаунт не знайдено. Будь ласка, зареєструйтесь.');
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     if (teamToken) {
       setRole('BUYER');
       setFetchingTeam(true);
@@ -97,7 +103,10 @@ function RegisterContent(): JSX.Element {
     <main className="flex min-h-screen flex-col">
        <header className="border-b border-border bg-card">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
-          <Link href="/" className="font-display text-xl font-semibold tracking-tight text-foreground">
+          <Link href="/" className="flex items-center gap-2 font-display text-xl font-semibold tracking-tight text-foreground">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2563eb] text-white">
+              <span className="font-bold text-lg leading-none">T</span>
+            </div>
             Teno
           </Link>
 
